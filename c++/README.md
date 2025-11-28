@@ -1,37 +1,37 @@
 # Huffman Coding - c++
 
-So far, we have everything needed to make the tree; but We, As in Me, need to figure out the best way to actually create and store this tree in memory.
 
-We determine the values of this tree from leaf to root…
+-    /    10   \
+-  / 6  \       |
+-  |    |    /  4   \
+-  |    |    |    /  2  \   
+ q(3) e(3) c(2) b(1) a(1)
+  0    1    2    3    4
+Goal, using the above tree, derive frequency indecies.
 
-so…
+left, add none to index, right add 1.
+	
 
-this following istance should be of size… 9
+2 4 6 10
 
-a(1) b(1) c(2) d(2) e(3)
-  \   /	              /
-    2	    \   /    /
-    \	      4     /
-      \	     /     /
-	 6        /
-	  \      /
-	      9
 
-This tree would look like the above…
+has something to do wiht the index of the nodes.
+node index
 
-Process is:
-	add all even matches of frequency (1), move to the next frequency
-	add remainder frequency with the first frequency of this round, add all even counts, move to the next frequency.
-	before moving to the next frequency, you want to combine all lower freuencies into one freuqency sum.
+Potential encoding method:
 
-	that's the secret.
+Layout the tree into a single dimentional signed int array, including both the nodes and the literals.
+Take note of the indecies of each literal, and store them in a seperate int array.
 
-	add all your sums, and before going to add the next layer of frequency sums, you must add all pairs.
+Now from literal, starting at the index provided, traverse to the root to build an encoding table.
+Table will be a multi dimensional array that matches the target byte, the total number of bits used in the encoded value, AND the actual encoded byte.
+You will then be able to use that to create an encoded bit stream.
 
-	because there's only two freuencies of 1, we just add them, and then move directly to the next frequncy.
-	because there's only two frequencies of 2, we just add them; but because there's an existing node (sum 2), before moving on to the final freq, we need to add our sum of 4 with our sum of 6.
-	Now that the highest node (value 6) sits alone, without pair, we can iterate to the next frequency (3) and add THAT to our 6.
+The decoding process will use knowledge of the root index, and the literal index array, to translate the encoded values back to the literal values.
 
-	it's all about adding remainder nodes.
-
-That's the process; but now I gotta figure out the encoding.
+The frquency table will be stored as follows:
+	the very first byte will tell us how many literals to use.
+	then for each literal we will store the the size of the frequency size(1 byte), followed by the literal(1 byte), followed by the size(1 to 255 bytes)
+	creating a header that will be of the following structure : [literal count] ([freq size] [literal] [freq])
+	
+	this method will allow us to store data without having to store the full size of an int data type, typically 4 bytes. Potentially saving us 1 byte per literal in the header.

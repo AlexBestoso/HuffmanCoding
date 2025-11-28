@@ -127,8 +127,9 @@ class HuffmanCoding{
 			return true;
 		}
 
-		bool plantTree(void){
+		bool encode(void){
 			// sort frequency and letter tables so that the lower frequencies are first.
+			// node count is frequencies_s - 1
 			
 			return true;
 		}
