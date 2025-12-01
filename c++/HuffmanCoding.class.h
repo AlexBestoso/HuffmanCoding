@@ -6,6 +6,8 @@ class HuffmanCoding{
 	
 		int *frequencies;
 		size_t frequencies_s;
+		
+		bool tablesSorted;
 
 		int error;
 		std::string error_msg;
@@ -179,6 +181,7 @@ class HuffmanCoding{
 					}
 				}
 				delete[] transfer;
+				this->tablesSorted = true;
 			}
 			
 			// Use index list to re-organize frequency and tree letter arrays.
@@ -204,8 +207,168 @@ class HuffmanCoding{
 			delete[] indexList;
 		}
 
-		bool encode(char *data, size_t dataSize){
+		size_t countLayers(void){
+			if(!this->tablesSorted){
 				
+				return 0;
+			}
+			size_t ret = 0;
+			for(int i=0, check=0; i<this->frequencies_s; i++){
+				if(i == 0){
+					check = this->freqiencies[i];
+					ret++;
+					continue;
+				}
+				if(check != this->frequencies[i])
+					ret++;
+			}
+		
+			return ret;
+		}
+
+		/*
+		 * using the starting index, find the next node in the tree.
+		 * */
+		int findNodeIndex(int startingIndex, size_t tree_s, int *literals, size_t literalsSize){
+			// plus 1 because startingIndex should be a node.
+			for(int i=startingIndex+1; i<tree_s; i++){
+				for(int j=0; j<literalsSize; j++){
+					if(i == literals[j]) return i;
+				}
+			}	
+			return -1;
+		}
+
+		bool buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize){
+			if(this->frequencies == NULL){
+				return false;
+			}
+			if(this->frequencies_s <= 0){
+				return false;
+			}
+			if(this->treeLetters == NULL){
+				return false;
+			}
+			if(this->treeLetters_s <= 0){
+				return false;
+			}
+			if(this->tree == NULL){
+				return false;
+			}
+			if(this->tree_s <= 0){
+				return false;
+			}
+			for(int i=0; i<literalsSize; i++)
+				literals[i] = -1;
+			int tableIndex=this->frequencies_s-1; // we sorted from most to least frequent, start with the least frequent.
+			// the number of like frequencies doesn't matter, all that matters is that this was sorted.
+			int literalCtr = 0;
+			int prevFreq=0;
+			bool finalLeftover = (this->frequencies_s % 2) == 1 ? true : false;
+			bool firstSum = true;
+			for(int i=tree_s-1; i>=0; i--){
+				if(tableIndex==0 && finalLeftover){
+					tree[i] = (int)this->treeLetters[tableIndex];
+					literals[tableIndex] = i;
+					int nodeIndex = this->findNodeIndex(i, tree_s, literals, literalsSize);
+					if(nodeIndex < 0){
+
+						return false;
+					}
+					if(nodeIndex >= this->tree_s){
+
+						return false;
+					}
+
+					i--;
+					if(i>=0){
+						tree[i] = tree[nodeIndex] + this->frequencies[tableIndex];
+					}else{
+						return false;
+					}
+					break;
+				}
+				if(literalCtr >= 2){ // We have an unused node.
+					literalCtr = 0;
+					if(firstSum){
+						// we need to create another node!
+						firstSum = false;
+						i++;
+						continue;
+					}
+					int nodeIndexA = this->findNodeIndex(i, tree_s, literals, literalsSize);
+					int nodeIndexB = this->findNodeIndex(nodeIndexA, tree_s, literals, literalsSize);
+					if(nodeIndexA < 0){
+
+						return false;
+					}
+					if(nodeIndexA >= this->tree_s){
+
+						return false;
+					}
+					if(nodeIndexB < 0){
+
+						return false;
+					}
+					if(nodeIndexB >= this->tree_s){
+
+						return false;
+					}
+					tree[i] = tree[nodeIndexA] + tree[nodeIndexB];
+					continue;
+					
+				}
+				if(literalCtr < 2){ // we need to create a node.
+					tree[i] = (int)this->treeLetters[tableIndex];
+					literals[tableIndex] = i;
+					if(literalCtr == 0){
+						prevFreq = this->frequencies[tableIndex];
+						tableIndex--;
+						literalCtr++;
+						continue;
+					}
+
+					i--;
+					if(i>= 0){
+						tree[i] = this->frequencies[tableIndex] + prevFreq;
+						tableIndex--;
+						literalCtr++;
+					}
+				}
+			}
+			return true;
+		}
+
+		bool packHeader(void){
+
+			return true;
+		}
+		
+		bool unpackHeader(void){
+
+			return true;
+		}
+
+		bool encode(char *data, size_t dataSize){
+			size_t treeSize = this->frequencies_s+this->frequencies_s-1;
+			int *tree = new int[treeSize];
+			size_t literalIndexListSize = this->frequencies_s;
+			int *literalIndexList = new int[this->literalIndexListSize];
+			this->buildTree(tree, treeSize, literalIndexList, literalIndexListSize);
+			// calculate layers
+		/*	size_t layerCount = this->countLayers();
+			if(layerCount <= 0){
+		
+				return false;
+			}
+			int *layerSizes = new int[layerCount];
+			if(!this->calculateLayerSizes(layerSizes, layerCount)){
+
+				return false;
+			}
+
+			delete[] layerSizes;*/
+			delete[] tree;
 			return true;
 		}
 
@@ -240,6 +403,7 @@ class HuffmanCoding{
 			this->treeLetters_s = 0;
 			this->frequencies = NULL;
 			this->frequencies_s = 0;
+			this->tablesSorted = false;
 			this->clearError();
 		}
 		~HuffmanCoding(){
@@ -253,6 +417,7 @@ class HuffmanCoding{
 			this->destroyTreeLetters();
 			this->destroyFrequencies();
 			this->destroyOut();
+			this->tablesSorted = false;
 			if(data == NULL){
 				this->setError(0x000, "compress(char *data, size_t dataSize) - data is null.");
 				return false;
