@@ -215,7 +215,7 @@ class HuffmanCoding{
 			size_t ret = 0;
 			for(int i=0, check=0; i<this->frequencies_s; i++){
 				if(i == 0){
-					check = this->freqiencies[i];
+					check = this->frequencies[i];
 					ret++;
 					continue;
 				}
@@ -232,9 +232,16 @@ class HuffmanCoding{
 		int findNodeIndex(int startingIndex, size_t tree_s, int *literals, size_t literalsSize){
 			// plus 1 because startingIndex should be a node.
 			for(int i=startingIndex+1; i<tree_s; i++){
+				bool good = false;
 				for(int j=0; j<literalsSize; j++){
-					if(i == literals[j]) return i;
+					if(i == literals[j]){
+						good = false;
+						break;
+					}else{
+						good = true;
+					}
 				}
+				if(good) return i;
 			}	
 			return -1;
 		}
@@ -252,10 +259,10 @@ class HuffmanCoding{
 			if(this->treeLetters_s <= 0){
 				return false;
 			}
-			if(this->tree == NULL){
+			if(tree == NULL){
 				return false;
 			}
-			if(this->tree_s <= 0){
+			if(tree_s <= 0){
 				return false;
 			}
 			for(int i=0; i<literalsSize; i++)
@@ -269,13 +276,16 @@ class HuffmanCoding{
 			for(int i=tree_s-1; i>=0; i--){
 				if(tableIndex==0 && finalLeftover){
 					tree[i] = (int)this->treeLetters[tableIndex];
+					#if HUFFMAN_DEBUGGING == 1
+							printf("[DBG] D tree cell %d : #%d : '%c'\n", i, tree[i], tree[i]);
+					#endif
 					literals[tableIndex] = i;
 					int nodeIndex = this->findNodeIndex(i, tree_s, literals, literalsSize);
 					if(nodeIndex < 0){
 
 						return false;
 					}
-					if(nodeIndex >= this->tree_s){
+					if(nodeIndex >= tree_s){
 
 						return false;
 					}
@@ -283,6 +293,10 @@ class HuffmanCoding{
 					i--;
 					if(i>=0){
 						tree[i] = tree[nodeIndex] + this->frequencies[tableIndex];
+						#if HUFFMAN_DEBUGGING == 1
+							printf("[DBG] Node Index : %d\n", nodeIndex);
+							printf("[DBG] E tree cell %d : #%d : '%c'\n", i, tree[i], tree[i]);
+						#endif
 					}else{
 						return false;
 					}
@@ -302,7 +316,7 @@ class HuffmanCoding{
 
 						return false;
 					}
-					if(nodeIndexA >= this->tree_s){
+					if(nodeIndexA >= tree_s){
 
 						return false;
 					}
@@ -310,16 +324,23 @@ class HuffmanCoding{
 
 						return false;
 					}
-					if(nodeIndexB >= this->tree_s){
+					if(nodeIndexB >= tree_s){
 
 						return false;
 					}
 					tree[i] = tree[nodeIndexA] + tree[nodeIndexB];
+					#if HUFFMAN_DEBUGGING == 1
+						printf("[DBG] Node Index A : %d | Node Index B : %d\n", nodeIndexA, nodeIndexB);
+						printf("[DBG] C tree cell %d : #%d : '%c'\n", i, tree[i], tree[i]);
+					#endif
 					continue;
 					
 				}
 				if(literalCtr < 2){ // we need to create a node.
 					tree[i] = (int)this->treeLetters[tableIndex];
+					#if HUFFMAN_DEBUGGING == 1
+							printf("[DBG] A tree cell %d : #%d : '%c'\n", i, tree[i], tree[i]);
+					#endif
 					literals[tableIndex] = i;
 					if(literalCtr == 0){
 						prevFreq = this->frequencies[tableIndex];
@@ -331,6 +352,9 @@ class HuffmanCoding{
 					i--;
 					if(i>= 0){
 						tree[i] = this->frequencies[tableIndex] + prevFreq;
+						#if HUFFMAN_DEBUGGING == 1
+							printf("[DBG] B tree cell %d : #%d : '%c'\n", i, tree[i], tree[i]);
+						#endif
 						tableIndex--;
 						literalCtr++;
 					}
@@ -353,8 +377,20 @@ class HuffmanCoding{
 			size_t treeSize = this->frequencies_s+this->frequencies_s-1;
 			int *tree = new int[treeSize];
 			size_t literalIndexListSize = this->frequencies_s;
-			int *literalIndexList = new int[this->literalIndexListSize];
+			int *literalIndexList = new int[literalIndexListSize];
 			this->buildTree(tree, treeSize, literalIndexList, literalIndexListSize);
+
+			#if HUFFMAN_DEBUGGING == 1
+			int dbg_nodeMax=0;
+			for(int i=0; i<this->frequencies_s; i++)
+				dbg_nodeMax += this->frequencies[i];
+			printf("[DBG] Expected Max Node Value : %d\n", dbg_nodeMax);
+			printf("[DBG] Tree : ");
+			for(int i=0; i<treeSize; i++){
+				printf("%d ", tree[i]);
+			}printf("\n");
+			#endif
+			
 			// calculate layers
 		/*	size_t layerCount = this->countLayers();
 			if(layerCount <= 0){
