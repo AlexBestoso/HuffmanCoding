@@ -130,11 +130,27 @@ class HuffmanCoding{
 			return true;
 		}
 
-		void sortFreqencies(void){
-			if(this->treeLetters_s != this->frequencies_s)
-				return;
-			if(this->treeLetters == NULL || this->frequencies == NULL)
-				return;
+		bool sortFreqencies(void){
+			if(this->treeLetters_s <= 0){
+				this->setError(0x923, "sortFreqencies(void) - treeLetters_s is 0, treating as null.");
+				return false;
+			}
+			if(this->frequencies_s <= 0){
+				this->setError(0x924, "sortFreqencies(void) - frequencies_s <= 0, treating as null.");
+				return false;
+			}
+			if(this->treeLetters_s != this->frequencies_s){
+				this->setError(0x920, "sortFreqencies(void) - Table Corruption, treeLetters_s != frequencies_s.");
+				return false;
+			}
+			if(this->treeLetters == NULL){
+				this->setError(0x921, "sortFreqencies(void) - treeLetters is null.");
+				return false;
+			}
+			if(this->frequencies == NULL){
+				this->setError(0x922, "sortFreqencies(void) - frequencies is null.");
+				return false;
+			}
 
 			size_t sortList_s = this->frequencies_s;
 			int *sortList = new int[sortList_s];
@@ -205,6 +221,7 @@ class HuffmanCoding{
 			delete[] sortList2;
 			delete[] sortList;
 			delete[] indexList;
+			return true;
 		}
 
 		size_t countLayers(void){
@@ -248,23 +265,42 @@ class HuffmanCoding{
 
 		bool buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize){
 			if(this->frequencies == NULL){
+				this->setError(0x800, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - frequencies is null.");
 				return false;
 			}
 			if(this->frequencies_s <= 0){
+				this->setError(0x801, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - frequencies_s <= 0, treating as null.");
 				return false;
 			}
 			if(this->treeLetters == NULL){
+				this->setError(0x802, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - treeLetters is null.");
 				return false;
 			}
 			if(this->treeLetters_s <= 0){
+				this->setError(0x803, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - treeLetters_s <= 0, treating as null.");
 				return false;
 			}
 			if(tree == NULL){
+				this->setError(0x804, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - tree is null.");
 				return false;
 			}
 			if(tree_s <= 0){
+				this->setError(0x805, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - tree_s <= 0, treating as null.");
 				return false;
 			}
+			if(literals == NULL){
+				this->setError(0x806, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - literals is null.");
+				return false;
+			}
+			if(literalsSize <= 0){
+				this->setError(0x807, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - literalsSize <= 0, treating as null.");
+				return false;
+			}
+			if(literalsSize != this->frequencies_s && this->frequencies_s != this->treeLetters_s){
+				this->setError(0x808, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - literalSize not aligned with frequencies_s and treeLetters_s.");
+				return false;
+			}
+			// init literals.
 			for(int i=0; i<literalsSize; i++)
 				literals[i] = -1;
 			int tableIndex=this->frequencies_s-1; // we sorted from most to least frequent, start with the least frequent.
@@ -278,19 +314,19 @@ class HuffmanCoding{
 					int nodeIndexA = this->findNodeIndex(i, tree_s, literals, literalsSize);
                                         int nodeIndexB = this->findNodeIndex(nodeIndexA, tree_s, literals, literalsSize);
                                         if(nodeIndexA < 0){
-
+						this->setError(0x809, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - NodeIndexA induces underflow.");
                                                 return false;
                                         }
                                         if(nodeIndexA >= tree_s){
-
+						this->setError(0x810, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - nodeIndexA induces overflow.");
                                                 return false;
                                         }
                                         if(nodeIndexB < 0){
-
+						this->setError(0x811, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - nodeIndexB induces underflow.");
                                                 return false;
                                         }
                                         if(nodeIndexB >= tree_s){
-
+						this->setError(0x812, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - nodeIndexB induces overflow.");
                                                 return false;
                                         }
                                         tree[i] = tree[nodeIndexA] + tree[nodeIndexB];
@@ -299,6 +335,22 @@ class HuffmanCoding{
                                                 printf("[DBG] C tree cell %d : #%d : '%c'\n", i, tree[i], tree[i]);
                                         #endif
 					i--;
+					if(i < 0){
+						this->setError(0x813, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - loop index induces underflow.");
+						return false;
+					}
+					if(i >= tree_s){
+						this->setError(0x814, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - loop index induces overflow.");
+						return false;
+					}
+					if(tableIndex < 0){
+						this->setError(0x815, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - tableIndex induces underflow.");
+						return false;
+					}
+					if(tableIndex >= this->treeLetters_s || tableIndex >= literalsSize || tableIndex >= this->frequencies_s){
+						this->setError(0x816, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - tableeIndex induces overflow.");
+						return false;
+					}
 					tree[i] = (int)this->treeLetters[tableIndex];
 					#if HUFFMAN_DEBUGGING == 1
 							printf("[DBG] D tree cell %d : #%d : '%c'\n", i, tree[i], tree[i]);
@@ -306,11 +358,11 @@ class HuffmanCoding{
 					literals[tableIndex] = i;
 					int nodeIndex = this->findNodeIndex(i, tree_s, literals, literalsSize);
 					if(nodeIndex < 0){
-
+						this->setError(0x817, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - nodeIndex induces underflow.");
 						return false;
 					}
 					if(nodeIndex >= tree_s){
-
+						this->setError(0x818, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - nodeIndex induces overflow.");
 						return false;
 					}
 
@@ -322,10 +374,12 @@ class HuffmanCoding{
 							printf("[DBG] E tree cell %d : #%d : '%c'\n", i, tree[i], tree[i]);
 						#endif
 					}else{
+						this->setError(0x819, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - loop index underflow caused final node failure.");
 						return false;
 					}
 					break;
 				}
+
 				if(literalCtr >= 2){ // We have an unused node.
 					literalCtr = 0;
 					if(firstSum){
@@ -337,19 +391,19 @@ class HuffmanCoding{
 					int nodeIndexA = this->findNodeIndex(i, tree_s, literals, literalsSize);
 					int nodeIndexB = this->findNodeIndex(nodeIndexA, tree_s, literals, literalsSize);
 					if(nodeIndexA < 0){
-
+						this->setError(0x820, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - nodeIndexA induces underflow.");
 						return false;
 					}
 					if(nodeIndexA >= tree_s){
-
+						this->setError(0x821, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - nodeIndexA induces overflow.");
 						return false;
 					}
 					if(nodeIndexB < 0){
-
+						this->setError(0x822, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - nodeIndexB inducees underflow.");
 						return false;
 					}
 					if(nodeIndexB >= tree_s){
-
+						this->setError(0x223, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - nodeIndexB induces overflow.");
 						return false;
 					}
 					tree[i] = tree[nodeIndexA] + tree[nodeIndexB];
@@ -361,9 +415,17 @@ class HuffmanCoding{
 					
 				}
 				if(literalCtr < 2){ // we need to create a node.
+					if(tableIndex < 0){
+						this->setError(0x224, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - tableIndex induces underflow.");
+						return false;
+					}
+					if(tableIndex >= this->treeLetters_s || tableIndex >= literalsSize || tableIndex >= this->frequencies_s){
+						this->setError(0x225, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - tableIndex induces underflow.");
+						return false;
+					}
 					tree[i] = (int)this->treeLetters[tableIndex];
 					#if HUFFMAN_DEBUGGING == 1
-							printf("[DBG] A tree cell %d : #%d : '%c'\n", i, tree[i], tree[i]);
+						printf("[DBG] A tree cell %d : #%d : '%c'\n", i, tree[i], tree[i]);
 					#endif
 					literals[tableIndex] = i;
 					if(literalCtr == 0){
@@ -374,13 +436,16 @@ class HuffmanCoding{
 					}
 
 					i--;
-					if(i>= 0){
+					if(i>= 0 && i<tree_s){
 						tree[i] = this->frequencies[tableIndex] + prevFreq;
 						#if HUFFMAN_DEBUGGING == 1
 							printf("[DBG] B tree cell %d : #%d : '%c'\n", i, tree[i], tree[i]);
 						#endif
 						tableIndex--;
 						literalCtr++;
+					}else{
+						this->setError(0x226, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - loop index out of bounds, caused faulure to calcualte tree.");
+						return false;
 					}
 				}
 			}
@@ -402,7 +467,10 @@ class HuffmanCoding{
 			int *tree = new int[treeSize];
 			size_t literalIndexListSize = this->frequencies_s;
 			int *literalIndexList = new int[literalIndexListSize];
-			this->buildTree(tree, treeSize, literalIndexList, literalIndexListSize);
+			if(!this->buildTree(tree, treeSize, literalIndexList, literalIndexListSize)){
+				this->setError(0x500, "encode(char *data, size_t dataSize) - failed to build tree.");
+				return false;
+			}
 
 			#if HUFFMAN_DEBUGGING == 1
 			int dbg_nodeMax=0;
@@ -504,7 +572,10 @@ class HuffmanCoding{
 			printf("\n");
 			#endif
 
-			this->sortFreqencies();
+			if(!this->sortFreqencies()){
+				this->setError(0x004, "compress(char *data, size_t dataSize) - sortFreqencies failed.");
+				return false;
+			}
 			#if HUFFMAN_DEBUGGING == 1
 			printf("[DBG] Sorted Frequencies : \n\t");
 			for(int i=0; i<this->frequencies_s; i++)
