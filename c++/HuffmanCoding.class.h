@@ -275,6 +275,30 @@ class HuffmanCoding{
 			bool firstSum = true;
 			for(int i=tree_s-1; i>=0; i--){
 				if(tableIndex==0 && finalLeftover){
+					int nodeIndexA = this->findNodeIndex(i, tree_s, literals, literalsSize);
+                                        int nodeIndexB = this->findNodeIndex(nodeIndexA, tree_s, literals, literalsSize);
+                                        if(nodeIndexA < 0){
+
+                                                return false;
+                                        }
+                                        if(nodeIndexA >= tree_s){
+
+                                                return false;
+                                        }
+                                        if(nodeIndexB < 0){
+
+                                                return false;
+                                        }
+                                        if(nodeIndexB >= tree_s){
+
+                                                return false;
+                                        }
+                                        tree[i] = tree[nodeIndexA] + tree[nodeIndexB];
+                                        #if HUFFMAN_DEBUGGING == 1
+                                                printf("[DBG] Node Index A : %d | Node Index B : %d\n", nodeIndexA, nodeIndexB);
+                                                printf("[DBG] C tree cell %d : #%d : '%c'\n", i, tree[i], tree[i]);
+                                        #endif
+					i--;
 					tree[i] = (int)this->treeLetters[tableIndex];
 					#if HUFFMAN_DEBUGGING == 1
 							printf("[DBG] D tree cell %d : #%d : '%c'\n", i, tree[i], tree[i]);
