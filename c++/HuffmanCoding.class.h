@@ -491,18 +491,28 @@ class HuffmanCoding{
 			// if the starting index is followed by a sum/illiteral, the nodes are based off of the next two illiterals.
 			// if the starting index is followed by a single literal and then an illiteral, the node is based off the combination of the two.
 			int matchCondition = -1;
+			bool targetIsLiteral = this->isLiteral(targetIndex, literals, literals_s);
 			bool matchA = this->isLiteral(startingIndex+1, literals, literals_s);
 			bool matchB = this->isLiteral(startingIndex+2, literals, literals_s);
-			if(matchA && matchB){
-				matchCondition = 0;
-			}else if(matchA && !matchB){
-				matchCondition = 1;
-			}else if(!matchA){
-				matchCondition = 2;
+			bool matchC = this->isLiteral(startingIndex+3, literals, literals_s);
+			if(targetIsLiteral){
+				if(matchA && matchB){
+					matchCondition = 0;
+				}else if(matchA && !matchB){
+					matchCondition = 1;
+				}
 			}else{
-				this->setError(0x37707, "deriveBit(...) - Invalid byte matching sequence.");
-				return -1;
+				if(matchA && matchB && !matchC){
+                                        matchCondition = 2;
+                                }else if(matchA && matchB){
+                                        matchCondition = 0;
+                                }else if(matchA && !matchB){
+                                        matchCondition = 1;
+                                }
 			}
+			#if HUFFMAN_DEBUGGING == 1
+			printf("[DBG] Match Condition : %d \n", matchCondition);
+			#endif
 			
 			int oneIndex;
 			int zeroIndex;
@@ -513,10 +523,10 @@ class HuffmanCoding{
 					oneIndex = startingIndex + 2;	
 				break;
 				case 2:
-					zeroIndex = startingIndex + 1;
+					zeroIndex = startingIndex;
 					for(int i=startingIndex+2; i<tree_s; i++){
 						if(!this->isLiteral(i, literals, literals_s)){
-							zeroIndex = i;
+							oneIndex = i;
 							break;
 						}
 					}
@@ -556,6 +566,7 @@ class HuffmanCoding{
 				int targetIndex = literals[i];
 				bitCount = 0;
 				encoded = 0;
+				bool firstRound = true;
 				for(int j=targetIndex; j>=0 && j<tree_s; j--){
 					bool itsALiteral = this->isLiteral(j, literals, literals_s);
 					if(this->failed()){
@@ -566,9 +577,12 @@ class HuffmanCoding{
 						continue;
 					}
 					// found a sum! Now determine if it's a 0 or 1.
+					#if HUFFMAN_DEBUGGING == 1
+					printf("[DBG] target Index : %d | starting index : %d\n", targetIndex, j);
+					#endif
 					int bit = this->deriveBit(tree, tree_s, literals, literals_s, targetIndex, j);
 					#if HUFFMAN_DEBUGGING == 1
-					printf("[DBG] target Index : %d | starting index : %d | derived bit : %d\n", targetIndex, j, bit);
+					printf("[DBG] Derived Bit : %d\n", bit);
 					#endif
 					if(this->failed()){
 						this->setError(0x401, "buildCodeTable(int *tree, size_t tree_s, int *literals, size_t literals_s, size_t codeCount) - deriveBit failed.");
@@ -582,10 +596,11 @@ class HuffmanCoding{
 					if(targetIndex == 1) break;
 				
 					// determine new target index.
-					for(int k=targetIndex-1; k>=0; k--){
-						if(!this->isLiteral(k, literals, literals_s)){
-							targetIndex = k+1;
-							j=k+1;
+					for(int k=j; k>=0; k--){
+						if(!this->isLiteral(k, literals, literals_s) && !this->isLiteral(k+1, literals, literals_s)){
+							targetIndex = k;
+							j=targetIndex-1;
+							break;
 						}
 					}
 					
