@@ -6,11 +6,15 @@ class HuffmanCoding{
 	
 		int *frequencies;
 		size_t frequencies_s;
+
+		int *codeTable;
+		size_t codeTable_s;
 		
 		bool tablesSorted;
 
 		int error;
 		std::string error_msg;
+
 
 		void destroyTreeLetters(void){
 			if(this->treeLetters != NULL)
@@ -224,24 +228,6 @@ class HuffmanCoding{
 			return true;
 		}
 
-		size_t countLayers(void){
-			if(!this->tablesSorted){
-				
-				return 0;
-			}
-			size_t ret = 0;
-			for(int i=0, check=0; i<this->frequencies_s; i++){
-				if(i == 0){
-					check = this->frequencies[i];
-					ret++;
-					continue;
-				}
-				if(check != this->frequencies[i])
-					ret++;
-			}
-		
-			return ret;
-		}
 
 		/*
 		 * using the starting index, find the next node in the tree.
@@ -261,6 +247,21 @@ class HuffmanCoding{
 				if(good) return i;
 			}	
 			return -1;
+		}
+
+		bool isLiteral(int targetIndex, int *literals, size_t literalsSize){
+			if(literals == NULL){
+				this->setError(0x37707, "isLiteral(int targetIndex, int *literals, size_t literalsSize) - literals is null");
+				return false;
+			}
+			if(literalsSize <= 0){
+                                this->setError(0x37707, "isLiteral(int targetIndex, int *literals, size_t literalsSize) - literalsSize <= 0, treating as null.");
+                                return false;
+                        }
+			for(int i=0; i<literalsSize; i++){
+				if(literals[i] == targetIndex) return true;
+			}
+			return false;
 		}
 
 		bool buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize){
@@ -452,6 +453,172 @@ class HuffmanCoding{
 			return true;
 		}
 
+		int deriveBit(int *tree, size_t tree_s, int *literals, size_t literals_s, int targetIndex, int startingIndex){
+			if(tree == NULL){
+				this->setError(0x37707, "deriveBit(int *tree, size_t tree_s, int targetIndex, int startingIndex) - tree is null.");
+				return -1;
+			}
+			if(tree_s <= 0){
+				this->setError(0x37707, "deriveBit(int *tree, size_t tree_s, int targetIndex, int startingIndex) - tree_s <= 0, treating as null.");
+				return -1;
+			}
+			if(literals == NULL){
+				this->setError(0x37707, "deriveBit(...) - literals is null.");
+				return -1;
+			}
+			if(literals_s <= 0){
+				this->setError(0x3370, "deriveBit(...) - literals_s <= 0, treating as null.");
+				return -1;
+			}
+			if(targetIndex < 0 || targetIndex >= tree_s){
+				this->setError(0x37707, "deriveBit(int *tree, size_t tree_s, int targetIndex, int startingIndex) - targetIndex out of bounds.");
+				return -1;
+			}
+			if(startingIndex < 0 || startingIndex >= tree_s){
+				this->setError(0x37707, "deriveBit(int *tree, size_t tree_s, int targetIndex, int startingIndex) - startingIndex out of bounds.");
+				return -1;
+			}
+			int ret = 0;
+			int literalCount = 0;
+			if(startingIndex == (tree_s-3)){
+                                // at the tail end.
+                                if(targetIndex == (startingIndex+1)) return 0;
+                                if(targetIndex == (startingIndex+2)) return 1;
+                                this->setError(0x37707, "deriveBit(...) - Failed to determine bit value (tail end)");
+                                return -1;
+                        }
+			// if starting index is followed by two literals, the nodes are based off the two literals.
+			// if the starting index is followed by a sum/illiteral, the nodes are based off of the next two illiterals.
+			// if the starting index is followed by a single literal and then an illiteral, the node is based off the combination of the two.
+			int matchCondition = -1;
+			bool matchA = this->isLiteral(startingIndex+1, literals, literals_s);
+			bool matchB = this->isLiteral(startingIndex+2, literals, literals_s);
+			if(matchA && matchB){
+				matchCondition = 0;
+			}else if(matchA && !matchB){
+				matchCondition = 1;
+			}else if(!matchA){
+				matchCondition = 2;
+			}else{
+				this->setError(0x37707, "deriveBit(...) - Invalid byte matching sequence.");
+				return -1;
+			}
+			
+			int oneIndex;
+			int zeroIndex;
+			switch(matchCondition){
+				case 0:
+				case 1:
+					zeroIndex = startingIndex + 1;
+					oneIndex = startingIndex + 2;	
+				break;
+				case 2:
+					zeroIndex = startingIndex + 1;
+					for(int i=startingIndex+2; i<tree_s; i++){
+						if(!this->isLiteral(i, literals, literals_s)){
+							zeroIndex = i;
+							break;
+						}
+					}
+						
+				break;
+			}
+			#if HUFFMAN_DEBUGGING == 1
+			printf("[DBG] zero Index : %d | one index : %d\n", zeroIndex, oneIndex);
+			#endif
+
+			if(targetIndex == zeroIndex){
+				return 0;
+			}else if(targetIndex == oneIndex){
+				return 1;
+			}else{
+				this->setError(0x37707, "deriveBit(...) - targetIndex is invalid.");
+				return -1;
+			}
+			this->setError(0x37707, "deriveBit(...) - execution out of order, higly unusual.");
+			return -1;
+		}
+		/*
+		 * Code table structure:
+		 * even byte contains bit count, odd byte contains encoded byte relative to bit count
+		 * 0x3 0xff would mean that the first 3 bits, from msb -> lsb, are the encoded value.
+		 * The index of each encode byte is relative to the index of the values in the code treeLetter array.
+		 * because our bytes never exceed 0xff, we shouldn't need more than 8 bits of storage per encoded value.
+		 * */
+		bool buildCodeTable(int *tree, size_t tree_s, int *literals, size_t literals_s, size_t codeCount){
+			this->codeTable_s = codeCount*2;
+			this->codeTable = new int[this->codeTable_s];
+			int tableIndex = 0;
+			int bitCount=0;
+			int encoded=0;
+			for(int i=0; i<literals_s; i++){
+				// identify encoded value and size.
+				int targetIndex = literals[i];
+				bitCount = 0;
+				encoded = 0;
+				for(int j=targetIndex; j>=0 && j<tree_s; j--){
+					bool itsALiteral = this->isLiteral(j, literals, literals_s);
+					if(this->failed()){
+						this->setError(0x400, "buildCodeTable(int *tree, size_t tree_s, int *literals, size_t literals_s, size_t codeCount) - literal detection failed.");
+						return false;
+					}
+					if(itsALiteral){
+						continue;
+					}
+					// found a sum! Now determine if it's a 0 or 1.
+					int bit = this->deriveBit(tree, tree_s, literals, literals_s, targetIndex, j);
+					#if HUFFMAN_DEBUGGING == 1
+					printf("[DBG] target Index : %d | starting index : %d | derived bit : %d\n", targetIndex, j, bit);
+					#endif
+					if(this->failed()){
+						this->setError(0x401, "buildCodeTable(int *tree, size_t tree_s, int *literals, size_t literals_s, size_t codeCount) - deriveBit failed.");
+						return false;
+					}
+
+					bit = bit << 7;
+					bitCount++;
+					encoded = (encoded >> 1) + bit;
+					if(bitCount > 7) break;
+					if(targetIndex == 1) break;
+				
+					// determine new target index.
+					for(int k=targetIndex-1; k>=0; k--){
+						if(!this->isLiteral(k, literals, literals_s)){
+							targetIndex = k+1;
+							j=k+1;
+						}
+					}
+					
+					#if HUFFMAN_DEBUGGING == 1
+					printf("[DBG] new target : %d\n", targetIndex);
+					#endif
+					
+				}
+
+				#if HUFFMAN_DEBUGGING == 1
+				printf("\t[DBG] Derived bit count : %d | encoded byte : 0x%x\n", bitCount, encoded);
+				#endif
+				
+				// store encoded value and size into code table.
+				if(tableIndex < this->codeTable_s){
+					this->codeTable[tableIndex] = bitCount;
+				}else{
+					this->setError(0x402, "buildCodeTable(int *tree, size_t tree_s, int *literals, size_t literals_s, size_t codeCount) - codeTable Overflow A.");
+					return false;
+				}
+				tableIndex++;
+				if(tableIndex < this->codeTable_s){
+                                        this->codeTable[tableIndex] = encoded;
+                                }else{
+                                        this->setError(0x402, "buildCodeTable(int *tree, size_t tree_s, int *literals, size_t literals_s, size_t codeCount) - codeTable Overflow B.");
+                                        return false;
+                                }
+				tableIndex++;
+				
+			}
+			return true;
+		}
+
 		bool packHeader(void){
 
 			return true;
@@ -472,30 +639,25 @@ class HuffmanCoding{
 				return false;
 			}
 
-			#if HUFFMAN_DEBUGGING == 1
-			int dbg_nodeMax=0;
+			int validateNodeMax=0;
 			for(int i=0; i<this->frequencies_s; i++)
-				dbg_nodeMax += this->frequencies[i];
-			printf("[DBG] Expected Max Node Value : %d\n", dbg_nodeMax);
+				validateNodeMax += this->frequencies[i];
+			if(validateNodeMax != tree[0]){
+				this->setError(0x501, "encode(char *data, size_t dataSize) - node max validation failed.");
+				return false;
+			}
+			#if HUFFMAN_DEBUGGING == 1
 			printf("[DBG] Tree : ");
 			for(int i=0; i<treeSize; i++){
 				printf("%d ", tree[i]);
 			}printf("\n");
 			#endif
+
+			if(!this->buildCodeTable(tree, treeSize, literalIndexList, literalIndexListSize, this->frequencies_s)){
+				this->setError(0x502, "encode(char *data, size_t dataSize) - failed to create code table.");
+				return false;
+			}
 			
-			// calculate layers
-		/*	size_t layerCount = this->countLayers();
-			if(layerCount <= 0){
-		
-				return false;
-			}
-			int *layerSizes = new int[layerCount];
-			if(!this->calculateLayerSizes(layerSizes, layerCount)){
-
-				return false;
-			}
-
-			delete[] layerSizes;*/
 			delete[] tree;
 			return true;
 		}
@@ -516,6 +678,10 @@ class HuffmanCoding{
 	public:
 		char *out;
 		size_t out_s;
+
+		bool failed(void){
+			return this->error != -1 ? true : false;
+		}
 
 		int getError(void){
 			return this->error;
