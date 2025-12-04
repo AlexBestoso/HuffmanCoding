@@ -303,12 +303,11 @@ class HuffmanCoding{
 			int nodeIndex = nodeCacheSize-1;
 			for(int i=0; i<nodeCacheSize; i++) nodeCache[i] = -1;
 			int remainder=-1;
-			/*
-				TODO : address the condition that happens with this examples frequency of 11.
-			*/
+			// Layer one of nodes.
 			for(int i=this->frequencies_s-1; i>=0; i--){
 				int freqCount = this->countLikeFrequencies(this->frequencies[i]);
 				int freq = this->frequencies[i];
+				bool remainderUsed = false;
 				if(remainder > -1){
 					if(nodeIndex >= 0){
 						printf("(round %d) On Node index %d, Using remainder f(%d) + r(%d)\n", i, nodeIndex, freq, remainder);
@@ -316,15 +315,21 @@ class HuffmanCoding{
 						nodeIndex--;
 					}
 					remainder = -1;
+					remainderUsed = true;
 				}else if((freqCount%2) == 1){
 					remainder = freq;
 					printf("(round %d) setting reaminder %d\n", i, remainder);
 				}
-				for(int j=0; j<freqCount/2 && freqCount > 1; j++){
-					if(nodeIndex < 0) break;
-					printf("(round %d) On node index %d, doing %d*2\n", i, nodeIndex, freq);
-					nodeCache[nodeIndex] = freq*2;
-					nodeIndex--;
+				if(remainderUsed && freqCount == 2){
+					remainder = freq;
+					printf("(round %d) setting reaminder %d\n", i, remainder);
+				}else{
+					for(int j=0; j<freqCount/2 && freqCount > 1; j++){
+						if(nodeIndex < 0) break;
+						printf("(round %d) On node index %d, doing %d*2\n", i, nodeIndex, freq);
+						nodeCache[nodeIndex] = freq*2;
+						nodeIndex--;
+					}
 				}
 				i-=freqCount-1;
 			}
