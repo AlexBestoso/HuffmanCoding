@@ -273,6 +273,11 @@ class HuffmanCoding{
 			return ret;
 		}
 
+		bool isSubnode(){
+			
+			return false;
+		}
+
 		bool buildTree(int *tree, size_t tree_s){
 			if(this->frequencies == NULL){
 				this->setError(0x800, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - frequencies is null.");
