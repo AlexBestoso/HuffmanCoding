@@ -298,6 +298,10 @@ class HuffmanCoding{
 				this->setError(0x805, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - tree_s <= 0, treating as null.");
 				return false;
 			}
+			size_t layerCount=2;
+			int *layerSizes = new int[layerCount];
+			layerSizes[0] = this->frequencies_s;
+			layerSizes[1] = this->frequencies_s / 2 + (this->frequencies_s%2);
 			size_t nodeCacheSize = this->frequencies_s - 1;
 			int *nodeCache = new int[nodeCacheSize];
 			int nodeIndex = nodeCacheSize-1;
@@ -332,6 +336,49 @@ class HuffmanCoding{
 					}
 				}
 				i-=freqCount-1;
+			}
+			if(nodeIndex < 0 || nodeIndex+1 >= nodeCacheSize){
+				return false;
+			}
+			if(remainder > -1){
+				nodeCache[nodeIndex] = remainder + nodeCache[nodeIndex+1];
+				printf("(round REMAINDER) On node index %d, doing %d + %d\n", nodeIndex, remainder, nodeCache[nodeIndex+1]);
+				nodeIndex--;
+			}
+			printf("[DBG] Leaf Node Count : %d\n", layerSizes[1]);
+			bool processing = true;
+			int start = nodeIndex+1;
+			int end = start+layerSizes[1];
+			while(processing){
+				if(nodeIndex < 0) break;
+				int newLayerSize=0;
+				for(int i=end-1; i>=start; i--){
+					if(nodeIndex < 0) break;
+					printf("Node val (%d) : %d\n", i, nodeCache[i]);
+					int current = nodeCache[i];
+					int next = i-1 >= start ? nodeCache[i-1] : -1;
+					int prevSum = nodeIndex+1 < start && (nodeIndex+1 < nodeCacheSize && nodeIndex+1 >= 0)  ? nodeCache[nodeIndex+1] : -1;
+					printf("Node val (%d) : %d | Current : %d | next : %d | prevSum : %d\n", i, nodeCache[i], current, next, prevSum);
+					if(next == -1){
+						if(prevSum == -1){
+							this->setError(0x37707, "buildTree() - unexpected condition.");
+							return false;
+						}
+						nodeCache[nodeIndex] = prevSum + current;
+						nodeIndex++;
+					}else if(prevSum == -1 || next == current || prevSum > next){
+						nodeCache[nodeIndex] = current + next;
+						i--;
+						nodeIndex--;
+					}else if(prevSum <= next){
+						nodeCache[nodeIndex] = current + prevSum;
+						nodeIndex--;
+					}else{
+						this->setError(0x7777, "buildTree() - spooky impossible error.");
+						return false;
+					}
+				}
+				break;
 			}
 
 			printf("[DEBUG] Node Cache : ");
@@ -466,10 +513,14 @@ class HuffmanCoding{
 				return false;
 			}
 			#if HUFFMAN_DEBUGGING == 1
+			int freqMax = 0;
 			printf("[DBG] Sorted Frequencies : \n\t");
-			for(int i=0; i<this->frequencies_s; i++)
+			for(int i=0; i<this->frequencies_s; i++){
 				printf("'%c'(%d) ", this->treeLetters[i], this->frequencies[i]);
+				freqMax += this->frequencies[i];
+			}
 			printf("\n");
+			printf("[DBG] Expected Max : %d\n", freqMax);
 			#endif
 
 			if(!this->encode(data, dataSize)){
