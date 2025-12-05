@@ -273,9 +273,11 @@ class HuffmanCoding{
 			return ret;
 		}
 
-		bool isSubnode(){
-			
-			return false;
+		int subnodeValidate(int nextFreq, int layerIndex, int currentNodeIndex, int nextNodeIndex, int *nodeCache, size_t nodeCache_s, int *layers, size_t layers_s){
+			if(layerIndex <= 0 || nextFreq == -1) // haven't made any subnodes yet.
+				return nextFreq;
+				
+			return nextFreq;
 		}
 
 		bool buildTree(int *tree, size_t tree_s){
@@ -303,87 +305,73 @@ class HuffmanCoding{
 				this->setError(0x805, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - tree_s <= 0, treating as null.");
 				return false;
 			}
-			size_t layerCount=2;
+			size_t layerCount=1;
 			int *layerSizes = new int[layerCount];
 			layerSizes[0] = this->frequencies_s;
-			layerSizes[1] = this->frequencies_s / 2 + (this->frequencies_s%2);
-			size_t nodeCacheSize = this->frequencies_s - 1;
+			size_t nodeCacheSize = (this->frequencies_s - 1) + this->frequencies_s;
 			int *nodeCache = new int[nodeCacheSize];
-			int nodeIndex = nodeCacheSize-1;
-			for(int i=0; i<nodeCacheSize; i++) nodeCache[i] = -1;
-			int remainder=-1;
-			// Layer one of nodes.
-			for(int i=this->frequencies_s-1; i>=0; i--){
-				int freqCount = this->countLikeFrequencies(this->frequencies[i]);
-				int freq = this->frequencies[i];
-				bool remainderUsed = false;
-				if(remainder > -1){
-					if(nodeIndex >= 0){
-						printf("(round %d) On Node index %d, Using remainder f(%d) + r(%d)\n", i, nodeIndex, freq, remainder);
-						nodeCache[nodeIndex] = freq + remainder;
-						nodeIndex--;
-					}
-					remainder = -1;
-					remainderUsed = true;
-				}else if((freqCount%2) == 1){
-					remainder = freq;
-					printf("(round %d) setting reaminder %d\n", i, remainder);
-				}
-				if(remainderUsed && freqCount == 2){
-					remainder = freq;
-					printf("(round %d) setting reaminder %d\n", i, remainder);
-				}else{
-					for(int j=0; j<freqCount/2 && freqCount > 1; j++){
-						if(nodeIndex < 0) break;
-						printf("(round %d) On node index %d, doing %d*2\n", i, nodeIndex, freq);
-						nodeCache[nodeIndex] = freq*2;
-						nodeIndex--;
-					}
-				}
-				i-=freqCount-1;
-			}
-			if(nodeIndex < 0 || nodeIndex+1 >= nodeCacheSize){
-				return false;
-			}
-			if(remainder > -1){
-				nodeCache[nodeIndex] = remainder + nodeCache[nodeIndex+1];
-				printf("(round REMAINDER) On node index %d, doing %d + %d\n", nodeIndex, remainder, nodeCache[nodeIndex+1]);
-				nodeIndex--;
-			}
-			printf("[DBG] Leaf Node Count : %d\n", layerSizes[1]);
+			int nodeIndex = nodeCacheSize - layerSizes[0] - 1;
+			for(int i=0; i<nodeCacheSize-this->frequencies_s; i++) nodeCache[i] = -1;
+			for(int i=nodeCacheSize-this->frequencies_s, j=0; i<nodeCacheSize;i++, j++)
+				nodeCache[i]=this->frequencies[j];
+
 			bool processing = true;
-			int start = nodeIndex+1;
-			int end = start+layerSizes[1];
+			int end = nodeIndex;
+			int start = nodeCacheSize-1;
+			int currentLayer = 0;
 			while(processing){
 				if(nodeIndex < 0) break;
-				int newLayerSize=0;
-				for(int i=end-1; i>=start; i--){
-					if(nodeIndex < 0) break;
-					printf("Node val (%d) : %d\n", i, nodeCache[i]);
+				int newSize = 0;
+				for(int i=start; i>end; i--){
 					int current = nodeCache[i];
-					int next = i-1 >= start ? nodeCache[i-1] : -1;
-					int prevSum = nodeIndex+1 < start && (nodeIndex+1 < nodeCacheSize && nodeIndex+1 >= 0)  ? nodeCache[nodeIndex+1] : -1;
-					printf("Node val (%d) : %d | Current : %d | next : %d | prevSum : %d\n", i, nodeCache[i], current, next, prevSum);
+					int prevSum = nodeIndex+1 <= end && (nodeIndex+1 < nodeCacheSize) ? nodeCache[nodeIndex+1] : -1;
+					int next = i-1 > end ? nodeCache[i-1] : -1;
+					next = this->subnodeValidate(next, currentLayer, i, i-1, nodeCache, nodeCacheSize, layerSizes, layerCount);
 					if(next == -1){
-						if(prevSum == -1){
-							this->setError(0x37707, "buildTree() - unexpected condition.");
-							return false;
-						}
-						nodeCache[nodeIndex] = prevSum + current;
-						nodeIndex++;
-					}else if(prevSum == -1 || next == current || prevSum > next){
-						nodeCache[nodeIndex] = current + next;
-						i--;
-						nodeIndex--;
-					}else if(prevSum <= next){
-						nodeCache[nodeIndex] = current + prevSum;
-						nodeIndex--;
-					}else{
-						this->setError(0x7777, "buildTree() - spooky impossible error.");
-						return false;
-					}
+                                                if(prevSum == -1){
+                                                        this->setError(0x37707, "buildTree() - unexpected condition.");
+                                                        return false;
+                                                }
+                                                nodeCache[nodeIndex] = prevSum + current;
+						printf("Node val (%d) : %d | Current : %d | next : %d | prevSum : %d\n", i, nodeCache[nodeIndex], current, next, prevSum);
+						newSize++;
+                                                nodeIndex--;
+                                        }else if(prevSum == -1 || next == current || prevSum > next){
+                                                nodeCache[nodeIndex] = current + next;
+						printf("Node val (%d) : %d | Current : %d | next : %d | prevSum : %d\n", i, nodeCache[nodeIndex], current, next, prevSum);
+						newSize++;
+                                                i--;
+                                                nodeIndex--;
+                                        }else if(prevSum <= next){
+                                                nodeCache[nodeIndex] = current + prevSum;
+						printf("Node val (%d) : %d | Current : %d | next : %d | prevSum : %d\n", i, nodeCache[nodeIndex], current, next, prevSum);
+						newSize++;
+                                                nodeIndex--;
+                                        }else{
+                                                this->setError(0x7777, "buildTree() - spooky impossible error.");
+                                                return false;
+                                        }
 				}
-				break;
+				
+				// Push new layer size
+                        	int *transfer = new int[layerCount];
+				for(int i=0; i<layerCount; i++)
+					transfer[i] = layerSizes[i];
+				delete[] layerSizes;
+				layerCount++;
+				layerSizes = new int[layerCount];
+				for(int i=0; i<layerCount-1; i++)
+					layerSizes[i] = transfer[i];
+				layerSizes[layerCount-1] = newSize;
+				delete[] transfer;
+				currentLayer++;
+
+				// calculate new start and end size
+				end = nodeIndex;
+                        	start = end + newSize;
+				newSize = 0;
+				if(currentLayer > 1) break;
+
 			}
 
 			printf("[DEBUG] Node Cache : ");
