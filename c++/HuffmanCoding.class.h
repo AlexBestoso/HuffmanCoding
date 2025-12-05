@@ -273,11 +273,55 @@ class HuffmanCoding{
 			return ret;
 		}
 
-		int subnodeValidate(int nextFreq, int layerIndex, int currentNodeIndex, int nextNodeIndex, int *nodeCache, size_t nodeCache_s, int *layers, size_t layers_s){
-			if(layerIndex <= 0 || nextFreq == -1) // haven't made any subnodes yet.
-				return nextFreq;
-				
-			return nextFreq;
+		int getTopNode(int nextNodeVal, int layerIndex, int currentNodeIndex, int nextNodeIndex, int *nodeCache, size_t nodeCache_s, int *layers, size_t layers_s){
+			// TODO: Add bounds checks
+			if(layerIndex < 1 || nextNodeVal == -1) // haven't made any subnodes yet.
+				return nextNodeVal;
+			int current = nodeCache[currentNodeIndex];
+
+			int leadupOffset = nodeCache_s-1;
+
+			size_t topSize = layers[layerIndex];
+			size_t bottomSize = layers[layerIndex-1];
+			int *top = new int[topSize];
+			int *bottom = new int[bottomSize];
+
+			for(int i=leadupOffset, j=bottomSize-1; i>leadupOffset-bottomSize && j>=0; i--, j--){
+				bottom[j] = nodeCache[i];
+			}
+			leadupOffset -= bottomSize;
+			bool updated = false;
+			for(int i=leadupOffset, j=topSize-1; i>leadupOffset-topSize && j>=0; i--, j--){
+				top[j] = nodeCache[i];
+				if(i == nextNodeIndex && !updated){
+					nextNodeIndex = j;
+					updated = true;
+				}
+			}
+
+			// top [i] == bottom[j] + bottome[j+1] && top[i] == nextNodeVal 
+				// nextNodeVal is already top node.
+			// top [i] == bottom[j] + bottome[j+1] && top[i] != nextNodeVal
+			// 	iterate past used values from equation. and loop back
+			// else top[i] == bottom[j] + top[i+1] && top[i+1] == nextNodeVal
+			// 	nextNodeVal = top[i], run through algo again until condition 1 is hit.
+			// else top[i] == bottom[j] + top[i+1] && top[i+1] != nextNodeVal
+			//	iterate top+1, and bottom +1, loop back up. 
+			// else
+			// 	Possibl errorr condition.
+
+			printf("Test Target (%d) %d\n", nextNodeIndex, nextNodeVal);
+			printf("Top : ");
+			for(int i=0; i<topSize; i++){
+				printf("%d ", top[i]);
+			}printf("\n");
+			printf("Bottom : ");
+			for(int i=0; i<bottomSize; i++){
+				printf("%d ", bottom[i]);
+			}printf("\n");
+			delete[] bottom;
+			delete[] top;
+			return nextNodeVal;
 		}
 
 		bool buildTree(int *tree, size_t tree_s){
@@ -326,7 +370,7 @@ class HuffmanCoding{
 					int current = nodeCache[i];
 					int prevSum = nodeIndex+1 <= end && (nodeIndex+1 < nodeCacheSize) ? nodeCache[nodeIndex+1] : -1;
 					int next = i-1 > end ? nodeCache[i-1] : -1;
-					next = this->subnodeValidate(next, currentLayer, i, i-1, nodeCache, nodeCacheSize, layerSizes, layerCount);
+					next = this->getTopNode(next, currentLayer, i, i-1, nodeCache, nodeCacheSize, layerSizes, layerCount);
 					if(next == -1){
                                                 if(prevSum == -1){
                                                         this->setError(0x37707, "buildTree() - unexpected condition.");
