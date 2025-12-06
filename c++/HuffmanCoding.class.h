@@ -278,12 +278,17 @@ class HuffmanCoding{
                                 return true;
 			printf("Testing to see if (%d)%d is top node...", targetIndex, targetVal);
 			int leadupOffset = nodeCache_s-1;
+			for(int i=0; i<targetLayerIndex-1; i++){
+				leadupOffset-= layerSizes[i];
+			}
 
-                        size_t topSize = layerSizes[targetLayerIndex]-1;
+                        size_t topSize = layerSizes[targetLayerIndex];
                         size_t bottomSize = layerSizes[targetLayerIndex-1];
                         int *top = new int[topSize];
                         int *bottom = new int[bottomSize];
+			
 
+		//	printf("Bottom start : %d | Bottom End : %ld\n", leadupOffset, leadupOffset-bottomSize);
                         for(int i=leadupOffset, j=bottomSize-1; i>leadupOffset-bottomSize && j>=0; i--, j--){
                                 bottom[j] = nodeCache[i];
                         }
@@ -296,8 +301,8 @@ class HuffmanCoding{
                                         updated = true;
                                 }
                         }
+/*			
 			
-			/*
 			printf("\tTop ray : ");
 			for(int i=0; i<topSize; i++)
 				printf("%d ", top[i]);
@@ -306,8 +311,8 @@ class HuffmanCoding{
 			for(int i=0; i<bottomSize; i++)
 				printf("%d ", bottom[i]);
 			printf("\n");
-			*/
-
+		
+*/
 			int bottomStart=0;
                         for(int i=0; i<topSize; i++){
                                 if(i==0 && top[i] == targetVal && targetIndex == 0) break;
@@ -330,7 +335,10 @@ class HuffmanCoding{
                                         }else if(top[i] == (bottom[j] + top[i+1]) && top[i+1] != targetVal){
                                                 bottomStart = j+1;
                                                 break;
-                                        }
+                                        }else if((top[i] != (bottom[j] + bottom[j+1])) && (top[i] != (bottom[j] + top[i+1]))){
+						continue;
+					}
+					printf("Error condition...\n");
                                         // else
                                         //      Possibl errorr condition.
                                 }
@@ -389,6 +397,7 @@ class HuffmanCoding{
 					}else if(top[i] == (bottom[j] + top[i+1]) && top[i+1] != targetVal){
 						bottomStart = j+1;
 						break;
+					}else{
 					}
 					// else
 					// 	Possibl errorr condition.
@@ -484,7 +493,7 @@ class HuffmanCoding{
                                                 value = -1;
                                                 continue;
 					}
-					if(j == i+1){
+					if(j == i){
 						printf("FINAL? : %d + %d = ", value, past);
                                                 past = value + past;
                                                 printf("%d\n", past);
@@ -547,9 +556,9 @@ class HuffmanCoding{
                                 layerSizes = new int[layerCount];
                                 for(int i=0; i<layerCount-1; i++)
                                         layerSizes[i] = transfer[i];
-                                layerSizes[layerCount-1] = newLayerSize+1;
+                                layerSizes[layerCount-1] = newLayerSize;
                                 delete[] transfer;
-				i=nodeIndex;
+				i=nodeIndex+1;
 			}
 /*
 			bool processing = true;
