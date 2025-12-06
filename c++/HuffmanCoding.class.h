@@ -273,6 +273,11 @@ class HuffmanCoding{
 			return ret;
 		}
 
+		bool isTopNode(int targetVal, int targetIndex, int targetLayerIndex, int *layerSizes, size_t layerSizes_s, int *nodeCache, size_t nodeCache_s){
+			
+			return true;
+		}
+
 		int getTopNode(int targetVal, int layerIndex, int targetIndex, int *nodeCache, size_t nodeCache_s, int *layers, size_t layers_s){
 			// TODO: Add bounds checks
 			if(layerIndex < 1 || targetVal == -1) // haven't made any subnodes yet.
@@ -357,16 +362,115 @@ class HuffmanCoding{
 				this->setError(0x805, "buildTree(int *tree, size_t tree_s, int *literals, size_t literalsSize) - tree_s <= 0, treating as null.");
 				return false;
 			}
+
+			// generate the first layer size.
 			size_t layerCount=1;
 			int *layerSizes = new int[layerCount];
 			layerSizes[0] = this->frequencies_s;
+			
+			// generate the entire node cache
 			size_t nodeCacheSize = (this->frequencies_s - 1) + this->frequencies_s;
 			int *nodeCache = new int[nodeCacheSize];
-			int nodeIndex = nodeCacheSize - layerSizes[0] - 1;
+			
+			// determine the starting point of the second layer.
+			int nodeIndex = nodeCacheSize - 1 - layerSizes[0];
+			
+			// Fill empty cache values with -1
 			for(int i=0; i<nodeCacheSize-this->frequencies_s; i++) nodeCache[i] = -1;
-			for(int i=nodeCacheSize-this->frequencies_s, j=0; i<nodeCacheSize;i++, j++)
+				
+			// Fill layer 1 with frequency values.
+			for(int i=nodeCacheSize-layerSizes[0], j=0; i<nodeCacheSize && j<this->frequencies_s; i++, j++)
 				nodeCache[i]=this->frequencies[j];
+			
+			// Begin main loop, starting at the index of the next layer.
+			for(int i=nodeIndex; i>=0; i--){
+				size_t newLayerSize = 0; 
+				
+				// from the start of the next uncalculated layer, 
+				// start looping from the beginning of the current layer
+				int value = -1;
+				int past = -1;
+				printf("J starting index : %d\n", i+layerSizes[layerCount-1]);
+				for(int j=i+layerSizes[layerCount-1]; j>i; j--){
+					if(nodeIndex < 0) break;
+					if(value == -1){
+						value = nodeCache[j];
+						continue;
+					}
+					if(past == -1){
+						past = value + nodeCache[j];
+						printf("A : %d + %d = %d\n", value, nodeCache[j], past);
+						nodeCache[nodeIndex] = past;
+						nodeIndex--;
+						newLayerSize++;
+						value = -1;
+						continue;
+					}
+					if(value == nodeCache[j]){
+						past = value + nodeCache[j];
+						printf("B : %d + %d = %d\n", value, nodeCache[j], past);
+                                                nodeCache[nodeIndex] = past;
+                                                nodeIndex--;
+                                                newLayerSize++;
+                                                value = -1;
+                                                continue;
+					}
+					if(nodeCache[j] < past){
+						past = value + nodeCache[j];
+						printf("C : %d + %d = %d\n", value, nodeCache[j], past);
+						nodeCache[nodeIndex] = past;
+                                                nodeIndex--;
+                                                newLayerSize++;
+                                                value = -1;
+						continue;
+					}
+					if(nodeCache[j] > past){
+						printf("D : %d + %d = ", value, past);
+						past = value + past;
+						printf("%d\n", past);
+                                                nodeCache[nodeIndex] = past;
+                                                nodeIndex--;
+                                                newLayerSize++;
+                                                value = -1;
+						j++;
+                                                continue;
+					}
+					if(nodeCache[j] == past && value < past){
+						printf("E : %d + %d = ", value, past);
+                                                past = value + past;
+                                                printf("%d\n", past);
+                                                nodeCache[nodeIndex] = past;
+                                                nodeIndex--;
+                                                newLayerSize++;
+                                                value = -1;
+                                                j++;
+						continue;
+					}
+					printf("A missing condition value %d, past %d, future %d...\n", value, past, nodeCache[j]);
+				}
+				if(past == -1) break;
+				if(nodeIndex < 0) break;
+				if(value != -1){
+					nodeCache[nodeIndex] = value + past;
+					printf("F : %d + %d = %d\n", value, past, nodeCache[nodeIndex]);
+					nodeIndex--;
+					newLayerSize++;
+				}
 
+				// Adjust for the next layer.
+				int *transfer = new int[layerCount];
+                                for(int i=0; i<layerCount; i++)
+                                        transfer[i] = layerSizes[i];
+                                delete[] layerSizes;
+                                layerCount++;
+                                layerSizes = new int[layerCount];
+                                for(int i=0; i<layerCount-1; i++)
+                                        layerSizes[i] = transfer[i];
+                                layerSizes[layerCount-1] = newLayerSize+1;
+                                delete[] transfer;
+				i=nodeIndex;
+			}
+/*
 			bool processing = true;
 			int end = nodeIndex;
 			int start = nodeCacheSize-1;
@@ -431,7 +535,7 @@ class HuffmanCoding{
                         	start = end + newSize;
 				newSize = 0;
 
-			}
+			}*/
 
 			printf("[DEBUG] Node Cache : ");
 			for(int i=0; i<nodeCacheSize; i++){
