@@ -527,26 +527,6 @@ class HuffmanCoding{
 			for(int i=0; i<treeSize; i++)
 				printf("%d ", tree[i]);
 			printf("\n");
-
-/*
-			int validateNodeMax=0;
-			for(int i=0; i<this->frequencies_s; i++)
-				validateNodeMax += this->frequencies[i];
-			if(validateNodeMax != tree[0]){
-				this->setError(0x501, "encode(char *data, size_t dataSize) - node max validation failed.");
-				return false;
-			}
-			#if HUFFMAN_DEBUGGING == 1
-			printf("[DBG] Tree : ");
-			for(int i=0; i<treeSize; i++){
-				printf("%d ", tree[i]);
-			}printf("\n");
-			#endif
-
-			if(!this->buildCodeTable(tree, treeSize, literalIndexList, literalIndexListSize, this->frequencies_s)){
-				this->setError(0x502, "encode(char *data, size_t dataSize) - failed to create code table.");
-				return false;
-			}*/
 			
 			delete[] tree;
 			return true;
