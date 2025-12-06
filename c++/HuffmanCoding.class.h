@@ -273,11 +273,10 @@ class HuffmanCoding{
 			return ret;
 		}
 
-		int getTopNode(int nextNodeVal, int layerIndex, int currentNodeIndex, int nextNodeIndex, int *nodeCache, size_t nodeCache_s, int *layers, size_t layers_s){
+		int getTopNode(int targetVal, int layerIndex, int targetIndex, int *nodeCache, size_t nodeCache_s, int *layers, size_t layers_s){
 			// TODO: Add bounds checks
-			if(layerIndex < 1 || nextNodeVal == -1) // haven't made any subnodes yet.
-				return nextNodeVal;
-			int current = nodeCache[currentNodeIndex];
+			if(layerIndex < 1 || targetVal == -1) // haven't made any subnodes yet.
+				return targetVal;
 
 			int leadupOffset = nodeCache_s-1;
 
@@ -293,35 +292,44 @@ class HuffmanCoding{
 			bool updated = false;
 			for(int i=leadupOffset, j=topSize-1; i>leadupOffset-topSize && j>=0; i--, j--){
 				top[j] = nodeCache[i];
-				if(i == nextNodeIndex && !updated){
-					nextNodeIndex = j;
+				if(i == targetIndex && !updated){
+					targetIndex = j;
 					updated = true;
 				}
 			}
 
-			// top [i] == bottom[j] + bottome[j+1] && top[i] == nextNodeVal 
-				// nextNodeVal is already top node.
-			// top [i] == bottom[j] + bottome[j+1] && top[i] != nextNodeVal
-			// 	iterate past used values from equation. and loop back
-			// else top[i] == bottom[j] + top[i+1] && top[i+1] == nextNodeVal
-			// 	nextNodeVal = top[i], run through algo again until condition 1 is hit.
-			// else top[i] == bottom[j] + top[i+1] && top[i+1] != nextNodeVal
-			//	iterate top+1, and bottom +1, loop back up. 
-			// else
-			// 	Possibl errorr condition.
-
-			printf("Test Target (%d) %d\n", nextNodeIndex, nextNodeVal);
-			printf("Top : ");
+			int bottomStart=0;
 			for(int i=0; i<topSize; i++){
-				printf("%d ", top[i]);
-			}printf("\n");
-			printf("Bottom : ");
-			for(int i=0; i<bottomSize; i++){
-				printf("%d ", bottom[i]);
-			}printf("\n");
+				if(i==0 && top[i] == targetVal && targetIndex == 0) break;
+				for(int j=bottomStart; j<bottomSize; j++){
+					if(j+1 >= bottomSize) break;
+					if(i+1 >= topSize) break;
+					if(top[i] == (bottom[j] + bottom[j+1]) && top[i] == targetVal){
+						i=topSize;
+						j=bottomSize;
+						break;
+					}else if(top[i] == (bottom[j] + bottom[j+1]) && top[i] != targetVal){
+						bottomStart=j+2;
+						break;
+					}else if(top[i] == (bottom[j] + top[i+1]) && top[i+1] == targetVal){
+						targetVal = top[i];
+						targetIndex = i;
+						i=-1;
+						bottomStart = 0;
+						break;
+					}else if(top[i] == (bottom[j] + top[i+1]) && top[i+1] != targetVal){
+						bottomStart = j+1;
+						break;
+					}
+					// else
+					// 	Possibl errorr condition.
+				}
+			}
+
+			printf("Test Target (%d) %d\n", targetIndex, targetVal);
 			delete[] bottom;
 			delete[] top;
-			return nextNodeVal;
+			return targetVal;
 		}
 
 		bool buildTree(int *tree, size_t tree_s){
@@ -366,18 +374,26 @@ class HuffmanCoding{
 			while(processing){
 				if(nodeIndex < 0) break;
 				int newSize = 0;
+				printf("Start %d | End : %d\n", start, end);
 				for(int i=start; i>end; i--){
 					int current = nodeCache[i];
+					int changeDetect = current;
 					int prevSum = nodeIndex+1 <= end && (nodeIndex+1 < nodeCacheSize) ? nodeCache[nodeIndex+1] : -1;
 					int next = i-1 > end ? nodeCache[i-1] : -1;
-					next = this->getTopNode(next, currentLayer, i, i-1, nodeCache, nodeCacheSize, layerSizes, layerCount);
+					current = this->getTopNode(current, currentLayer, i, nodeCache, nodeCacheSize, layerSizes, layerCount);
+					next = this->getTopNode(next, currentLayer, i-1, nodeCache, nodeCacheSize, layerSizes, layerCount);
+					if(next == current && current != changeDetect){
+						next = -1;
+						i--;
+					}
+				
 					if(next == -1){
+						printf("Node val (%d) : %d | Current : %d | next : %d | prevSum : %d\n", i, nodeCache[nodeIndex], current, next, prevSum);
                                                 if(prevSum == -1){
                                                         this->setError(0x37707, "buildTree() - unexpected condition.");
                                                         return false;
                                                 }
                                                 nodeCache[nodeIndex] = prevSum + current;
-						printf("Node val (%d) : %d | Current : %d | next : %d | prevSum : %d\n", i, nodeCache[nodeIndex], current, next, prevSum);
 						newSize++;
                                                 nodeIndex--;
                                         }else if(prevSum == -1 || next == current || prevSum > next){
@@ -414,7 +430,6 @@ class HuffmanCoding{
 				end = nodeIndex;
                         	start = end + newSize;
 				newSize = 0;
-				if(currentLayer > 1) break;
 
 			}
 
