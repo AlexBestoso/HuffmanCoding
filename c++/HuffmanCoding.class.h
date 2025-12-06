@@ -274,7 +274,71 @@ class HuffmanCoding{
 		}
 
 		bool isTopNode(int targetVal, int targetIndex, int targetLayerIndex, int *layerSizes, size_t layerSizes_s, int *nodeCache, size_t nodeCache_s){
+			if(targetLayerIndex < 1 || targetVal == -1) // haven't made any subnodes yet.
+                                return true;
+			printf("Testing to see if (%d)%d is top node...", targetIndex, targetVal);
+			int leadupOffset = nodeCache_s-1;
+
+                        size_t topSize = layerSizes[targetLayerIndex]-1;
+                        size_t bottomSize = layerSizes[targetLayerIndex-1];
+                        int *top = new int[topSize];
+                        int *bottom = new int[bottomSize];
+
+                        for(int i=leadupOffset, j=bottomSize-1; i>leadupOffset-bottomSize && j>=0; i--, j--){
+                                bottom[j] = nodeCache[i];
+                        }
+                        leadupOffset -= bottomSize;
+                        bool updated = false;
+                        for(int i=leadupOffset, j=topSize-1; i>leadupOffset-topSize && j>=0; i--, j--){
+                                top[j] = nodeCache[i];
+                                if(i == targetIndex && !updated){
+                                        targetIndex = j;
+                                        updated = true;
+                                }
+                        }
 			
+			/*
+			printf("\tTop ray : ");
+			for(int i=0; i<topSize; i++)
+				printf("%d ", top[i]);
+			printf("\n");
+			printf("\tBottom ray : ");
+			for(int i=0; i<bottomSize; i++)
+				printf("%d ", bottom[i]);
+			printf("\n");
+			*/
+
+			int bottomStart=0;
+                        for(int i=0; i<topSize; i++){
+                                if(i==0 && top[i] == targetVal && targetIndex == 0) break;
+                                for(int j=bottomStart; j<bottomSize; j++){
+                                        if(j+1 >= bottomSize) break;
+                                        if(i+1 >= topSize) break;
+                                        if(top[i] == (bottom[j] + bottom[j+1]) && top[i] == targetVal){
+						delete[] bottom;
+                        			delete[] top;
+						printf("TOP NODE\n");
+						return true;
+                                        }else if(top[i] == (bottom[j] + bottom[j+1]) && top[i] != targetVal){
+                                                bottomStart=j+2;
+                                                break;
+                                        }else if(top[i] == (bottom[j] + top[i+1]) && top[i+1] == targetVal){
+						delete[] bottom;
+                                                delete[] top;
+						printf("BOTTOM NODE\n");
+                                                return false;
+                                        }else if(top[i] == (bottom[j] + top[i+1]) && top[i+1] != targetVal){
+                                                bottomStart = j+1;
+                                                break;
+                                        }
+                                        // else
+                                        //      Possibl errorr condition.
+                                }
+                        }
+
+                        delete[] bottom;
+                        delete[] top;
+			printf("¿TOP NODE?\n");
 			return true;
 		}
 
@@ -394,10 +458,13 @@ class HuffmanCoding{
 				for(int j=i+layerSizes[layerCount-1]; j>i; j--){
 					if(nodeIndex < 0) break;
 					if(value == -1){
-						value = nodeCache[j];
+						if(isTopNode(nodeCache[j], j, layerCount-1, layerSizes, layerCount, nodeCache, nodeCacheSize))
+							value = nodeCache[j];
 						continue;
 					}
 					if(past == -1){
+						if(!isTopNode(nodeCache[j], j, layerCount-1, layerSizes, layerCount, nodeCache, nodeCacheSize))
+							continue;
 						past = value + nodeCache[j];
 						printf("A : %d + %d = %d\n", value, nodeCache[j], past);
 						nodeCache[nodeIndex] = past;
@@ -407,6 +474,8 @@ class HuffmanCoding{
 						continue;
 					}
 					if(value == nodeCache[j]){
+						if(!isTopNode(nodeCache[j], j, layerCount-1, layerSizes, layerCount, nodeCache, nodeCacheSize))
+							continue;
 						past = value + nodeCache[j];
 						printf("B : %d + %d = %d\n", value, nodeCache[j], past);
                                                 nodeCache[nodeIndex] = past;
@@ -415,9 +484,21 @@ class HuffmanCoding{
                                                 value = -1;
                                                 continue;
 					}
+					if(j == i+1){
+						printf("FINAL? : %d + %d = ", value, past);
+                                                past = value + past;
+                                                printf("%d\n", past);
+                                                nodeCache[nodeIndex] = past;
+                                                nodeIndex--;
+                                                newLayerSize++;
+                                                value = -1;
+						continue;
+					}
 					if(nodeCache[j] < past){
+						if(!isTopNode(nodeCache[j], j, layerCount-1, layerSizes, layerCount, nodeCache, nodeCacheSize))
+							continue;
 						past = value + nodeCache[j];
-						printf("C : %d + %d = %d\n", value, nodeCache[j], past);
+						printf("C[%d] : %d + %d = %d\n", j, value, nodeCache[j], past);
 						nodeCache[nodeIndex] = past;
                                                 nodeIndex--;
                                                 newLayerSize++;
