@@ -15,7 +15,13 @@ class HuffmanCoding{
 		int error;
 		std::string error_msg;
 
-
+		
+		void destroyCodingTable(void){
+			if(this->codeTable != NULL)
+				delete[] this->codeTable;
+			this->codeTable = NULL;
+			this->codeTable_s = 0;
+		}
 		void destroyTreeLetters(void){
 			if(this->treeLetters != NULL)
 				delete[] this->treeLetters;
@@ -229,50 +235,6 @@ class HuffmanCoding{
 		}
 
 
-		/*
-		 * using the starting index, find the next node in the tree.
-		 * */
-		int findNodeIndex(int startingIndex, size_t tree_s, int *literals, size_t literalsSize){
-			// plus 1 because startingIndex should be a node.
-			for(int i=startingIndex+1; i<tree_s; i++){
-				bool good = false;
-				for(int j=0; j<literalsSize; j++){
-					if(i == literals[j]){
-						good = false;
-						break;
-					}else{
-						good = true;
-					}
-				}
-				if(good) return i;
-			}	
-			return -1;
-		}
-
-		bool isLiteral(int targetIndex, int *literals, size_t literalsSize){
-			if(literals == NULL){
-				this->setError(0x37707, "isLiteral(int targetIndex, int *literals, size_t literalsSize) - literals is null");
-				return false;
-			}
-			if(literalsSize <= 0){
-                                this->setError(0x37707, "isLiteral(int targetIndex, int *literals, size_t literalsSize) - literalsSize <= 0, treating as null.");
-                                return false;
-                        }
-			for(int i=0; i<literalsSize; i++){
-				if(literals[i] == targetIndex) return true;
-			}
-			return false;
-		}
-		
-		int countLikeFrequencies(int target){
-			int ret = 0;
-			for(int i=0; i<this->frequencies_s; i++){
-				if(this->frequencies[i] == target)
-					ret++;
-			}
-			return ret;
-		}
-
 		bool isTopNode(int targetVal, int targetIndex, int targetLayerIndex, int *layerSizes, size_t layerSizes_s, int *nodeCache, size_t nodeCache_s){
 			if(targetLayerIndex < 1 || targetVal == -1) // haven't made any subnodes yet.
                                 return true;
@@ -287,7 +249,6 @@ class HuffmanCoding{
                         int *bottom = new int[bottomSize];
 			
 
-		//	printf("Bottom start : %d | Bottom End : %ld\n", leadupOffset, leadupOffset-bottomSize);
                         for(int i=leadupOffset, j=bottomSize-1; i>leadupOffset-bottomSize && j>=0; i--, j--){
                                 bottom[j] = nodeCache[i];
                         }
@@ -504,6 +465,177 @@ class HuffmanCoding{
 			return true;
 		}
 
+		size_t countTreeLayers(int *tree, size_t tree_s){
+			if(tree == NULL){
+				this->setError(0x123, "countTreeLayers() - tree is null.");
+				return 0;
+			}
+			if(tree_s <= 0){
+				this->setError(0x124, "countTreeLayers() - tree_s <= 0. Treating like null.");
+				return 0;
+			}
+			size_t ret =0;
+			int tracer = tree[0];
+			for(int i=1; i<tree_s; i++){
+				if(tree[i] > tracer || i == tree_s-1) ret++;
+				tracer = tree[i];
+			}
+			printf("Tree Layers : %ld\n", ret);
+			return ret;
+		}
+
+		bool calcLayerSizes(int *layerSizes, size_t layerCount, int *tree, size_t tree_s){
+			if(tree == NULL){
+				this->setError(445, "calcLayerSizes(...) - tree is null.");
+				return false;
+			}
+			if(tree_s <= 0){
+				this->setError(446, "calcLayerSizes(...) - tree_s <= 0. Treating like null.");
+				return false;
+			}
+			if(layerSizes == NULL){
+				this->setError(447, "calcLayerSizes(...) - layerSizes is null.");
+				return false;
+			}
+			if(layerCount <= 0){
+				this->setError(448, "calcLayerSizes(...) - layerCount <= 0. Treating like null.");
+				return false;
+			}
+			for(int i=layerCount-1; i>=0; i--){
+				int size=0;
+				int idx=0;
+				int tracer = tree[0];
+				for(int j=1; j<tree_s; j++){
+					if(tree[j] <= tracer && i == idx){
+						size++;
+					}else if((tree[j] > tracer || j == tree_s-1) && i == idx){
+						size++;
+						layerSizes[i] = size;
+						printf("Size : %d\n", size);
+						size = -1;
+						break;
+					}else if(tree[j] > tracer || j == tree_s-1){
+						idx++;
+					}
+                                	tracer = tree[j];
+                        	}
+				if(size != -1){
+					size++;
+					layerSizes[i] = size;
+					printf("Size : %d\n", size);
+				}
+			}
+			return true;
+		}
+
+		bool isolateLayers(int *tree, size_t tree_s, int **isolatedLayers, int layerCount, int *layerSizes){
+			if(tree == NULL){
+                                this->setError(445, "isolateLayers(...) - tree is null.");
+                                return false;
+                        }
+                        if(tree_s <= 0){
+                                this->setError(446, "isolateLayers(...) - tree_s <= 0. Treating like null.");
+                                return false;
+                        }
+			if(isolatedLayers == NULL){
+				this->setError(777, "isolateLayers() - isolatedLayers is null.");
+				return false;
+			}
+			if(layerSizes == NULL){
+				this->setError(778, "isloateLayers() - layerSizes is null.");
+				return false;
+			}
+			if(layerCount <= 0){
+				this->setError(779, "isolateLayers() - layerCount <= 0. Treating like null.");
+				return false;
+			}
+			int start=0;
+			for(int i=0; i<layerCount; i++){
+				int tracer = tree[0];
+				int idx=0;
+				int subIdx=0;
+                                for(int j=1; j<tree_s && subIdx<layerSizes[i]; j++){ 
+					if(isolatedLayers[i] == NULL){
+						this->setError(780, "isolateLayers() - isolatedLayers[i] is null, improperly allocated.");
+						return false;
+					}
+                                        if(tree[j] <= tracer && i == idx){
+						if(subIdx == 0){
+                                                	isolatedLayers[i][subIdx] = tracer;
+							subIdx++;
+							if(!(subIdx<layerSizes[i])) break;
+						}
+                                                isolatedLayers[i][subIdx] = tree[j];
+						subIdx++;
+                                        }else if(tree[j] > tracer && i == idx){
+                                                break;
+                                        }else if(tree[j] > tracer || j == tree_s-1){
+                                                idx++;
+                                        }
+                                        tracer = tree[j];
+                                }
+			}
+			return true;
+		}
+		
+		bool buildCodingTable(int *tree, size_t tree_s){
+			if(this->treeLetters == NULL){
+				this->setError(1234, "buildCodingTable() - treeLetters is null.");
+				return false;
+			}
+                	if(this->treeLetters_s <= 0){
+				this->setError(1235, "buildCodingTable() - treeLetters_s <= 0. Treating like null");
+				return false;
+			}
+			if(this->frequencies == NULL){
+                                this->setError(1234, "buildCodingTable() - frequencies is null.");
+                                return false;
+                        }
+                        if(this->frequencies_s <= 0){
+                                this->setError(1235, "buildCodingTable() - frequencies_s <= 0. Treating like null");
+                                return false;
+                        }
+			if(tree == NULL){
+                                this->setError(1234, "buildCodingTable() - tree is null.");
+                                return false;
+                        }
+                        if(tree_s <= 0){
+                                this->setError(1235, "buildCodingTable() - tree_s <= 0. Treating like null");
+                                return false;
+                        }
+			
+			this->destroyCodingTable();
+			this->codeTable_s = this->frequencies_s*2;
+			this->codeTable = new int[this->codeTable_s];
+
+			size_t treeLayerCount = this->countTreeLayers(tree, tree_s);
+			int *treeLayerSizes = new int[treeLayerCount];
+			if(!this->calcLayerSizes(treeLayerSizes, treeLayerCount, tree, tree_s)){
+				this->setError(1236, "buildCodingTable() - failed to count layer sizes.");
+				return false;
+			}
+			int **isolatedLayers = new int*[treeLayerCount];
+			for(int i=0; i<treeLayerCount; i++)
+				isolatedLayers[i] = new int[treeLayerSizes[i]];
+			if(!this->isolateLayers(tree, tree_s, isolatedLayers, treeLayerCount, treeLayerSizes)){
+				this->setError(1237, "buildCodingTable() - failed to isolate layers.");
+				return false;
+			}
+
+			printf("[DBG] Isolated Layers : \n");
+			for(int i=0; i<treeLayerCount; i++){
+				printf("\t%d) ", i);
+				for(int j=0; j<treeLayerSizes[i]; j++){
+					printf("%d ", isolatedLayers[i][j]);
+				}printf("\n");
+			}printf("\n");
+			
+			delete[] treeLayerSizes;
+			for(int i=0; i<treeLayerCount; i++)
+				delete[] isolatedLayers[i];
+			delete[] isolatedLayers;
+			return true;
+		}
 
 		bool packHeader(void){
 
@@ -527,6 +659,11 @@ class HuffmanCoding{
 			for(int i=0; i<treeSize; i++)
 				printf("%d ", tree[i]);
 			printf("\n");
+
+			if(!this->buildCodingTable(tree, treeSize)){
+				this->setError(0x501, "encode(char *data, size_t dataSize) - failed to build coding table.");
+				return false;
+			}
 			
 			delete[] tree;
 			return true;
@@ -563,6 +700,8 @@ class HuffmanCoding{
 		HuffmanCoding(){
 			this->out = NULL;
 			this->out_s = 0;
+			this->codeTable = NULL;
+			this->codeTable_s = 0;
 			this->treeLetters = NULL;
 			this->treeLetters_s = 0;
 			this->frequencies = NULL;
@@ -571,6 +710,7 @@ class HuffmanCoding{
 			this->clearError();
 		}
 		~HuffmanCoding(){
+			this->destroyCodingTable();
 			this->destroyTreeLetters();
 			this->destroyFrequencies();
 			this->destroyOut();
@@ -578,6 +718,7 @@ class HuffmanCoding{
 
 		bool compress(char *data, size_t dataSize){
 			this->clearError();
+			this->destroyCodingTable();
 			this->destroyTreeLetters();
 			this->destroyFrequencies();
 			this->destroyOut();
@@ -600,13 +741,6 @@ class HuffmanCoding{
 				this->setError(0x003, "compress(char *data, size_t dataSize) - Failed to create frequency table");
 				return false;
 			}
-
-			#if HUFFMAN_DEBUGGING == 1
-			printf("[DBG] Frequencies : \n\t");
-			for(int i=0; i<this->frequencies_s; i++)
-				printf("'%c'(%d) ", this->treeLetters[i], this->frequencies[i]);
-			printf("\n");
-			#endif
 
 			if(!this->sortFreqencies()){
 				this->setError(0x004, "compress(char *data, size_t dataSize) - sortFreqencies failed.");
