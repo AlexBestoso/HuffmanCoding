@@ -603,10 +603,15 @@ class HuffmanCoding{
                                 this->setError(1235, "buildCodingTable() - tree_s <= 0. Treating like null");
                                 return false;
                         }
+			if(this->frequencies_s != this->treeLetters_s){
+				this->setError(12333, "buildCodingTable() - frequencies_s != treeLetters_s. Invalid coding arrays.");
+				return false;
+			}
 			
 			this->destroyCodingTable();
 			this->codeTable_s = this->frequencies_s*2;
 			this->codeTable = new int[this->codeTable_s];
+			for(int i=0; i<this->codeTable_s; i++) this->codeTable[i] = -1;
 
 			size_t treeLayerCount = this->countTreeLayers(tree, tree_s);
 			int *treeLayerSizes = new int[treeLayerCount];
@@ -617,8 +622,13 @@ class HuffmanCoding{
 			int **isolatedLayers = new int*[treeLayerCount];
 			for(int i=0; i<treeLayerCount; i++)
 				isolatedLayers[i] = new int[treeLayerSizes[i]];
+			
 			if(!this->isolateLayers(tree, tree_s, isolatedLayers, treeLayerCount, treeLayerSizes)){
 				this->setError(1237, "buildCodingTable() - failed to isolate layers.");
+				delete[] treeLayerSizes;
+                        	for(int i=0; i<treeLayerCount; i++)
+                        	        delete[] isolatedLayers[i];
+                        	delete[] isolatedLayers;
 				return false;
 			}
 
@@ -630,9 +640,75 @@ class HuffmanCoding{
 				}printf("\n");
 			}printf("\n");
 			
+			// build all the table values as you go along.
+			// we're basically gonna go through the exact same process for making the tree;
+			// but instead of building the tree, we're gonna make each char's code.
+			// So we'll likely be processing two values at a time, and as we go up in the layers, 
+			// we'll be handling more chars per single iteration. It's relative to the nodes...
+			for(int i=treeLayerCount-1; i>=0; i--){
+				if(isolatedLayers[i] == NULL){
+					delete[] treeLayerSizes;
+					for(int i=0; i<treeLayerCount; i++){
+						if(isolatedLayers[i] != NULL)
+			                                delete[] isolatedLayers[i];
+					}
+					this->setError(454545, "buildCodingTable() - isolatedLayers[i] is null.\n");
+					return false;
+				}
+				int *layer = isolatedLayers[i];
+				size_t targetLayer_s = treeLayerSizes[i];
+				int tracer=targetLayer_s-1 < 0 ? -1 : layer[targetLayer_s-1];
+				if(tracer == -1){
+					this->setError(4444, "buildCodingTable() - targetLayer_s induces an underflow.");
+					return false;
+				}
+				printf("Procesing layer %d, contains %ld bytes\n\t", i, targetLayer_s);
+				for(int j=targetLayer_s-2; j>=0; j--){
+					if(i==treeLayerCount-1){
+						// First layer follows simple logic.
+						if(j==0 && (targetLayer_s % 2) == 1){
+							this->codeTable[j] = 1; // starting bit count is 1.
+							this->codeTable[targetLayer_s] = 0;
+							printf("%d ", layer[j]);
+							continue;
+						}
+						this->codeTable[j] = 1; // starting bit count is 1.
+						this->codeTable[j+targetLayer_s] = 0; // this is the left branch.
+
+						this->codeTable[j+1] = 1; // starting bit count is 1.
+						this->codeTable[j+1+targetLayer_s] = 1<<7; // this is the right branch.
+						printf("%d ", layer[j]);
+						printf("%d ", layer[j+1]);
+						j--;
+						if(j==0) j++;
+
+						
+						continue;
+					}
+
+					// Processing layers that may have top nodes...
+					// I have to determine which values are associated with each pairing of nodes.
+					// and then push the relavent bits to their locations in the table before going to the 
+					// next pair
+					
+					if(j == targetLayer_s-2) 
+						printf("%d ", layer[j+1]);
+					printf("%d ", layer[j]);
+				}
+				printf("\n");
+			}
+
+			printf("-----CODE TABLE----\n| BIT COUNT | ENCODED VAL | ORIGINAL VAL |\n");
+			for(int i=0; i<this->frequencies_s; i++){
+				printf("|    %d    |    0x%x    |       %c    |\n", this->codeTable[i], this->codeTable[this->frequencies_s+i], this->treeLetters[i]);
+			}
+			printf("---------------\n");
+			
 			delete[] treeLayerSizes;
-			for(int i=0; i<treeLayerCount; i++)
-				delete[] isolatedLayers[i];
+			for(int i=0; i<treeLayerCount; i++){
+				if(isolatedLayers[i] != NULL)
+					delete[] isolatedLayers[i];
+			}
 			delete[] isolatedLayers;
 			return true;
 		}
