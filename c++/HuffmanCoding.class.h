@@ -239,7 +239,7 @@ class HuffmanCoding{
 		bool new_isTopNode(/*int targetVal, */int targetIndex, /*int targetLayerIndex, int *layerSizes, size_t layerSizes_s,*/ int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex){
 			int topLayerIndex=0;
 			int bottomLayerIndex=0;
-			int layerStartDescriptor;
+			int layerStartDescriptor = 0;
                         size_t topSize = 0;//layerSizes[targetLayerIndex];
                         size_t bottomSize = -1; // layerSizes[targetLayerIndex-1];
 			bool processing = false;
@@ -256,10 +256,13 @@ class HuffmanCoding{
 						break;
 					}
 				}else{
+					if(i==0){
+						layerStartDescriptor = 0;
+					}
 					if(test > nodeCache[i]){
 						bottomSize = topSize-1;
 						topSize = 1;
-						bottomLayerIndex = topLayerIndex+1;
+						bottomLayerIndex = topLayerIndex;
 						topLayerIndex++;
 					}
 				}
@@ -271,6 +274,7 @@ class HuffmanCoding{
 
 			printf("Measured top size %ld at layer index %d\n", topSize, topLayerIndex);
 			printf("Measured bottom size %ld at layer index %d\n", bottomSize, bottomLayerIndex);
+			printf("Measured start descriptor : %d\n", layerStartDescriptor);
 
 			int topIterEnd = layerStartDescriptor+topSize;
                         int *top = new int[topSize];
@@ -280,6 +284,7 @@ class HuffmanCoding{
 				top[idx] = nodeCache[i];
 				printf("%d ", top[idx]);
 			}printf("\n");
+
 
                         int *bottom = NULL;
 			if(bottomSize == -1){
@@ -327,6 +332,7 @@ class HuffmanCoding{
 			int targetVal = nodeCache[targetIndex];
 			printf("Main Loop start : %d\n", layerStartDescriptor);
 			printf("Sub loop start : %d\n", bottomStart);
+			processing = false;
 			for(int i=layerStartDescriptor; i<topIterEnd; i++){
 				printf("dbg Grabbed [%d]%d\n", i, nodeCache[i]);
 				int grabbed = nodeCache[i];
@@ -338,40 +344,48 @@ class HuffmanCoding{
 					}
 					int one = nodeCache[j+1];
 					int sum = zero + one;
-					printf("%d + %d = %d. %s\n", zero, one, sum, sum == grabbed ? "Yes, match" : "No, match");
+					printf("%d + %d = %d. %s %d\n", zero, one, sum, sum == grabbed ? "Yes, matched with " : "No, matched with ", i);
 					if(sum == grabbed){ // top node / leaf.
 						// node is valid; but is it related to our target node?
-						printf("Grabbed top node.\n");
 						bottomStart = j + 2;
 						if(i == targetIndex){
 							zeroIndex[0] = j;
 							oneIndex[0] = j+1;
+							printf("Grabbed top node.\n");
 							return true;
 						}
+						processing = false;
 						break;
 					}
 					
 					if(!(i+1<topIterEnd)){
+						processing = false;
 						printf("Unhandled error - top check out of bounds.");
 						break;
 					}
 					one = nodeCache[i+1];
 					sum = zero+one;
-					printf("\t%d + %d = %d. %s\n", zero, one, sum, sum == grabbed ? "Yes, match" : "No, match");
+					printf("%d + %d = %d. %s %d\n", zero, one, sum, sum == grabbed ? "Yes, matched with " : "No, matched with ", i);
 					if(sum == grabbed){ // bottom node / interier node
-						printf("Grabbed bottom node.\n");
 						// node is valid; but is it related to our target node?
 						bottomStart = j + 1;
 						if(i == targetIndex){
+							printf("Grabbed bottom node.\n");
 							zeroIndex[0] = j;
 							oneIndex[0] = i+1;
 							return false;
 						}
+						processing = false;
 						break;
 					}
 				
-					printf("Possibly invalid input data...\n");
-					return false;
+					// we gotta maintain the I index; but shift the J starting index by 1.
+					// if we don't get a match on this bottom row, then we have bad data.
+					printf("Nothing found yet, bump j start, keep i.\n");
+						i--; // we only want to do this once.
+					processing = true;
+					bottomStart++;
+					break;
 				}
 			}
 
@@ -495,15 +509,18 @@ class HuffmanCoding{
 				// start looping from the beginning of the current layer
 				int value = -1;
 				int past = -1;
+				int z=0, o=0;
 				for(int j=i+layerSizes[layerCount-1]; j>i; j--){
 					if(nodeIndex < 0) break;
 					if(value == -1){
 						if(isTopNode(nodeCache[j], j, layerCount-1, layerSizes, layerCount, nodeCache, nodeCacheSize))
+						//if(this->new_isTopNode(j, nodeCache, nodeCacheSize, &z, &o))
 							value = nodeCache[j];
 						continue;
 					}
 					if(past == -1){
 						if(!isTopNode(nodeCache[j], j, layerCount-1, layerSizes, layerCount, nodeCache, nodeCacheSize)){
+						//if(!this->new_isTopNode(j, nodeCache, nodeCacheSize, &z, &o)){
 							if(this->failed()){
 								delete[] nodeCache;
 								return false;
@@ -519,6 +536,7 @@ class HuffmanCoding{
 					}
 					if(value == nodeCache[j]){
 						if(!isTopNode(nodeCache[j], j, layerCount-1, layerSizes, layerCount, nodeCache, nodeCacheSize)){
+						//if(!this->new_isTopNode(j, nodeCache, nodeCacheSize, &z, &o)){
 							if(this->failed()){
 								delete[] nodeCache;
 								return false;
@@ -542,6 +560,7 @@ class HuffmanCoding{
 					}
 					if(nodeCache[j] < past){
 						if(!isTopNode(nodeCache[j], j, layerCount-1, layerSizes, layerCount, nodeCache, nodeCacheSize)){
+						//if(!this->new_isTopNode(j, nodeCache, nodeCacheSize, &z, &o)){
 							if(this->failed()){
 								delete[] nodeCache;
 								return false;
@@ -889,13 +908,13 @@ class HuffmanCoding{
 
 			/// development zone
 			int dbg_layerindex = 0;
-			int dbg_targetIndex = treeSize-treeSize;;
+			int dbg_targetIndex = 3;
 			int zeroIndex=-1, oneIndex=-1;
 			printf("TARGET INDEX : %d\n", dbg_targetIndex);
 			if(new_isTopNode(dbg_targetIndex, tree, treeSize, &zeroIndex, &oneIndex)){
 				printf("%d[%d] is a top node. zero Index (%d) | one Index(%d)\n", tree[dbg_targetIndex], dbg_targetIndex, zeroIndex, oneIndex);
 			}else{
-				printf("%d[%d] is a bottom node. zero Index (%d) | one Index(%d)\n", this->treeLetters[dbg_targetIndex], dbg_targetIndex, zeroIndex, oneIndex);
+				printf("%d[%d] is a bottom node. zero Index (%d) | one Index(%d)\n", tree[dbg_targetIndex], dbg_targetIndex, zeroIndex, oneIndex);
 			}
 			/// end development zone
 			delete[] tree;

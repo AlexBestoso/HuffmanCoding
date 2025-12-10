@@ -2,6 +2,6 @@
 
 Development Notes : 
 
-Found an edge case for index 0.
+index 0 is a top node; but is getting marked as a bottom.
 
-Figure out where we're going out of bounds, and ensure that this be be werkin'
+index 1 segfaults.
