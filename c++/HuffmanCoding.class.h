@@ -9,13 +9,22 @@ class HuffmanCoding{
 
 		int *codeTable;
 		size_t codeTable_s;
+
+		int *treeData;
+		size_t treeData_s;
 		
 		bool tablesSorted;
 
 		int error;
 		std::string error_msg;
-
 		
+		void destroyTreeData(void){
+			if(this->treeData != NULL)
+				delete[] this->treeData;
+			this->treeData = NULL;
+			this->treeData_s = 0;
+		}
+			
 		void destroyCodingTable(void){
 			if(this->codeTable != NULL)
 				delete[] this->codeTable;
@@ -246,10 +255,12 @@ class HuffmanCoding{
 
 			// Determine the size and location of top and bottom layers.
 			for(int i=nodeCache_s-1, test=-1; i>=0; i--){
-				topSize++;
 				if(i==nodeCache_s-1)
 					test = nodeCache[i];
+				topSize++;
 				if(processing){
+					if(test == -1)
+						break;
 					if(test > nodeCache[i]){
 						topSize--;
 						layerStartDescriptor = i+1;
@@ -279,10 +290,10 @@ class HuffmanCoding{
 			int topIterEnd = layerStartDescriptor+topSize;
                         int *top = new int[topSize];
 			
-			//printf("top : ");
+		//	printf("top(%ld) : ", topSize);
 			for(int i=layerStartDescriptor, idx=0; i<topIterEnd && idx<topSize; i++, idx++){
 				top[idx] = nodeCache[i];
-			//	printf("%d ", top[idx]);
+		//		printf("%d ", top[idx]);
 			}//printf("\n");
 
 
@@ -290,7 +301,7 @@ class HuffmanCoding{
 			if(bottomSize == -1){
 				// we requested a value from the bottom layer. determine if it's a 1 or a 0,
 				// then set the zero and one index values respectively.
-				if(targetIndex == layerStartDescriptor && (topSize%2) == 1){
+				if(targetIndex == layerStartDescriptor && (topSize%2) == 1 && targetIndex+this->frequencies_s == nodeCache_s){
 					zeroIndex[0] = layerStartDescriptor;
 					oneIndex[0] = targetIndex-(topSize/2);
 					return true;
@@ -882,6 +893,57 @@ class HuffmanCoding{
 			return true;
 		}
 
+		bool plantTree(void){
+			this->destroyTreeData();
+			this->destroyCodingTable();
+			this->treeData_s = this->frequencies_s+this->frequencies_s-1;
+                        this->treeData = new int[this->treeData_s];
+			this->codeTable_s = this->frequencies_s*2;
+			this->codeTable = new int[this->codeTable_s];
+			for(int i=0; i<this->treeData_s; i++)
+				this->treeData[i] = -1;
+			for(int i=0; i<this->codeTable_s; i++){
+				this->codeTable[i] = -1;
+			}
+			for(int i=this->treeData_s-1, j=this->frequencies_s-1; i>=this->treeData_s-this->frequencies_s && j>=0; i--, j--){
+				this->treeData[i] = this->frequencies[j];
+			}
+
+			// Setup starting layer.
+			int nextLayerIdx = treeData_s-this->frequencies_s-1;
+			int zeroUsed=-1, oneUsed=-1;
+			for(int i=treeData_s-1, f=this->frequencies_s-1, c=this->frequencies_s-1; f>=0 && i>=treeData_s-this->frequencies_s; i--, f--, c--){
+				this->treeData[i] = this->frequencies[f];
+				int zero=-1, one=-1;
+				this->new_isTopNode(i, this->treeData, this->treeData_s, &zero, &one);
+				this->codeTable[c] = 1;
+				this->codeTable[c+this->frequencies_s] = zero == i ? 0 : one == i ? (1<<7) : -1;
+				if(zero != zeroUsed && one != oneUsed){
+					this->treeData[nextLayerIdx] = this->treeData[zero]+this->treeData[one];
+					nextLayerIdx--;
+				}
+				zeroUsed = zero;
+				oneUsed = one;
+			}
+			printf("Starting Layer Coded, second layer created.\n");
+			
+			// gather the remaining codes.
+			for(int i=treeData_s-this->frequencies_s-1; i>=0; i++){
+				
+			}
+			
+			printf("Tree : ");
+			for(int i=0; i<this->treeData_s; i++)
+				printf("[%d]%d ", i, this->treeData[i]);
+			printf("\n");
+			printf("-----CODE TABLE----\n| BIT COUNT | ENCODED VAL | ORIGINAL VAL |\n");
+                        for(int i=0; i<this->frequencies_s; i++){
+                                printf("|    %d    |    0x%x    |       %c    |\n", this->codeTable[i], this->codeTable[this->frequencies_s+i], this->treeLetters[i]);
+                        }
+                        printf("---------------\n");
+			return true;
+		}
+
 		bool encode(char *data, size_t dataSize){
 			size_t treeSize = this->frequencies_s+this->frequencies_s-1;
 			int *tree = new int[treeSize];
@@ -901,6 +963,13 @@ class HuffmanCoding{
 			}
 
 			/// development zone
+		
+			if(!this->plantTree()){
+				this->setError(0x502, "encode() - failed to plant tree.");
+				return false;
+			}
+			printf("Tree Planted!");
+
 			int dbg_layerindex = 0;
 			int dbg_targetIndex = 3;
 			int zeroIndex=-1, oneIndex=-1;
@@ -955,6 +1024,8 @@ class HuffmanCoding{
 			this->frequencies = NULL;
 			this->frequencies_s = 0;
 			this->tablesSorted = false;
+			this->treeData=NULL;
+			this->treeData_s = 0;
 			this->clearError();
 		}
 		~HuffmanCoding(){
@@ -962,6 +1033,7 @@ class HuffmanCoding{
 			this->destroyTreeLetters();
 			this->destroyFrequencies();
 			this->destroyOut();
+			this->destroyTreeData();
 		}
 
 		bool compress(char *data, size_t dataSize){
