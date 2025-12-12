@@ -919,6 +919,7 @@ class HuffmanCoding{
 		}
 
 		bool growLayer(void){
+			printf("Growing Layer...\n");
 			if(this->treeData_s <= 0){
 				return false;
 			}
@@ -966,7 +967,12 @@ class HuffmanCoding{
 			if(bottomLayerStart == -1)
 				bottomLayerStart = this->treeData_s-1;
 
+			printf("\tTop Layer Start : %d -> %d\n", topLayerStart, topLayerEnd);
+			printf("\tBottom Layer Start : %d -> %d\n", bottomLayerStart, bottomLayerEnd);
 			for(int i=bottomLayerStart, sum=-1, next=-1, nextOffset=0; i>=bottomLayerEnd && topLayerEnd >= 0; i--){
+				int z=0, o=0;
+				if(!this->new_isTopNode(i, this->treeData, this->treeData_s, &z, &o))
+					continue;
 				if(next == -1){
 					nextOffset=1;
 					for(int j=i; i>=bottomLayerEnd; j++){
