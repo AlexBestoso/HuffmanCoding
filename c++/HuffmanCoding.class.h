@@ -245,6 +245,7 @@ class HuffmanCoding{
 
 		// returns true if target is NOT an inner node, and returns the indecies of the two values that created
 		// the target value, organized relative to their encoding value (1 or 0)
+		// TODO: Fix boolean. Index 9 wrongly marked as a top node.
 		bool new_isTopNode(/*int targetVal, */int targetIndex, /*int targetLayerIndex, int *layerSizes, size_t layerSizes_s,*/ int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex){
 			int topLayerIndex=0;
 			int bottomLayerIndex=0;
@@ -259,14 +260,19 @@ class HuffmanCoding{
 					test = nodeCache[i];
 				topSize++;
 				if(processing){
-					if(test == -1)
+					if(test == -1){
+						printf("TEST BREAK A\n");
 						break;
+					}
 					if(test > nodeCache[i]){
 						topSize--;
 						layerStartDescriptor = i+1;
 						break;
 					}
 				}else{
+					if(test == -1){
+						printf("TEST BREAK B\n");
+					}
 					if(i==0){
 						layerStartDescriptor = 0;
 					}
@@ -283,18 +289,13 @@ class HuffmanCoding{
 				test = nodeCache[i];
 			}
 
-		//	printf("Measured top size %ld at layer index %d\n", topSize, topLayerIndex);
-		//	printf("Measured bottom size %ld at layer index %d\n", bottomSize, bottomLayerIndex);
-		//	printf("Measured start descriptor : %d\n", layerStartDescriptor);
-
 			int topIterEnd = layerStartDescriptor+topSize;
                         int *top = new int[topSize];
 			
-		//	printf("top(%ld) : ", topSize);
+			int topStart = layerStartDescriptor;
 			for(int i=layerStartDescriptor, idx=0; i<topIterEnd && idx<topSize; i++, idx++){
 				top[idx] = nodeCache[i];
-		//		printf("%d ", top[idx]);
-			}//printf("\n");
+			}
 
 
                         int *bottom = NULL;
@@ -332,21 +333,22 @@ class HuffmanCoding{
 			// A bottom layer exists, contine for more advanced processing.
 			int bottomIterEnd = layerStartDescriptor+topSize+bottomSize;
 			bottom = new int[bottomSize];
-		//	printf("bottom : ");
 			for(int i=topIterEnd, idx=0; i<bottomIterEnd; i++, idx++){
                                	bottom[idx] = nodeCache[i];
-		//		printf("%d ", bottom[idx]);
-                       	}//printf("\n");
+                       	}
 			
 			int bottomStart = topIterEnd;
 			int targetVal = nodeCache[targetIndex];
 			processing = false;
+			bool falseify = false;
+			int finalize=-1;
 			for(int i=layerStartDescriptor; i<topIterEnd; i++){
 				int grabbed = nodeCache[i];
-				for(int j=bottomStart; j<bottomIterEnd; j++){
+				for(int j=bottomStart; j>=bottomStart; j++){
 					int zero = nodeCache[j];
 					if(!(j+1<bottomIterEnd)){
-						printf("Unhandled error. - bottom check out of bounds\n");
+						printf("Unhandled error. - bottom check out of bounds %d+1 < %d\n", j, bottomIterEnd);
+						i=topIterEnd;
 						break;
 					}
 					int one = nodeCache[j+1];
@@ -355,16 +357,22 @@ class HuffmanCoding{
 						// node is valid; but is it related to our target node?
 						bottomStart = j + 2;
 						if(i == targetIndex){
+							if(finalize != -1){
+								if((finalize == j) || (finalize == j+1)){
+									return false;
+								}else{
+									return true;
+								}
+							}
 							zeroIndex[0] = j;
 							oneIndex[0] = j+1;
-						//	printf("Grabbed top node.\n");
-							return true;
+							return falseify == true ? false : true;
 						}
 						processing = false;
 						break;
 					}
 					
-					if(!(i+1<topIterEnd)){
+					if(!(i+1<nodeCache_s)){
 						processing = false;
 						printf("Unhandled error - top check out of bounds.");
 						break;
@@ -375,12 +383,29 @@ class HuffmanCoding{
 						// node is valid; but is it related to our target node?
 						bottomStart = j + 1;
 						if(i == targetIndex){
-						//	printf("Grabbed bottom node.\n");
+							if(finalize != -1){
+                                                                if((finalize == j) || (finalize == i+1)){
+                                                                        return false;
+                                                                }else{
+                                                                        return true;
+                                                                }
+                                                        }
 							zeroIndex[0] = j;
 							oneIndex[0] = i+1;
-							return false;
+							if(targetIndex == topStart){
+								return true;
+							}else{
+								finalize = targetIndex;
+								targetIndex--;
+								bottomStart = topIterEnd;
+								i = layerStartDescriptor-1;
+								break;
+							}
 						}
 						processing = false;
+						if(i+1 == targetIndex){
+							falseify = true;
+						}
 						break;
 					}
 				
@@ -893,6 +918,105 @@ class HuffmanCoding{
 			return true;
 		}
 
+		bool growLayer(void){
+			if(this->treeData_s <= 0){
+				return false;
+			}
+			if(this->treeData == NULL){
+				return false;
+			}
+			if(this->treeData[this->treeData_s-1] == -1){
+				if(this->frequencies_s <= 0){
+					return false;
+				}
+				if(this->frequencies == NULL){
+					return false;
+				}
+				// seeding layer
+				for(int i=this->treeData_s-1, j=this->frequencies_s-1; i>=this->treeData_s-this->frequencies_s && j>=0; i--, j--)
+                                	this->treeData[i] = this->frequencies[j];
+				return true;
+			}
+
+			int topLayerStart=-1;
+			int topLayerEnd=-1;
+			int bottomLayerStart=0;
+			int bottomLayerEnd=0;
+			for(int i=this->treeData_s-1; i>=0; i--){
+				if(this->treeData[i] == -1){
+					topLayerStart = i;
+					break;
+				}
+			}
+			if(topLayerStart == -1){
+				// no more room to grow
+				return false;
+			}
+			topLayerEnd = topLayerStart;
+			bottomLayerEnd = topLayerStart+1;
+			for(int i=bottomLayerEnd, track=-1; i<this->treeData_s; i++){
+				if(i==topLayerStart+1)
+					track = this->treeData[i];
+				if(track<this->treeData[i]){
+					bottomLayerStart = i-1;
+					break;
+				}
+				track = this->treeData[i];
+			}
+			if(bottomLayerStart == -1)
+				bottomLayerStart = this->treeData_s-1;
+
+			for(int i=bottomLayerStart, sum=-1, next=-1, nextOffset=0; i>=bottomLayerEnd && topLayerEnd >= 0; i--){
+				if(next == -1){
+					nextOffset=1;
+					for(int j=i; i>=bottomLayerEnd; j++){
+						next = i-nextOffset >= 0 && i-nextOffset >= bottomLayerEnd ? this->treeData[i-nextOffset] : -1;
+						if(next == -1) break;
+						int a=0, b=0;
+						if(!this->new_isTopNode(i-nextOffset, this->treeData, this->treeData_s, &a, &b)){
+							nextOffset++;
+							next = -1;
+						}else{
+							printf("Next : %d\n", next);
+							break;
+						}
+					}
+				}
+				if(sum == -1 && this->treeData[topLayerEnd] == -1){
+					sum = this->treeData[i] + next;
+					this->treeData[topLayerEnd] = sum;
+					printf("%d) Z sum : %d = %d + %d\n", i, sum, this->treeData[i], next);
+					topLayerEnd--;
+					next = -1;
+					i-=nextOffset;
+					continue;
+				}
+				
+				if(sum <= next || next == -1){
+					this->treeData[topLayerEnd] = this->treeData[i] + sum;
+					printf("%d) A sum : %d = %d + %d\n", i, this->treeData[topLayerEnd], this->treeData[i], sum);
+					sum = this->treeData[topLayerEnd];
+					topLayerEnd--;
+					next = -1;
+					continue;	
+				}else{
+					int a=0, b=0;
+					if(!this->new_isTopNode(i, this->treeData, this->treeData_s, &a, &b)){
+						next=-1;
+						continue;
+					}
+					this->treeData[topLayerEnd] = this->treeData[i] + next;
+					printf("%d) B sum : %d = %d + %d | old sum : %d\n", i, this->treeData[topLayerEnd], this->treeData[i], next, sum);
+					sum = this->treeData[topLayerEnd];
+					topLayerEnd--;
+					i-=nextOffset;
+					next = -1;
+					continue;
+				}
+			}
+			return true;
+		}
+	
 		bool plantTree(void){
 			this->destroyTreeData();
 			this->destroyCodingTable();
@@ -905,16 +1029,18 @@ class HuffmanCoding{
 			for(int i=0; i<this->codeTable_s; i++){
 				this->codeTable[i] = -1;
 			}
-			for(int i=this->treeData_s-1, j=this->frequencies_s-1; i>=this->treeData_s-this->frequencies_s && j>=0; i--, j--){
-				this->treeData[i] = this->frequencies[j];
-			}
+			
+			// First run seeds the tree
+			this->growLayer();
 
 			// Setup starting layer.
 			int nextLayerIdx = treeData_s-this->frequencies_s-1;
 			int zeroUsed=-1, oneUsed=-1;
-			for(int i=treeData_s-1, f=this->frequencies_s-1, c=this->frequencies_s-1; f>=0 && i>=treeData_s-this->frequencies_s; i--, f--, c--){
-				this->treeData[i] = this->frequencies[f];
-				int zero=-1, one=-1;
+			int zero=-1, one=-1;
+			for(int i=treeData_s-1, c=this->frequencies_s-1; i>=treeData_s-this->frequencies_s; i--, c--){
+				zero=-1;
+				one=-1;
+				//this->treeData[i] = this->frequencies[f];
 				this->new_isTopNode(i, this->treeData, this->treeData_s, &zero, &one);
 				this->codeTable[c] = 1;
 				this->codeTable[c+this->frequencies_s] = zero == i ? 0 : one == i ? (1<<7) : -1;
@@ -925,11 +1051,17 @@ class HuffmanCoding{
 				zeroUsed = zero;
 				oneUsed = one;
 			}
-			printf("Starting Layer Coded, second layer created.\n");
-			
-			// gather the remaining codes.
-			for(int i=treeData_s-this->frequencies_s-1; i>=0; i++){
-				
+
+			int continueationIndex = nextLayerIdx;
+			printf("ContinueationIndex : %d\n", continueationIndex);
+
+			// build next layer
+			this->growLayer();
+			this->growLayer();
+			// process code table values.
+			for(int i=continueationIndex,remainingFreqs=this->frequencies_s; i>=0 && this->treeData[i] != -1 && remainingFreqs>0; i--){
+				bool nodeType = this->new_isTopNode(i, this->treeData, this->treeData_s, &zero, &one);
+				printf("dbg %s [%d]%d | zero : %d | one : %d\n", nodeType == true ? "top node" : "bottom node", i, this->treeData[i], zero, one);
 			}
 			
 			printf("Tree : ");
