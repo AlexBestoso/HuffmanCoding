@@ -1044,31 +1044,10 @@ class HuffmanCoding{
 			for(int i=0; i<this->treeData_s; i++)
 				this->treeData[i] = -1;
 			for(int i=0; i<this->codeTable_s; i++){
-				this->codeTable[i] = -1;
+				this->codeTable[i] = 0;
 			}
 			
 			// seed the tree, and begin coding table.
-			this->growLayer();
-			printf("Layer Seeded.\n");
-			
-			// TODO: clean up this section, remove the code table part, and integrate changes into the grow layer func.
-			/*int nextLayerIdx = treeData_s-this->frequencies_s-1;
-			int zeroUsed=-1, oneUsed=-1;
-			int zero=-1, one=-1;
-			for(int i=treeData_s-1, c=this->frequencies_s-1; i>=treeData_s-this->frequencies_s; i--, c--){
-				zero=-1;
-				one=-1;
-				this->new_isTopNode(i, this->treeData, this->treeData_s, &zero, &one);
-				this->codeTable[c] = 1;
-				this->codeTable[c+this->frequencies_s] = zero == i ? 0 : one == i ? (1<<7) : -1;
-				if(zero != zeroUsed && one != oneUsed){
-					this->treeData[nextLayerIdx] = this->treeData[zero]+this->treeData[one];
-					nextLayerIdx--;
-				}
-				zeroUsed = zero;
-				oneUsed = one;
-			}*/
-			// Finish Growing the Tree
 			while(this->treeData[0] == -1)
 				this->growLayer();
 
@@ -1094,9 +1073,20 @@ class HuffmanCoding{
 				while(queue[0] != -1){
 					int z=0, o=0;
 					int target = queue[0];
-					this->new_isTopNode(queue[0], this->treeData, this->treeData_s, &z, &o);
-					printf("\t\tzero process | target:%d | z:%d | o:%d\n",queue[0],  z, o);
 					queue[0] = -1;
+					if(target > baseLayerEnd){
+                                                printf("\t\tzero process | target:%d (conv:%d) | baselayer : %d\n",target, target-converter, baseLayerEnd);
+						target = target-converter;
+						this->codeTable[target]++;
+                                                this->codeTable[target+this->frequencies_s] = (this->codeTable[target+this->frequencies_s] >> 1);
+						for(int j=0; j<queueSize-1; j++){
+							queue[j] = queue[j+1];
+						}
+						qIndex--;
+						continue;
+					}
+					this->new_isTopNode(target, this->treeData, this->treeData_s, &z, &o);
+					printf("\t\tzero process | target:%d | z:%d | o:%d\n",target,  z, o);
 					if(z >= baseLayerEnd && o > baseLayerEnd){
 						// Shift queue, reduce size by 1.
 						for(int j=0; j<queueSize-1; j++){
@@ -1194,9 +1184,20 @@ class HuffmanCoding{
 				while(queue[0] != -1){
 					int z=0, o=0;
 					int target = queue[0];
-					this->new_isTopNode(queue[0], this->treeData, this->treeData_s, &z, &o);
-					printf("\t\tOne process | target:%d | z:%d | o:%d\n",queue[0],  z, o);
+					this->new_isTopNode(target, this->treeData, this->treeData_s, &z, &o);
+					printf("\t\tOne process | target:%d | z:%d | o:%d\n",target,  z, o);
 					queue[0] = -1;
+					if(target > baseLayerEnd){
+                                                printf("\t\tone process | target:%d (conv:%d) | baselayer : %d\n",target, target-converter, baseLayerEnd);
+                                                target = target-converter;
+                                                this->codeTable[target]++;
+                                                this->codeTable[target+this->frequencies_s] = (1<<7) + (this->codeTable[target+this->frequencies_s] >> 1);
+                                                for(int j=0; j<queueSize-1; j++){
+                                                        queue[j] = queue[j+1];
+                                                }
+                                                qIndex--;
+                                                continue;
+                                        }
 					if(z >= baseLayerEnd && o > baseLayerEnd){
 						// Shift queue, reduce size by 1.
 						for(int j=0; j<queueSize-1; j++){
