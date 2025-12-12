@@ -919,7 +919,6 @@ class HuffmanCoding{
 		}
 
 		bool growLayer(void){
-			printf("Growing Layer...\n");
 			if(this->treeData_s <= 0){
 				return false;
 			}
@@ -967,8 +966,6 @@ class HuffmanCoding{
 			if(bottomLayerStart == -1)
 				bottomLayerStart = this->treeData_s-1;
 
-			printf("\tTop Layer Start : %d -> %d\n", topLayerStart, topLayerEnd);
-			printf("\tBottom Layer Start : %d -> %d\n", bottomLayerStart, bottomLayerEnd);
 			for(int i=bottomLayerStart, sum=-1, next=-1, nextOffset=0; i>=bottomLayerEnd && topLayerEnd >= 0; i--){
 				int z=0, o=0;
 				if(!this->new_isTopNode(i, this->treeData, this->treeData_s, &z, &o))
@@ -983,7 +980,6 @@ class HuffmanCoding{
 							nextOffset++;
 							next = -1;
 						}else{
-							printf("Next : %d\n", next);
 							break;
 						}
 					}
@@ -991,7 +987,6 @@ class HuffmanCoding{
 				if(sum == -1 && this->treeData[topLayerEnd] == -1){
 					sum = this->treeData[i] + next;
 					this->treeData[topLayerEnd] = sum;
-					printf("%d) Z sum : %d = %d + %d\n", i, sum, this->treeData[i], next);
 					topLayerEnd--;
 					next = -1;
 					i-=nextOffset;
@@ -1000,7 +995,6 @@ class HuffmanCoding{
 				
 				if(sum <= next || next == -1){
 					this->treeData[topLayerEnd] = this->treeData[i] + sum;
-					printf("%d) A sum : %d = %d + %d\n", i, this->treeData[topLayerEnd], this->treeData[i], sum);
 					sum = this->treeData[topLayerEnd];
 					topLayerEnd--;
 					next = -1;
@@ -1012,7 +1006,6 @@ class HuffmanCoding{
 						continue;
 					}
 					this->treeData[topLayerEnd] = this->treeData[i] + next;
-					printf("%d) B sum : %d = %d + %d | old sum : %d\n", i, this->treeData[topLayerEnd], this->treeData[i], next, sum);
 					sum = this->treeData[topLayerEnd];
 					topLayerEnd--;
 					i-=nextOffset;
@@ -1036,17 +1029,14 @@ class HuffmanCoding{
 				this->codeTable[i] = -1;
 			}
 			
-			// First run seeds the tree
+			// seed the tree, and begin coding table.
 			this->growLayer();
-
-			// Setup starting layer.
 			int nextLayerIdx = treeData_s-this->frequencies_s-1;
 			int zeroUsed=-1, oneUsed=-1;
 			int zero=-1, one=-1;
 			for(int i=treeData_s-1, c=this->frequencies_s-1; i>=treeData_s-this->frequencies_s; i--, c--){
 				zero=-1;
 				one=-1;
-				//this->treeData[i] = this->frequencies[f];
 				this->new_isTopNode(i, this->treeData, this->treeData_s, &zero, &one);
 				this->codeTable[c] = 1;
 				this->codeTable[c+this->frequencies_s] = zero == i ? 0 : one == i ? (1<<7) : -1;
@@ -1057,17 +1047,177 @@ class HuffmanCoding{
 				zeroUsed = zero;
 				oneUsed = one;
 			}
+			// Finish Growing the Tree
+			while(this->treeData[0] == -1)
+				this->growLayer();
 
-			int continueationIndex = nextLayerIdx;
+			int baseLayerEnd = this->treeData_s - this->frequencies_s;
+			int continueationIndex = baseLayerEnd-1;
 			printf("ContinueationIndex : %d\n", continueationIndex);
 
-			// build next layer
-			this->growLayer();
-			this->growLayer();
-			// process code table values.
-			for(int i=continueationIndex,remainingFreqs=this->frequencies_s; i>=0 && this->treeData[i] != -1 && remainingFreqs>0; i--){
+			// Complete code table generation.
+			for(int i=continueationIndex; i>=0; i--){
 				bool nodeType = this->new_isTopNode(i, this->treeData, this->treeData_s, &zero, &one);
-				printf("dbg %s [%d]%d | zero : %d | one : %d\n", nodeType == true ? "top node" : "bottom node", i, this->treeData[i], zero, one);
+				printf("CodeGen %s [%d]%d | zero : %d | one : %d\n", nodeType == true ? "top node" : "bottom node", i, this->treeData[i], zero, one);
+				// every final result under index zero, needs to have a 0 added.
+				bool processing=true;
+				size_t queueSize=this->treeData_s+1;
+				int converter = this->treeData_s-this->frequencies_s;
+				int *queue = new int[queueSize];
+				int qIndex=0;
+				for(int a=0; a<queueSize; a++)
+					queue[a] = -1;
+				queue[0] = zero;
+				while(queue[0] != -1){
+					int z=0, o=0;
+					this->new_isTopNode(queue[0], this->treeData, this->treeData_s, &z, &o);
+					queue[0] = -1;
+					if(z > baseLayerEnd && o > baseLayerEnd){
+						// Shift queue, reduce size by 1.
+						for(int j=0; j<queueSize-1; j++){
+							if(queue[j] == -1){
+								break;
+							}else{
+								queue[j] = queue[j+1];
+							}
+						}
+						qIndex--;
+
+						// convert treeData index to code table index, 
+						z = z - converter;
+						o = o - converter;
+						if(z < 0 || z >= this->codeTable_s || z+this->frequencies_s >= this->codeTable_s){
+                                                        printf("INVALID INDEX !! CASE 0 A | z: %d and %ld vs %ld\n", z, z+this->frequencies_s, this->codeTable_s);
+                                                        break;
+                                                }
+						if(o < 0 || o >= this->codeTable_s || o+this->frequencies_s >= this->codeTable_s){
+                                                        printf("INVALID INDEX !! CASE 0 B\n");
+                                                        break;
+                                                }
+						// add 0 to both z and o code table index.
+						this->codeTable[z]++;
+						this->codeTable[z+this->frequencies_s] = (this->codeTable[z+this->frequencies_s] >> 1);
+						this->codeTable[o]++;
+						this->codeTable[o+this->frequencies_s] = (this->codeTable[o+this->frequencies_s] >> 1);
+
+					}else if(z > baseLayerEnd && !(o > baseLayerEnd)){
+						// add o to queue, shift towards 0
+						if(qIndex+1 < queueSize){
+							queue[qIndex+1] = o;
+							for(int j=0; j<queueSize-1; j++){
+                                                                if(queue[j] == -1){
+                                                                        break;
+                                                                }else{
+                                                                        queue[j] = queue[j+1];
+                                                                }
+                                                        }
+						}
+
+						// convert treeData index to code table index, 
+						z = z - converter;
+						// add a 0 to index z in the code table.
+						if(z < 0 || z >= this->codeTable_s || z+this->frequencies_s >= this->codeTable_s){
+							printf("INVALID INDEX !! CASE 1\n");
+							break;
+						}
+						this->codeTable[z]++;
+						this->codeTable[z+this->frequencies_s] = (this->codeTable[z+this->frequencies_s] >> 1);
+					}else{
+						// neither is at base layer, add both to queu
+						if(qIndex+2 < queueSize){
+							queue[qIndex+1] = z;
+							queue[qIndex+2] = o;
+							qIndex+=1;
+							for(int j=0; j<queueSize-1; j++){
+								if(queue[j] == -1){
+									break;
+								}else{
+									queue[j] = queue[j+1];
+								}
+							}
+						}
+					}
+				}
+
+				// every final result under index one, needs to have a 1 added.
+				for(int a=0; a<queueSize; a++)
+					queue[a] = -1;
+				queue[0] = one;
+				qIndex=0;
+				while(queue[0] != -1){
+					int z=0, o=0;
+					this->new_isTopNode(queue[0], this->treeData, this->treeData_s, &z, &o);
+					queue[0] = -1;
+					if(z > baseLayerEnd && o > baseLayerEnd){
+						// Shift queue, reduce size by 1.
+						for(int j=0; j<queueSize-1; j++){
+							if(queue[j] == -1){
+								break;
+							}else{
+								queue[j] = queue[j+1];
+							}
+						}
+						qIndex--;
+
+						// convert treeData index to code table index, 
+						z = z - converter;
+						o = o - converter;
+						if(z < 0 || z >= this->codeTable_s || z+this->frequencies_s >= this->codeTable_s){
+                                                        printf("INVALID INDEX !! CASE 0 A | z: %d and %ld vs %ld\n", z, z+this->frequencies_s, this->codeTable_s);
+                                                        break;
+                                                }
+						if(o < 0 || o >= this->codeTable_s || o+this->frequencies_s >= this->codeTable_s){
+                                                        printf("INVALID INDEX !! CASE 0 B\n");
+                                                        break;
+                                                }
+						// add 0 to both z and o code table index.
+						this->codeTable[z]++;
+						this->codeTable[z+this->frequencies_s] = (this->codeTable[z+this->frequencies_s] >> 1) + (1<<7);
+						this->codeTable[o]++;
+						this->codeTable[o+this->frequencies_s] = (this->codeTable[o+this->frequencies_s] >> 1) + (1<<7);
+
+					}else if(z > baseLayerEnd && !(o > baseLayerEnd)){
+						// add o to queue, shift towards 0
+						if(qIndex+1 < queueSize){
+							queue[qIndex+1] = o;
+							for(int j=0; j<queueSize-1; j++){
+                                                                if(queue[j] == -1){
+                                                                        break;
+                                                                }else{
+                                                                        queue[j] = queue[j+1];
+                                                                }
+                                                        }
+						}
+
+						// convert treeData index to code table index, 
+						z = z - converter;
+						// add a 0 to index z in the code table.
+						if(z < 0 || z >= this->codeTable_s || z+this->frequencies_s >= this->codeTable_s){
+							printf("INVALID INDEX !! CASE 1\n");
+							break;
+						}
+						this->codeTable[z]++;
+						this->codeTable[z+this->frequencies_s] = (this->codeTable[z+this->frequencies_s] >> 1) + (1<<7);
+					}else{
+						// neither is at base layer, add both to queu
+						if(qIndex+2 < queueSize){
+							queue[qIndex+1] = z;
+							queue[qIndex+2] = o;
+							qIndex+=1;
+							for(int j=0; j<queueSize-1; j++){
+								if(queue[j] == -1){
+									break;
+								}else{
+									queue[j] = queue[j+1];
+								}
+							}
+						}
+					}
+				}
+
+
+				if(queue != NULL)
+					delete[] queue;
 			}
 			
 			printf("Tree : ");
