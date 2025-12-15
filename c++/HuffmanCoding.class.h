@@ -815,50 +815,30 @@ class HuffmanCoding{
 			printf("\n");
 			printf("-----CODE TABLE----\nIDX | BIT COUNT | ENCODED VAL | ORIGINAL VAL |\n");
                         for(int i=0; i<this->frequencies_s; i++){
-                                printf("%d  |    %d    |    0x%x    |       %c    |\n", i, this->codeTable[i], this->codeTable[this->frequencies_s+i], this->treeLetters[i]);
+                                printf("%d  |    %d    |    %s    |       %c    |\n", i, this->codeTable[i], this->printCodeBinary(i).c_str(), this->treeLetters[i]);
                         }
                         printf("---------------\n");
 			return true;
 		}
 
-		bool encode(char *data, size_t dataSize){
-		/*	size_t treeSize = this->frequencies_s+this->frequencies_s-1;
-			int *tree = new int[treeSize];
-			if(!this->buildTree(tree, treeSize)){
-				this->setError(0x500, "encode(char *data, size_t dataSize) - failed to build tree.");
-				return false;
+		std::string printCodeBinary(int idx){
+			std::string ret = "";
+			int codeSize = this->codeTable[idx];
+			int code = this->codeTable[this->frequencies_s+idx];
+			for(int i=0; i<codeSize; i++){
+				int bit = (code >> (7-i)) & 1;
+				ret += std::to_string(bit);
 			}
+			return ret;
+		}
 
-			printf("[DBG] Generated Tree : ");
-			for(int i=0; i<treeSize; i++)
-				printf("[%d]%d ", i, tree[i]);
-			printf("\n");
-
-			if(!this->buildCodingTable(tree, treeSize)){
-				this->setError(0x501, "encode(char *data, size_t dataSize) - failed to build coding table.");
-				return false;
-			}*/
-
-			/// development zone
-		
+		bool encode(char *data, size_t dataSize){
 			if(!this->plantTree()){
 				this->setError(0x502, "encode() - failed to plant tree.");
 				return false;
 			}
 			printf("Tree Planted!");
 
-			int dbg_layerindex = 0;
-			int dbg_targetIndex = 3;
-			int zeroIndex=-1, oneIndex=-1;
-			for(int i=0; i<this->treeData_s; i++){
-			dbg_targetIndex = i;
-			if(isTopNode(dbg_targetIndex, this->treeData, this->treeData_s, &zeroIndex, &oneIndex)){
-				printf("[%d]%d is a top node. zero Index [%d]%d | one Index [%d]%d\n", dbg_targetIndex, this->treeData[dbg_targetIndex], zeroIndex, this->treeData[zeroIndex], oneIndex, this->treeData[oneIndex]);
-			}else{
-				printf("[%d]%d is a bottom node. zero Index [%d]%d | one Index [%d]%d\n", dbg_targetIndex, this->treeData[dbg_targetIndex], zeroIndex, this->treeData[zeroIndex], oneIndex, this->treeData[oneIndex]);
-			}
-			}
-			/// end development zone
 			return true;
 		}
 
