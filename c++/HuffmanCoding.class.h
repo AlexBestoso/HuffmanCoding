@@ -426,16 +426,7 @@ class HuffmanCoding{
 
 
 
-		bool packHeader(void){
-
-			return true;
-		}
-		
-		bool unpackHeader(void){
-
-			return true;
-		}
-
+	
 		bool growLayer(void){
 			if(this->treeData_s <= 0){
 				return false;
@@ -572,12 +563,10 @@ class HuffmanCoding{
 			int zero=-1, one=-1;
 			int baseLayerEnd = this->treeData_s - this->frequencies_s;
 			int continueationIndex = baseLayerEnd-1;
-			printf("ContinueationIndex : %d\n", continueationIndex);
 
 			// Complete code table generation.
 			for(int i=continueationIndex; i>=0; i--){
 				bool nodeType = this->isTopNode(i, this->treeData, this->treeData_s, &zero, &one);
-				printf("CodeGen %s [%d]%d | zero : %d | one : %d\n", nodeType == true ? "top node" : "bottom node", i, this->treeData[i], zero, one);
 				// every final result under index zero, needs to have a 0 added.
 				bool processing=true;
 				size_t queueSize=this->treeData_s+1;
@@ -587,13 +576,11 @@ class HuffmanCoding{
 				for(int a=0; a<queueSize; a++)
 					queue[a] = -1;
 				queue[0] = zero;
-				printf("\tProcessing zero bit...\n");
 				while(queue[0] != -1){
 					int z=0, o=0;
 					int target = queue[0];
 					queue[0] = -1;
 					if(target > baseLayerEnd){
-                                                printf("\t\tzero process | target:%d (conv:%d) | baselayer : %d\n",target, target-converter, baseLayerEnd);
 						target = target-converter;
 						this->codeTable[target]++;
                                                 this->codeTable[target+this->frequencies_s] = (this->codeTable[target+this->frequencies_s] >> 1);
@@ -604,7 +591,6 @@ class HuffmanCoding{
 						continue;
 					}
 					this->isTopNode(target, this->treeData, this->treeData_s, &z, &o);
-					printf("\t\tzero process | target:%d | z:%d | o:%d\n",target,  z, o);
 					if(z >= baseLayerEnd && o > baseLayerEnd){
 						// Shift queue, reduce size by 1.
 						for(int j=0; j<queueSize-1; j++){
@@ -624,19 +610,10 @@ class HuffmanCoding{
                                                         break;
                                                 }
 						// add 0 to both z and o code table index.
-						printf("\t\tA | Adding 0 bit to %d and %d\n", z, o);
 						this->codeTable[z]++;
 						this->codeTable[z+this->frequencies_s] = (this->codeTable[z+this->frequencies_s] >> 1);
 						this->codeTable[o]++;
 						this->codeTable[o+this->frequencies_s] = (this->codeTable[o+this->frequencies_s] >> 1);
-						printf("\t\tNew Queue : ");
-						for(int q=0; q<queueSize; q++){
-							if(queue[q] == -1) {
-                                                                printf("~");
-                                                                break;
-                                                        }
-							printf("%d ", queue[q]);
-						}printf("\n");
 
 					}else if(z >= baseLayerEnd && !(o > baseLayerEnd)){
 						// add o to queue, shift towards 0
@@ -649,24 +626,13 @@ class HuffmanCoding{
 
 						// convert treeData index to code table index, 
 						z = z - converter;
-						printf("\t\tB | Adding 0 bit to %d only\n", z);
 						// add a 0 to index z in the code table.
 						if(z < 0 || z >= this->codeTable_s || z+this->frequencies_s >= this->codeTable_s){
 							printf("INVALID INDEX !! CASE 1\n");
 							break;
 						}
 						this->codeTable[z]++;
-						this->codeTable[z+this->frequencies_s] = (this->codeTable[z+this->frequencies_s] >> 1);
-						printf("\t\tNew Queue : ");
-						for(int q=0; q<queueSize; q++){
-							if(queue[q] == -1) {
-                                                                printf("~");
-                                                                break;
-                                                        }
-							printf("%d ", queue[q]);
-						}printf("\n");
 					}else{
-						printf("\t\tC | Cant add bit, growing queue.\n");
 						// neither is at base layer, add both to queu
 						if(qIndex+2 < queueSize){
 							if(z != target && o != target){
@@ -682,14 +648,6 @@ class HuffmanCoding{
 								queue[j] = queue[j+1];
 							}
 						}
-						printf("\t\tNew Queue : ");
-						for(int q=0; q<queueSize; q++){
-							if(queue[q] == -1) {
-                                                                printf("~");
-                                                                break;
-                                                        }
-							printf("%d ", queue[q]);
-						}printf("\n");
 					}
 				}
 
@@ -698,15 +656,12 @@ class HuffmanCoding{
 					queue[a] = -1;
 				queue[0] = one;
 				qIndex=0;
-				printf("\tProcessing one bit...");
 				while(queue[0] != -1){
 					int z=0, o=0;
 					int target = queue[0];
 					this->isTopNode(target, this->treeData, this->treeData_s, &z, &o);
-					printf("\t\tOne process | target:%d | z:%d | o:%d\n",target,  z, o);
 					queue[0] = -1;
 					if(target > baseLayerEnd){
-                                                printf("\t\tone process | target:%d (conv:%d) | baselayer : %d\n",target, target-converter, baseLayerEnd);
                                                 target = target-converter;
                                                 this->codeTable[target]++;
                                                 this->codeTable[target+this->frequencies_s] = (1<<7) + (this->codeTable[target+this->frequencies_s] >> 1);
@@ -735,19 +690,10 @@ class HuffmanCoding{
                                                         break;
                                                 }
 						// add 0 to both z and o code table index.
-						printf("\t\tA | Adding 1 bit to %d and %d\n", z, o);
 						this->codeTable[z]++;
 						this->codeTable[z+this->frequencies_s] = (this->codeTable[z+this->frequencies_s] >> 1) + (1<<7);
 						this->codeTable[o]++;
 						this->codeTable[o+this->frequencies_s] = (this->codeTable[o+this->frequencies_s] >> 1) + (1<<7);
-						printf("\t\tNew Queue : ");
-						for(int q=0; q<queueSize; q++){
-							if(queue[q] == -1) {
-                                                                printf("~");
-                                                                break;
-                                                        }
-							printf("%d ", queue[q]);
-						}printf("\n");
 
 					}else if(z >= baseLayerEnd && !(o > baseLayerEnd)){
 						// add o to queue, shift towards 0
@@ -760,7 +706,6 @@ class HuffmanCoding{
 
 						// convert treeData index to code table index, 
 						z = z - converter;
-						printf("\t\tB | Adding 1 bit to %d only\n", z);
 						// add a 0 to index z in the code table.
 						if(z < 0 || z >= this->codeTable_s || z+this->frequencies_s >= this->codeTable_s){
 							printf("INVALID INDEX !! CASE 1\n");
@@ -768,16 +713,7 @@ class HuffmanCoding{
 						}
 						this->codeTable[z]++;
 						this->codeTable[z+this->frequencies_s] = (this->codeTable[z+this->frequencies_s] >> 1) + (1<<7);
-						printf("\t\tNew Queue : ");
-						for(int q=0; q<queueSize; q++){
-							if(queue[q] == -1) {
-								printf("~");
-								break;
-							}
-							printf("%d ", queue[q]);
-						}printf("\n");
 					}else{
-						printf("\t\tC | Cant add bit, growing queue.\n");
 						// neither is at base layer, add both to queu
 						if(qIndex+2 < queueSize){
 							if(z != target && o != target){
@@ -793,14 +729,6 @@ class HuffmanCoding{
 								queue[j] = queue[j+1];
 							}
 						}
-						printf("\t\tNew Queue : ");
-						for(int q=0; q<queueSize; q++){
-							if(queue[q] == -1) {
-                                                                printf("~");
-                                                                break;
-                                                        }
-							printf("%d ", queue[q]);
-						}printf("\n");
 					}
 				}
 
@@ -815,13 +743,13 @@ class HuffmanCoding{
 			printf("\n");
 			printf("-----CODE TABLE----\nIDX | BIT COUNT | ENCODED VAL | ORIGINAL VAL |\n");
                         for(int i=0; i<this->frequencies_s; i++){
-                                printf("%d  |    %d    |    %s    |       %c    |\n", i, this->codeTable[i], this->printCodeBinary(i).c_str(), this->treeLetters[i]);
+                                printf("%d  |    %d    |    %s    |       %c    |\n", i, this->codeTable[i], this->getCodeBinary(i).c_str(), this->treeLetters[i]);
                         }
                         printf("---------------\n");
 			return true;
 		}
 
-		std::string printCodeBinary(int idx){
+		std::string getCodeBinary(int idx){
 			std::string ret = "";
 			int codeSize = this->codeTable[idx];
 			int code = this->codeTable[this->frequencies_s+idx];
@@ -831,14 +759,99 @@ class HuffmanCoding{
 			}
 			return ret;
 		}
+		
+		int charToTableIndex(char val){
+			for(int i=0; i<this->treeLetters_s; i++){
+				if(val == this->treeLetters[i])
+					return i;
+			}
+			return -1;
+		}
+
+		/* Header Structure:
+		 *  1 byte number of tree letters, N.
+		 *  followed by N*(4 byte int, + 1 byte char)
+		 * Int is stored big endian
+		 * */
+		bool packHeader(void){
+			size_t headerSize = (this->frequencies_s*sizeof(int)) + this->treeLetters_s + 1;
+			char byteOne_count = this->treeLetters_s;
+			
+			this->out[0] = byteOne_count;
+			for(int i=1, j=0; i<headerSize && i<this->out_s && j<this->treeLetters_s && j<this->frequencies_s; i++){
+				char freq_a=0,freq_b=0,freq_c=0,freq_d=0, letter=this->treeLetters[j];
+				freq_a = (this->frequencies[j] >> 8*3) & 0xff;
+				freq_b = (this->frequencies[j] >> 8*2) & 0xff;
+				freq_c = (this->frequencies[j] >> 8*1) & 0xff;
+				freq_d = this->frequencies[j] & 0xff;
+				this->out[i] = freq_a; i++;
+				if(!(i<this->out_s)) return false;
+				this->out[i] = freq_b; i++;
+				if(!(i<this->out_s)) return false;
+				this->out[i] = freq_c; i++;
+				if(!(i<this->out_s)) return false;
+				this->out[i] = freq_d; i++;
+				if(!(i<this->out_s)) return false;
+				this->out[i] = letter;
+				j++;
+			}	
+			return true;
+		}
+		
+		bool unpackHeader(void){
+
+			return true;
+		}
 
 		bool encode(char *data, size_t dataSize){
 			if(!this->plantTree()){
 				this->setError(0x502, "encode() - failed to plant tree.");
 				return false;
 			}
-			printf("Tree Planted!");
+			printf("[DBG] Tree Planted!\n");
+			
+			this->destroyOut();
+			this->out_s = 0;
+			int bodySize = 0;
+			for(int i=0; i<this->frequencies_s; i++){
+				int freq = this->frequencies[i];
+				int bitCount = this->codeTable[i];
+				bodySize += bitCount * freq;
+			}
 
+
+			size_t headerSize = (this->frequencies_s*sizeof(int)) + this->treeLetters_s + 1; // the one continas the treeLetters_s
+			char outRemainder = (bodySize%8);
+			bodySize = outRemainder == 0 ? bodySize/8 : (bodySize/8) + 1;
+
+			this->out_s = headerSize + bodySize + 1; // the one contains the outRemainder
+			this->out = new char[this->out_s];
+			for(int i=0; i<this->out_s; i++) this->out[i] = 0x00;
+
+			this->packHeader();
+
+			int bitLoop=0;
+			this->out[headerSize] = outRemainder;
+			printf("[DBG] encoded binary string :\n");
+			for(int i=0, o=headerSize+1; i<dataSize && o<this->out_s; i++){
+				int codeIndex = this->charToTableIndex(data[i]);
+				std::string binary = getCodeBinary(codeIndex);
+				for(int j=0; j<binary.length() && o<this->out_s; j++){
+					int bit = binary[j] == '0' ? 0 : 1;
+					printf("%d", bit);
+					this->out[o] += bit << (7-bitLoop);
+					bitLoop++;
+					if((bitLoop%8) == 0){
+						bitLoop=0;
+						o++;
+					}
+				}
+			}printf("\n");
+
+			printf("[DBG] Output buffer (size : %ld | Remainder : %d) : \n", this->out_s, outRemainder);
+			for(int i=0; i<this->out_s;i++){
+				printf("%c", this->out[i]);
+			}printf("\n");
 			return true;
 		}
 
