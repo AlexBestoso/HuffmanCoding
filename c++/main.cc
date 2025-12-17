@@ -15,7 +15,26 @@ int main(void){
 		printf("Compression failed : %s\n", hc.getErrorMessage().c_str());
 		exit(EXIT_FAILURE);
 	}
-	printf("NOT YET FINISHED\n");
+
+	size_t compressedSize = hc.out_s;
+	char *compressedMsg = new char[compressedSize];
+	printf("Compressed Data : ");
+	for(int i=0; i<hc.out_s; i++){
+		compressedMsg[i] = hc.out[i];
+		printf("%c", hc.out[i]);
+	}
+	printf("\n");
+
+	if(!hc.decompress(compressedMsg, compressedSize)){
+		printf("Decompression failed : %s\n", hc.getErrorMessage().c_str());
+		exit(EXIT_FAILURE);
+	}
 	
+	printf("Decompressed Data : ");
+	for(int i=0; i<hc.out_s; i++){
+		printf("%c", hc.out[i]);
+	}
+	printf("\n");
+	delete[] compressedMsg;
 	exit(EXIT_SUCCESS);
 }
