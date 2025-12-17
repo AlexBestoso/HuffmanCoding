@@ -92,11 +92,11 @@ class HuffmanCoding{
 		
 		bool createTreeLetters(char *data, size_t dataSize){
 			if(data == NULL){
-				this->setError(0x900, "createTreeLetters(char *data, size_t dataSize) - data is null.");
+				this->setError(200, "createTreeLetters(char *data, size_t dataSize) - data is null.");
 				return false;
 			}
 			if(dataSize <= 0){
-				this->setError(0x901, "createTreeLetters(char *data, size_t dataSize) - dataSize is <= 0, treating data as null");
+				this->setError(201, "createTreeLetters(char *data, size_t dataSize) - dataSize is <= 0, treating data as null");
 				return false;
 			}
 			this->destroyTreeLetters();
@@ -120,19 +120,19 @@ class HuffmanCoding{
 
 		bool createFrequency(char *data, size_t dataSize){
 			if(this->treeLetters == NULL){
-				this->setError(0x910, "createFrequency(char *data, size_t dataSize) - treeLetters is null.");
+				this->setError(300, "createFrequency(char *data, size_t dataSize) - treeLetters is null.");
 				return false;
 			}
 			if(this->treeLetters_s <= 0){
-				this->setError(0x911, "createFrequency(char *data, size_t dataSize) - treeLetters_s is <= 0, treating treeLetters as null.");
+				this->setError(301, "createFrequency(char *data, size_t dataSize) - treeLetters_s is <= 0, treating treeLetters as null.");
 				return false;
 			}
 			if(data == NULL){
-				this->setError(0x912, "createFrequency(char *data, size_t dataSize) - data is null.");
+				this->setError(302, "createFrequency(char *data, size_t dataSize) - data is null.");
 				return false;
 			}
 			if(dataSize <= 0){
-				this->setError(0x913, "createFrequency(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+				this->setError(303, "createFrequency(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
 				return false;
 			}
 			this->destroyFrequencies();
@@ -151,23 +151,23 @@ class HuffmanCoding{
 
 		bool sortFreqencies(void){
 			if(this->treeLetters_s <= 0){
-				this->setError(0x923, "sortFreqencies(void) - treeLetters_s is 0, treating as null.");
+				this->setError(400, "sortFreqencies(void) - treeLetters_s is 0, treating as null.");
 				return false;
 			}
 			if(this->frequencies_s <= 0){
-				this->setError(0x924, "sortFreqencies(void) - frequencies_s <= 0, treating as null.");
+				this->setError(401, "sortFreqencies(void) - frequencies_s <= 0, treating as null.");
 				return false;
 			}
 			if(this->treeLetters_s != this->frequencies_s){
-				this->setError(0x920, "sortFreqencies(void) - Table Corruption, treeLetters_s != frequencies_s.");
+				this->setError(402, "sortFreqencies(void) - Table Corruption, treeLetters_s != frequencies_s.");
 				return false;
 			}
 			if(this->treeLetters == NULL){
-				this->setError(0x921, "sortFreqencies(void) - treeLetters is null.");
+				this->setError(403, "sortFreqencies(void) - treeLetters is null.");
 				return false;
 			}
 			if(this->frequencies == NULL){
-				this->setError(0x922, "sortFreqencies(void) - frequencies is null.");
+				this->setError(404, "sortFreqencies(void) - frequencies is null.");
 				return false;
 			}
 
@@ -246,12 +246,20 @@ class HuffmanCoding{
 		// returns true if target is NOT an inner node, and returns the indecies of the two values that created
 		// the target value, organized relative to their encoding value (1 or 0)
 		// TODO: Fix boolean. Index 9 wrongly marked as a top node.
-		bool isTopNode(/*int targetVal, */int targetIndex, /*int targetLayerIndex, int *layerSizes, size_t layerSizes_s,*/ int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex){
+		bool isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex){
+			if(nodeCache == NULL){
+				this->setError(500, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - nodeCache is null.");
+				return false;
+			}
+			if(nodeCache_s <= 0){
+				this->setError(501, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - nodeCache_s <= 0. Treating as null.");
+				return false;
+			}
 			int topLayerIndex=0;
 			int bottomLayerIndex=0;
 			int layerStartDescriptor = 0;
-                        size_t topSize = 0;//layerSizes[targetLayerIndex];
-                        size_t bottomSize = -1; // layerSizes[targetLayerIndex-1];
+                        size_t topSize = 0;
+                        size_t bottomSize = -1;
 			bool processing = false;
 
 			// Determine the size and location of top and bottom layers.
@@ -324,7 +332,7 @@ class HuffmanCoding{
 					i--;
 					prev = i;
 				}
-				this->setError(12345, "isTopNode() - Failed to process provided layer 0 value.");
+				this->setError(502, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - Failed to process provided layer 0 value.");
 				oneIndex[0] = -1;
 				zeroIndex[0] = -1;
 				return false;
@@ -347,9 +355,14 @@ class HuffmanCoding{
 				for(int j=bottomStart; j>=bottomStart; j++){
 					int zero = nodeCache[j];
 					if(!(j+1<bottomIterEnd)){
-						printf("Unhandled error. - bottom check out of bounds %d+1 < %d\n", j, bottomIterEnd);
-						i=topIterEnd;
-						break;
+						std::string msg = "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - bottom check out of bounds ";
+						msg += std::to_string(j);
+						msg += "+1 < ";
+						msg += std::to_string(bottomIterEnd);
+						this->setError(503, msg.c_str());
+						return false;
+						//i=topIterEnd;
+						//break;
 					}
 					int one = nodeCache[j+1];
 					int sum = zero + one;
@@ -374,8 +387,10 @@ class HuffmanCoding{
 					
 					if(!(i+1<nodeCache_s)){
 						processing = false;
-						printf("Unhandled error - top check out of bounds.");
-						break;
+						this->setError(504, "Unhandled error - top check out of bounds.");
+						return false;
+						//printf("Unhandled error - top check out of bounds.");
+						//break;
 					}
 					one = nodeCache[i+1];
 					sum = zero+one;
@@ -429,16 +444,20 @@ class HuffmanCoding{
 	
 		bool growLayer(void){
 			if(this->treeData_s <= 0){
+				this->setError(600, "growLoayer(void) - treeData_s <= 0. Treating as null.");
 				return false;
 			}
 			if(this->treeData == NULL){
+				this->setError(601, "growLoayer(void) - treeData is null.");
 				return false;
 			}
 			if(this->treeData[this->treeData_s-1] == -1){
 				if(this->frequencies_s <= 0){
+					this->setError(602, "growLoayer(void) - frequencies_s <= 0. Treating as null.");
 					return false;
 				}
 				if(this->frequencies == NULL){
+					this->setError(603, "growLoayer(void) - frequencies is null.");
 					return false;
 				}
 				// seeding layer
@@ -495,8 +514,13 @@ class HuffmanCoding{
 
 			for(int i=bottomLayerStart, sum=-1, next=-1, nextOffset=0; i>=bottomLayerEnd && topLayerEnd >= 0; i--){
 				int z=0, o=0;
-				if(!this->isTopNode(i, this->treeData, this->treeData_s, &z, &o))
+				if(!this->isTopNode(i, this->treeData, this->treeData_s, &z, &o)){
+					if(this->failed()){
+						this->setError(604, "growLoayer(void) - Failed to check for top node.");
+						return false;
+					}
 					continue;
+				}
 				if(next == -1){
 					nextOffset=1;
 					for(int j=i; i>=bottomLayerEnd; j++){
@@ -504,6 +528,10 @@ class HuffmanCoding{
 						if(next == -1) break;
 						int a=0, b=0;
 						if(!this->isTopNode(i-nextOffset, this->treeData, this->treeData_s, &a, &b)){
+							if(this->failed()){
+								this->setError(605, "growLoayer(void) - Failed to check for top node.");
+								return false;
+							}
 							nextOffset++;
 							next = -1;
 						}else{
@@ -529,6 +557,11 @@ class HuffmanCoding{
 				}else{
 					int a=0, b=0;
 					if(!this->isTopNode(i, this->treeData, this->treeData_s, &a, &b)){
+						if(this->failed()){
+							this->setError(606, "growLoayer(void) - Failed to check for top node.");
+							return false;
+
+						}
 						next=-1;
 						continue;
 					}
@@ -544,6 +577,14 @@ class HuffmanCoding{
 		}
 	
 		bool plantTree(void){
+			if(this->frequencies == NULL){
+				this->setError(700, "plantTree(void) - frequencies is null.");
+				return false;
+			}
+			if(this->frequencies_s <= 0){
+				this->setError(701, "plantTree(void) - frequencies_s <=0. Treating as null.");
+				return false;
+			}
 			this->destroyTreeData();
 			this->destroyCodingTable();
 			this->treeData_s = this->frequencies_s+this->frequencies_s-1;
@@ -557,8 +598,12 @@ class HuffmanCoding{
 			}
 			
 			// seed the tree, and begin coding table.
-			while(this->treeData[0] == -1)
-				this->growLayer();
+			while(this->treeData[0] == -1){
+				if(!this->growLayer()){
+					this->setError(702, "plantTree(void) - Failed to grow tree layer.");
+					return false;
+				}
+			}
 
 			int zero=-1, one=-1;
 			int baseLayerEnd = this->treeData_s - this->frequencies_s;
@@ -567,6 +612,10 @@ class HuffmanCoding{
 			// Complete code table generation.
 			for(int i=continueationIndex; i>=0; i--){
 				bool nodeType = this->isTopNode(i, this->treeData, this->treeData_s, &zero, &one);
+				if(this->failed()){
+					this->setError(703, "plantTree(void) - Failed to identify top node.");
+					return false;
+				}
 				// every final result under index zero, needs to have a 0 added.
 				bool processing=true;
 				size_t queueSize=this->treeData_s+1;
@@ -591,6 +640,10 @@ class HuffmanCoding{
 						continue;
 					}
 					this->isTopNode(target, this->treeData, this->treeData_s, &z, &o);
+					if(this->failed()){
+						this->setError(704, "plantTree(void) - Failed to identify top node.");
+						return false;
+					}
 					if(z >= baseLayerEnd && o > baseLayerEnd){
 						// Shift queue, reduce size by 1.
 						for(int j=0; j<queueSize-1; j++){
@@ -660,6 +713,10 @@ class HuffmanCoding{
 					int z=0, o=0;
 					int target = queue[0];
 					this->isTopNode(target, this->treeData, this->treeData_s, &z, &o);
+					if(this->failed()){
+						this->setError(705, "plantTree(void) - failed to identify top node.");
+						return false;
+					}
 					queue[0] = -1;
 					if(target > baseLayerEnd){
                                                 target = target-converter;
@@ -741,6 +798,18 @@ class HuffmanCoding{
 		}
 
 		std::string getCodeBinary(int idx){
+			if(this->codeTable == NULL){
+				this->setError(800, "getCodeBinary(int idx) - codeTable is null.");
+				return "";
+			}
+			if(idx < 0 || idx >= this->codeTable_s){
+				this->setError(801, "getCodeBinary(int idx) - idx is out of bounds.");
+				return "";
+			}
+			if(this->frequencies_s+idx < 0 || this->frequencies_s+idx >= this->codeTable_s){
+				this->setError(802, "getCodeBinary(int idx) - frequencies_s+idx is out of bounds.");
+				return "";
+			}
 			std::string ret = "";
 			int codeSize = this->codeTable[idx];
 			int code = this->codeTable[this->frequencies_s+idx];
@@ -754,6 +823,10 @@ class HuffmanCoding{
 		int codeToTableIndex(std::string code){
 			for(int i=0; i<this->frequencies_s; i++){
 				std::string comp = this->getCodeBinary(i);
+				if(this->failed()){
+					this->setError(900, "codeToTableIndex(std::string code) - failed to get binary code.");
+					return -1;
+				}
 				if(comp == code){
 					return i;
 				}
@@ -775,6 +848,22 @@ class HuffmanCoding{
 		 * Int is stored big endian
 		 * */
 		bool packHeader(void){
+			if(this->frequencies == NULL){
+				this->setError(1000, "packHeader(void) - frequencies is null.");
+				return false;
+			}
+			if(this->frequencies_s <= 0){
+				this->setError(1001, "packHeader(void) - frequencies_s <= 0. Treating as null.");
+				return false;
+			}
+			if(this->treeLetters == NULL){
+                                this->setError(1002, "packHeader(void) - treeLetters is null.");
+                                return false;
+                        }
+                        if(this->treeLetters_s <= 0){
+                                this->setError(1003, "packHeader(void) - treeLetters_s <= 0. Treating as null.");
+                                return false;
+                        }
 			size_t headerSize = (this->frequencies_s*sizeof(int)) + this->treeLetters_s + 1;
 			char byteOne_count = this->treeLetters_s;
 			
@@ -786,13 +875,25 @@ class HuffmanCoding{
 				freq_c = (this->frequencies[j] >> 8*1) & 0xff;
 				freq_d = this->frequencies[j] & 0xff;
 				this->out[i] = freq_a; i++;
-				if(!(i<this->out_s)) return false;
+				if(!(i<this->out_s)){
+					this->setError(1004, "packHeader(void) - i out of bounds.");
+					return false;
+				}
 				this->out[i] = freq_b; i++;
-				if(!(i<this->out_s)) return false;
+				if(!(i<this->out_s)){
+					this->setError(1005, "packHeader(void) - i out of bounds.");
+					return false;
+				}
 				this->out[i] = freq_c; i++;
-				if(!(i<this->out_s)) return false;
+				if(!(i<this->out_s)){
+					this->setError(1006, "packHeader(void) - i out of bounds.");
+					return false;
+				}
 				this->out[i] = freq_d; i++;
-				if(!(i<this->out_s)) return false;
+				if(!(i<this->out_s)){
+					this->setError(1007, "packHeader(void) - i out of bounds.");
+					return false;
+				}
 				this->out[i] = letter;
 				j++;
 			}	
@@ -801,11 +902,11 @@ class HuffmanCoding{
 		
 		bool unpackHeader(char *data, size_t dataSize){
 			if(data == NULL){
-				this->setError(444, "unpackHeader() - data is null.");
+				this->setError(1100, "unpackHeader(char *data, size_t dataSize) - data is null.");
 				return false;
 			}
 			if(dataSize <= 0){
-				this->setError(4545, "unpackHeader() - dataSize <= 0, treating as null.");
+				this->setError(1101, "unpackHeader(char *data, size_t dataSize) - dataSize <= 0, treating as null.");
 				return false;
 			}
 
@@ -822,13 +923,25 @@ class HuffmanCoding{
 				int freq=0;
 				char letter=0x00;
 				freq += data[i] << (8*3); i++;
-				if(!(i<dataSize)) return false;
+				if(!(i<dataSize)){
+					this->setError(1102, "unpackHeader(char *data, size_t dataSize) - i out of bounds.");
+					return false;
+				}
 				freq += data[i] << (8*2); i++;
-				if(!(i<dataSize)) return false;
+				if(!(i<dataSize)){
+					this->setError(1103, "unpackHeader(char *data, size_t dataSize) - i out of bounds.");
+					return false;
+				}
 				freq += data[i] << (8*1); i++;
-				if(!(i<dataSize)) return false;
+				if(!(i<dataSize)){
+					this->setError(1104, "unpackHeader(char *data, size_t dataSize) - i out of bounds.");
+					return false;
+				}
 				freq += data[i]; i++;
-				if(!(i<dataSize)) return false;
+				if(!(i<dataSize)){
+					this->setError(1105, "unpackHeader(char *data, size_t dataSize) - i out of bounds.");
+					return false;
+				}
 				letter = data[i];
 				
 				this->frequencies[j] = freq;
@@ -840,7 +953,7 @@ class HuffmanCoding{
 
 		bool encode(char *data, size_t dataSize){
 			if(!this->plantTree()){
-				this->setError(0x502, "encode() - failed to plant tree.");
+				this->setError(0x1200, "encode() - failed to plant tree.");
 				return false;
 			}
 			printf("[DBG] Tree Planted!\n");
@@ -864,7 +977,7 @@ class HuffmanCoding{
 			for(int i=0; i<this->out_s; i++) this->out[i] = 0x00;
 
 			if(!this->packHeader()){
-				this->setError(1234, "encode() - failed to pack header.");
+				this->setError(1201, "encode() - failed to pack header.");
 				return false;
 			}
 
@@ -963,6 +1076,50 @@ class HuffmanCoding{
 			this->destroyTreeData();
 		}
 
+		void printTreeLetters(void){
+			printf("Tree Letters : ");
+			if(this->treeLetters == NULL || this->treeLetters_s <=0){
+				printf("NULL\n");
+				return;
+			}
+			for(int i=0; i<treeLetters_s; i++){
+				printf("[%d]%c ", i, this->treeLetters[i]);
+			}printf("\n");
+		}
+
+		void printFrequencies(void){
+			printf("Frequencies : ");
+			if(this->frequencies == NULL || this->frequencies_s <= 0){
+				printf("NULL\n");
+				return;
+			}
+			for(int i=0; i<this->frequencies_s; i++){
+				printf("[%d]%d ", i, this->frequencies[i]);
+			}printf("\n");
+		}
+
+		void printCodeTable(void){
+			printf("Code Table : \n\tindex | bit count |  code | char\n");
+			if(this->frequencies == NULL || this->frequencies_s <= 0 || this->codeTable == NULL || this->codeTable_s <= 0 || this->treeLetters == NULL || this->treeLetters_s <=0){
+                                printf("NULL\n");
+                                return;
+                        }
+			for(int i=0; i<this->frequencies_s; i++){
+				printf("\t%d    | %d        | %s     | %c\n", i, this->codeTable[i], this->getCodeBinary(i).c_str(), this->treeLetters[i]);
+			}printf("\n");
+		}
+
+		void printTree(void){
+			printf("Tree : ");
+			if(this->treeData == NULL || this->treeData_s <= 0){
+				printf("NULL\n");
+				return;
+			}
+			for(int i=0; i<this->treeData_s; i++){
+				printf("[%d]%d ", i, this->treeData[i]);
+			}
+		}
+
 		bool compress(char *data, size_t dataSize){
 			this->clearError();
 			this->destroyCodingTable();
@@ -971,26 +1128,26 @@ class HuffmanCoding{
 			this->destroyOut();
 			this->tablesSorted = false;
 			if(data == NULL){
-				this->setError(0x000, "compress(char *data, size_t dataSize) - data is null.");
+				this->setError(0, "compress(char *data, size_t dataSize) - data is null.");
 				return false;
 			}
 			if(dataSize <= 0){
-				this->setError(0x001, "compress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+				this->setError(1, "compress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
 				return false;
 			}
 
 			if(!this->createTreeLetters(data, dataSize)){
-				this->setError(0x002, "compress(char *data, size_t dataSize) - Failed to create tree letters.");
+				this->setError(2, "compress(char *data, size_t dataSize) - Failed to create tree letters.");
 				return false;
 			}
 
 			if(!this->createFrequency(data, dataSize)){
-				this->setError(0x003, "compress(char *data, size_t dataSize) - Failed to create frequency table");
+				this->setError(3, "compress(char *data, size_t dataSize) - Failed to create frequency table");
 				return false;
 			}
 
 			if(!this->sortFreqencies()){
-				this->setError(0x004, "compress(char *data, size_t dataSize) - sortFreqencies failed.");
+				this->setError(4, "compress(char *data, size_t dataSize) - sortFreqencies failed.");
 				return false;
 			}
 			#if HUFFMAN_DEBUGGING == 1
@@ -1005,7 +1162,7 @@ class HuffmanCoding{
 			#endif
 
 			if(!this->encode(data, dataSize)){
-				this->setError(0x004, "compress(char *data, size_t dataSize) - Failed to encode data.");
+				this->setError(5, "compress(char *data, size_t dataSize) - Failed to encode data.");
 				return false;
 			}
 			
@@ -1019,15 +1176,15 @@ class HuffmanCoding{
 			this->destroyFrequencies();
 			this->destroyOut();
 			if(data == NULL){
-                                this->setError(0x000, "decompress(char *data, size_t dataSize) - data is null.");
+                                this->setError(100, "decompress(char *data, size_t dataSize) - data is null.");
                                 return false;
                         }
                         if(dataSize <= 0){
-                                this->setError(0x001, "decompress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+                                this->setError(101, "decompress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
                                 return false;
                         }
 			if(!this->unpackHeader(data, dataSize)){
-				this->setError(12345, "decompress() - faiiled to unpack header.");
+				this->setError(102, "decompress(char *data, size_t dataSize) - faiiled to unpack header.");
 				return false;
 			}
 
@@ -1043,7 +1200,7 @@ class HuffmanCoding{
                         #endif
 
 			if(!this->plantTree()){
-                                this->setError(0x502, "decompress() - failed to plant tree.");
+                                this->setError(103, "decompress(char *data, size_t dataSize) - failed to plant tree.");
                                 return false;
                         }
                         printf("[DBG] Tree Planted!\n");
@@ -1058,7 +1215,7 @@ class HuffmanCoding{
                         printf("---------------\n");
 		
 			if(!this->decode(data, dataSize)){
-				this->setError(4445, "decompress() - failed to decode the data.");
+				this->setError(104, "decompress(char *data, size_t dataSize) - failed to decode the data.");
 				return false;
 			}
 			return true;
