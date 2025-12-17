@@ -737,15 +737,6 @@ class HuffmanCoding{
 					delete[] queue;
 			}
 			
-			printf("Tree : ");
-			for(int i=0; i<this->treeData_s; i++)
-				printf("[%d]%d ", i, this->treeData[i]);
-			printf("\n");
-			printf("-----CODE TABLE----\nIDX | BIT COUNT | ENCODED VAL | ORIGINAL VAL |\n");
-                        for(int i=0; i<this->frequencies_s; i++){
-                                printf("%d  |    %d    |    %s    |       %c    |\n", i, this->codeTable[i], this->getCodeBinary(i).c_str(), this->treeLetters[i]);
-                        }
-                        printf("---------------\n");
 			return true;
 		}
 
@@ -758,6 +749,16 @@ class HuffmanCoding{
 				ret += std::to_string(bit);
 			}
 			return ret;
+		}
+
+		int codeToTableIndex(std::string code){
+			for(int i=0; i<this->frequencies_s; i++){
+				std::string comp = this->getCodeBinary(i);
+				if(comp == code){
+					return i;
+				}
+			}
+			return -1;
 		}
 		
 		int charToTableIndex(char val){
@@ -798,8 +799,42 @@ class HuffmanCoding{
 			return true;
 		}
 		
-		bool unpackHeader(void){
+		bool unpackHeader(char *data, size_t dataSize){
+			if(data == NULL){
+				this->setError(444, "unpackHeader() - data is null.");
+				return false;
+			}
+			if(dataSize <= 0){
+				this->setError(4545, "unpackHeader() - dataSize <= 0, treating as null.");
+				return false;
+			}
 
+			this->destroyTreeLetters();
+			this->destroyFrequencies();
+			char letterCount = data[0];
+			this->frequencies_s = (size_t)letterCount;
+			this->treeLetters_s = this->frequencies_s;
+			this->frequencies = new int[this->frequencies_s];
+			this->treeLetters = new char[this->treeLetters_s];
+			
+			int headerSize = 1 + (this->frequencies_s*sizeof(int)) + this->treeLetters_s;
+			for(int i=1, j=0; i<headerSize && i<dataSize && j<this->frequencies_s && j<this->treeLetters_s; i++){
+				int freq=0;
+				char letter=0x00;
+				freq += data[i] << (8*3); i++;
+				if(!(i<dataSize)) return false;
+				freq += data[i] << (8*2); i++;
+				if(!(i<dataSize)) return false;
+				freq += data[i] << (8*1); i++;
+				if(!(i<dataSize)) return false;
+				freq += data[i]; i++;
+				if(!(i<dataSize)) return false;
+				letter = data[i];
+				
+				this->frequencies[j] = freq;
+				this->treeLetters[j] = letter;
+				j++;
+			}
 			return true;
 		}
 
@@ -828,17 +863,18 @@ class HuffmanCoding{
 			this->out = new char[this->out_s];
 			for(int i=0; i<this->out_s; i++) this->out[i] = 0x00;
 
-			this->packHeader();
+			if(!this->packHeader()){
+				this->setError(1234, "encode() - failed to pack header.");
+				return false;
+			}
 
 			int bitLoop=0;
 			this->out[headerSize] = outRemainder;
-			printf("[DBG] encoded binary string :\n");
 			for(int i=0, o=headerSize+1; i<dataSize && o<this->out_s; i++){
 				int codeIndex = this->charToTableIndex(data[i]);
 				std::string binary = getCodeBinary(codeIndex);
 				for(int j=0; j<binary.length() && o<this->out_s; j++){
 					int bit = binary[j] == '0' ? 0 : 1;
-					printf("%d", bit);
 					this->out[o] += bit << (7-bitLoop);
 					bitLoop++;
 					if((bitLoop%8) == 0){
@@ -846,17 +882,39 @@ class HuffmanCoding{
 						o++;
 					}
 				}
-			}printf("\n");
+			}
 
-			printf("[DBG] Output buffer (size : %ld | Remainder : %d) : \n", this->out_s, outRemainder);
-			for(int i=0; i<this->out_s;i++){
-				printf("%c", this->out[i]);
-			}printf("\n");
 			return true;
 		}
 
-		bool deriveTreeLetters(void){return true;}
-		bool deriveFrequency(void){return true;}
+		bool decode(char *data, size_t dataSize){
+			size_t headerSize = (this->frequencies_s*sizeof(int)) + this->treeLetters_s + 1;
+			int paddingCount = (int)data[headerSize];
+			int dataStart = headerSize+1;
+			int bitCount = ((dataSize - headerSize-1) * 8) - paddingCount;
+			std::string grab = "";
+			std::string obuff="";
+			size_t obuff_s =0;
+			destroyOut();
+			for(int i=dataStart; i<dataSize && bitCount > 0; i++){
+				char val = data[i];
+				for(int j=0; j<8 && bitCount>0; j++){
+					grab += std::to_string((val >> (7-j)) & 1);
+					bitCount--;
+					int decoded = this->codeToTableIndex(grab);
+					if(decoded != -1){
+						obuff += this->treeLetters[decoded];
+						obuff_s++;
+						grab = "";
+					}
+				}
+			}
+			this->out_s = obuff_s;
+			this->out = new char[this->out_s];
+			for(int i=0; i<obuff_s; i++)
+				this->out[i] = obuff[i];
+			return true;
+		}
 
 		void clearError(void){
 			this->error = -1;
@@ -960,6 +1018,49 @@ class HuffmanCoding{
 			this->destroyTreeLetters();
 			this->destroyFrequencies();
 			this->destroyOut();
+			if(data == NULL){
+                                this->setError(0x000, "decompress(char *data, size_t dataSize) - data is null.");
+                                return false;
+                        }
+                        if(dataSize <= 0){
+                                this->setError(0x001, "decompress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+                                return false;
+                        }
+			if(!this->unpackHeader(data, dataSize)){
+				this->setError(12345, "decompress() - faiiled to unpack header.");
+				return false;
+			}
+
+			#if HUFFMAN_DEBUGGING == 1
+                        int freqMax = 0;
+                        printf("[DBG] Imported Frequencies : \n\t");
+                        for(int i=0; i<this->frequencies_s; i++){
+                                printf("'%c'(%d) ", this->treeLetters[i], this->frequencies[i]);
+                                freqMax += this->frequencies[i];
+                        }
+                        printf("\n");
+                        printf("[DBG] Expected Max : %d\n", freqMax);
+                        #endif
+
+			if(!this->plantTree()){
+                                this->setError(0x502, "decompress() - failed to plant tree.");
+                                return false;
+                        }
+                        printf("[DBG] Tree Planted!\n");
+			printf("Tree : ");
+                        for(int i=0; i<this->treeData_s; i++)
+                                printf("[%d]%d ", i, this->treeData[i]);
+                        printf("\n");
+                        printf("-----CODE TABLE----\nIDX | BIT COUNT | ENCODED VAL | ORIGINAL VAL |\n");
+                        for(int i=0; i<this->frequencies_s; i++){
+                                printf("%d  |    %d    |    %s    |       %c    |\n", i, this->codeTable[i], this->getCodeBinary(i).c_str(), this->treeLetters[i]);
+                        }
+                        printf("---------------\n");
+		
+			if(!this->decode(data, dataSize)){
+				this->setError(4445, "decompress() - failed to decode the data.");
+				return false;
+			}
 			return true;
 		}
 };
