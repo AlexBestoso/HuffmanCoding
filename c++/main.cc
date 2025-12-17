@@ -1,40 +1,43 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <string>
 
 #include "HuffmanCoding.class.h"
 
-int main(void){
-	printf("Huffman Coding Tests\n");
+int main(int argc, char *argv[]){
+	std::string dbg = argc > 1 ? argv[1] : "";
+	printf("[*] Running Huffman Coding 256 Byte Test\n");
 	HuffmanCoding hc;
+	int counts[256];
+	size_t ogMsgSize = 0;
+	std::srand(time(0));
 
-	std::string msg = "What I always found interesting was the fact that I can just write for days and days, seemingly never running out of things to say.";
-	printf("Compressing the message (%ld) : \n\t%s\n", msg.length(), msg.c_str());
+	printf("[*] Generating random byte frequencies...");
+	for(int i=0; i<256; i++){
+		counts[i] = rand() % (60-1+1)+1;
+		ogMsgSize += counts[i];
+	}
+	printf("%ld bytes.\n[*] Original Msg : \n\033[0;32m", ogMsgSize);
+	if(dbg != "debug") printf("\tRun %s debug to view generated message.", argv[0]);
+	char *ogMsg = new char[ogMsgSize];
+	for(int i=0, midx=0; i<256 && midx < ogMsgSize; i++){
+		for(int j=0; j<counts[i] && midx < ogMsgSize; j++){
+			ogMsg[midx] = i;
+			if(dbg == "debug")
+				printf("0x%x ", ogMsg[midx] & 0xff);
+			midx++;
+		}
+	}printf("\033[0m\n");
 
-	if(!hc.compress((char *)msg.c_str(), msg.length())){
-		printf("Compression failed : %s\n", hc.getErrorMessage().c_str());
+	printf("[*] Attempting Compression...");
+	if(!hc.compress(ogMsg, ogMsgSize)){
+		printf("Failed. %s\n", hc.getErrorMessage().c_str());
+		delete[] ogMsg;
 		exit(EXIT_FAILURE);
 	}
-
-	size_t compressedSize = hc.out_s;
-	char *compressedMsg = new char[compressedSize];
-	printf("Compressed Data : ");
-	for(int i=0; i<hc.out_s; i++){
-		compressedMsg[i] = hc.out[i];
-		printf("%c", hc.out[i]);
-	}
-	printf("\n");
-
-	if(!hc.decompress(compressedMsg, compressedSize)){
-		printf("Decompression failed : %s\n", hc.getErrorMessage().c_str());
-		exit(EXIT_FAILURE);
-	}
+	printf("successful!\n");
 	
-	printf("Decompressed Data : ");
-	for(int i=0; i<hc.out_s; i++){
-		printf("%c", hc.out[i]);
-	}
-	printf("\n");
-	delete[] compressedMsg;
+	delete[] ogMsg;
 	exit(EXIT_SUCCESS);
 }
