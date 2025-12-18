@@ -35,11 +35,11 @@ int main(int argc, char *argv[]){
 		printf("Failed. %s\n", hc.getErrorMessage().c_str());
 		printf("\033[5mDATA DUMP\033[0;31m\n");
 		hc.printTreeLetters();
-		printf("\033[0;32m");
+		printf("\n\033[0;32m");
 		hc.printFrequencies();
-		printf("\033[0;33m");
+		printf("\n\033[0;33m");
 		hc.printCodeTable();
-		printf("\033[1;34m");
+		printf("\n\033[1;34m");
 		hc.printTree();
 		delete[] ogMsg;
 		printf("\033[0m");
