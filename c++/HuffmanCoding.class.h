@@ -392,7 +392,7 @@ class HuffmanCoding{
 			}
 			return true;
 		}
-		// TODO: fix  Failed to identify node stats for layer-starting index.
+		// TODO: fix when target index is 0, no zero and one index is found..
 		bool isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex){
 			if(nodeCache == NULL){
 				this->setError(500, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - nodeCache is null.");
@@ -411,67 +411,86 @@ class HuffmanCoding{
 			oneIndex[0] = -1;
 			
 			// Identify relative layer offsets and sizes.
-			int topEnd = 0;
+			int layerStart = 0;
                         size_t topSize = 0;
                         size_t bottomSize = -1;
 			// Returns bottomSize -1 if the target index is in the base layer/the leaf layer.
-			if(!this->findRelativeLayers(targetIndex, nodeCache, nodeCache_s, &topSize, &bottomSize, &topEnd)){
+			if(!this->findRelativeLayers(targetIndex, nodeCache, nodeCache_s, &topSize, &bottomSize, &layerStart)){
 				this->setError(502, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - failed to find relative layers.");	
 				return false;
 			}
 			if(bottomSize == -1){
-				return this->processBaseNodeValues(targetIndex, topEnd+topSize-1, topSize, nodeCache_s, zeroIndex, oneIndex);
+				return this->processBaseNodeValues(targetIndex, layerStart+topSize-1, topSize, nodeCache_s, zeroIndex, oneIndex);
 			}
 		
-			int topStart = topEnd+topSize;
-			int bottomEnd = topEnd+topSize;
-			int bottomStart = bottomEnd+bottomSize;
 			
-			int isTop = -1;
 			// This gets processed backwords (root to leaf)
 			printf("targetIndex : %d\n", targetIndex);
-			printf("\trelative values: top, bottom, start : %ld, %ld, %d\n", topSize, bottomSize, topEnd);
-			for(int i=0; i<topSize; i++){
-
-			}
-			for(int i=topEnd, j=0, tracer=-1, tracerIdx=0; i<topStart && i<nodeCache_s && bottomEnd+j < nodeCache_s; i++){
-				int a=0, b=0;
-				int sum = nodeCache[i];
+			printf("\trelative values: top, bottom, start : %ld, %ld, %d\n", topSize, bottomSize, layerStart);
+			
+			int bottomStart = layerStart+topSize+bottomSize-1;
+			int bottomEnd = layerStart+topSize;
+			int topStart = layerStart+topSize-1;
+			bool checking=false;
+			for(int i=bottomStart, j=topStart, tracer=-1, tracerIdx=0, sum=-1; i>=bottomEnd && j>=layerStart; i--){
 				if(tracer == -1){
-					tracer = nodeCache[bottomEnd+j];
-					tracerIdx=bottomEnd+j;
-					j++;
-					i--;
+					tracer = nodeCache[i];
+					tracerIdx=i;
 					continue;
 				}
-				//printf("\ti, tracer, current, sum, isTop : %d| %d | %d | %d | %d\n", i, tracer, nodeCache[bottomEnd+j], sum, isTop);
-				if(i == targetIndex && isTop == -1)
-					isTop = 1;
-				if(isTop != -1){
-					if(sum == tracer + nodeCache[bottomEnd+j]){
-                                        	zeroIndex[0] = tracerIdx;
-                                        	oneIndex[0] = bottomEnd+j;
-                                        	break;
-                                	}
-					if(sum == tracer + nodeCache[i+1]){
-						zeroIndex[0] = tracerIdx;
-						oneIndex[0] = i+1;
-						break;
+				if(sum == -1){
+					if(j == targetIndex){ // check value too.
+						zeroIndex[0] = i;
+						oneIndex[0] = tracerIdx;
+						checking = true;
 					}
-					tracer=-1;
-					i--;
+					sum = tracer + nodeCache[i];
+					tracer = -1;
+					j--;
 					continue;
-				}else{
-					if(sum == tracer + nodeCache[bottomEnd+j]){
-						j++;
-						tracer=-1;
-						continue;	
+				}
+				if(checking){
+					printf("\tzero : [%d]%d | one [%d]%d | expected sum [%d]%d calculated sum %d\n", zeroIndex[0], nodeCache[zeroIndex[0]], oneIndex[0], nodeCache[oneIndex[0]], targetIndex, nodeCache[targetIndex], nodeCache[zeroIndex[0]]+nodeCache[oneIndex[0]]);
+					if(sum < nodeCache[i]){
+						return false; 
+					}else{
+						return true;
 					}
-					if(sum == tracer + nodeCache[i+1]){
-						if(i+1 == targetIndex){
-							isTop = 0;
+				}else{
+					if(sum == nodeCache[i]){
+						sum = nodeCache[i] + tracer;
+						if(j == targetIndex){
+							zeroIndex[0] = i;
+							oneIndex[0] = tracerIdx;
+							checking = true;
 						}
+						j--;
 						tracer = -1;
+						continue;
+					}
+					if(sum < nodeCache[i]){
+						sum = tracer + sum;
+						if(j == targetIndex){
+							zeroIndex[0] = tracerIdx;
+							oneIndex[0] = j+1;
+							checking = true;
+						}
+						j--;
+						tracer = nodeCache[i];
+						tracerIdx = i;
+						continue;
+					}
+				
+					if(sum > nodeCache[i]){
+						sum = tracer + nodeCache[i];
+						if(j == targetIndex){
+							zeroIndex[0] = i;
+							oneIndex[0] = tracerIdx;
+							checking = true;
+						}
+						j--;
+						tracer = -1;
+						continue;
 					}
 				}
 			}
@@ -482,7 +501,7 @@ class HuffmanCoding{
 				return false;
 			}
 
-			return isTop == 1 ? true : false;
+			return true;
 		}
 
 		bool seedLayers(void){
@@ -610,8 +629,8 @@ class HuffmanCoding{
 			int topLayerStart = this->getTopLayerStart();
 			size_t topLayerSize = topLayerStart + 1;
 			
-			// The top layer for post-seed operations is off by 2, and is grown out of order/scale
 
+			// TODO: Investigate if this modular equation is throwing things off.
 			printf("Top layer Start : %d\n", topLayerStart);
 			for(int i=topLayerStart, tracer=-1, sum=-1; i>=0; i--){
 				int z=0, o=0;
@@ -625,10 +644,13 @@ class HuffmanCoding{
 					break;
 				}
 				if(!this->isTopNode(i, this->treeData, this->treeData_s, &z, &o) && i != 0){
-					printf("\t%d '%d' is bottom node, skipping...\n", i, this->treeData[i]);
+					if(this->failed()){
+						printf("TRIED TARGET : %d\n", i);
+						this->setError(334, "growLayer(void) - isTopNode check failed.");
+						return false;
+					}
+					printf("\t\t%d '%d' is bottom node, skipping...\n", i, this->treeData[i]);
 					continue;
-				}else{
-					printf("\t%d '%d' is a top node.\n", i, this->treeData[i]);
 				}
 				if(tracer == -1){
 					tracer = this->treeData[i];
