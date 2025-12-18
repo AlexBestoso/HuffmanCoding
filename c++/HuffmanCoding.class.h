@@ -307,43 +307,54 @@ class HuffmanCoding{
 			out_topSize[0] = 0;
 			out_bottomSize[0] = 0;
 			out_segmentStart[0] = -1;
-			int baseline = nodeCache_s-this->frequencies_s;
-			if(target >= baseline){
-				out_topSize[0] = this->frequencies_s;
-				out_bottomSize[0] = -1;
-				out_segmentStart[0] = baseline;
-				return true;
-			}
-			for(int i=nodeCache_s-1, found=0, checker=-1; i>=0; i--){
-				if(i==nodeCache_s-1){
-					checker = nodeCache[i];
+			int layerStart = 0;
+			int layerSize=0;
+			bool found=false;
+			for(int i=0, tracer=-1; i<nodeCache_s; i++){
+				if(tracer == -1){
+					tracer = nodeCache[i];
+					layerSize=1;
+					layerStart = i;
+					continue;
 				}
-				if(found){ // no longer searching for bottom layer
-					if(checker > nodeCache[i]){
-						break;
-					}
-					
-					out_topSize[0]++;
-					out_segmentStart[0] = i;
 
-				}else{ // searching for bottom layer
-					if(checker > nodeCache[i]){
-						out_bottomSize[0] = out_topSize[0];
-						out_topSize[0] = 1;
-					}else{
-						out_topSize[0]++;
-						out_segmentStart[0] = i;
-					}
-				}
 				if(i == target)
-					found = 1;
-				checker = nodeCache[i];
+					found = true;
+
+				if(tracer >= nodeCache[i]){
+					layerSize++;
+					tracer = nodeCache[i];
+					continue;
+				}
+				
+				if(found) break;
+				layerStart = i;
+				layerSize=1;
+				tracer = nodeCache[i];
 			}
 
-			if(out_segmentStart[0] == -1){
-				this->setError(524, "findRelativeLayers(int target, int *nodeCache, size_t nodeCache_s, int *out_topSize, int *out_bottomSize, int *out_segmentStart) - failed to indentify segment start.");
-				return false;
+			out_segmentStart[0] = layerStart;
+			out_topSize[0] = layerSize;
+
+			layerStart = layerStart+layerSize;
+			found=false;
+			for(int i=layerStart, tracer=-1; i<nodeCache_s; i++){
+				if(tracer == -1){
+                                        tracer = nodeCache[i];
+                                        layerSize=1;
+                                        layerStart = i;
+                                        continue;
+                                }
+
+                                if(tracer >= nodeCache[i]){
+                                        layerSize++;
+                                        tracer = nodeCache[i];
+                                        continue;
+                                }
+
+				break;
 			}
+			out_bottomSize[0] = layerSize;
 
 			return true;
 		}
@@ -418,7 +429,11 @@ class HuffmanCoding{
 			
 			int isTop = -1;
 			// This gets processed backwords (root to leaf)
-			printf("\ttargetIndex : %d\n", targetIndex);
+			printf("targetIndex : %d\n", targetIndex);
+			printf("\trelative values: top, bottom, start : %ld, %ld, %d\n", topSize, bottomSize, topEnd);
+			for(int i=0; i<topSize; i++){
+
+			}
 			for(int i=topEnd, j=0, tracer=-1, tracerIdx=0; i<topStart && i<nodeCache_s && bottomEnd+j < nodeCache_s; i++){
 				int a=0, b=0;
 				int sum = nodeCache[i];
@@ -610,10 +625,10 @@ class HuffmanCoding{
 					break;
 				}
 				if(!this->isTopNode(i, this->treeData, this->treeData_s, &z, &o) && i != 0){
-					printf("%d '%d' is bottom node, skipping...\n", i, this->treeData[i]);
+					printf("\t%d '%d' is bottom node, skipping...\n", i, this->treeData[i]);
 					continue;
 				}else{
-					printf("%d '%d' is a top node.\n", i, this->treeData[i]);
+					printf("\t%d '%d' is a top node.\n", i, this->treeData[i]);
 				}
 				if(tracer == -1){
 					tracer = this->treeData[i];
