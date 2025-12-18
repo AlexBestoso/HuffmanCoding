@@ -353,7 +353,8 @@ class HuffmanCoding{
 				this->setError(1999, "processBaseNodeValues(int targetIndex, int layerStart, size_t layerSize, int *out_zero, int *out_one) - failed to validate frequencies.");
 				return false;
 			}
-			if(cacheTarget < cacheLayerStart){
+			if(cacheTarget < cacheSize-this->frequencies_s){
+				printf("DEBUG : %d < %d\n", cacheTarget, cacheLayerStart);
 				this->setError(2000, "processBaseNodeValues(int targetIndex, int layerStart, size_t layerSize, int *out_zero, int *out_one) - targetIndex not in base layer.");
 				return false;
 			} 
@@ -380,7 +381,7 @@ class HuffmanCoding{
 			}
 			return true;
 		}
-		// TODO: Fix Bottom layer out of bounds error and infinite loop.
+		// TODO: fix  Failed to identify node stats for layer-starting index.
 		bool isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex){
 			if(nodeCache == NULL){
 				this->setError(500, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - nodeCache is null.");
@@ -390,138 +391,72 @@ class HuffmanCoding{
 				this->setError(501, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - nodeCache_s <= 0. Treating as null.");
 				return false;
 			}
+			if(targetIndex < 0 || targetIndex >= nodeCache_s){
+				this->setError(502, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - target index out of bounds.");
+				return false;
+			}
 			
 			// Identify relative layer offsets and sizes.
-			int layerStartDescriptor = 0;
+			int topEnd = 0;
                         size_t topSize = 0;
                         size_t bottomSize = -1;
 			// Returns bottomSize -1 if the target index is in the base layer/the leaf layer.
-			if(!this->findRelativeLayers(targetIndex, nodeCache, nodeCache_s, &topSize, &bottomSize, &layerStartDescriptor)){
+			if(!this->findRelativeLayers(targetIndex, nodeCache, nodeCache_s, &topSize, &bottomSize, &topEnd)){
 				this->setError(502, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - failed to find relative layers.");	
 				return false;
 			}
-
-			// Allocate the top layer.
-                        int *top = new int[topSize];
-			int topIterEnd = layerStartDescriptor+topSize;
-			int topStart = layerStartDescriptor; // index into nodeCache
-			for(int i=topStart, idx=0; i<topIterEnd && idx<topSize; i++, idx++){
-				top[idx] = nodeCache[i];
-			}
-
-			// Process base layer condition.
 			if(bottomSize == -1){
-				printf("target %d is a base node.\n", targetIndex);
-				// both target and topstart are indecies to nodeCache
-				bool err = this->processBaseNodeValues(targetIndex, topStart, topSize, nodeCache_s, zeroIndex, oneIndex);
-				if(this->failed()){
-					this->setError(503, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - Failed to process base-node values.");
-					return false;
-				}else{
-					return err;
-				}
+				return this->processBaseNodeValues(targetIndex, topEnd+topSize-1, topSize, nodeCache_s, zeroIndex, oneIndex);
 			}
-
-			// Allocate the bottom layer.
-			int *bottom = new int[bottomSize];
-			int bottomIterEnd = layerStartDescriptor+topSize+bottomSize;
-			int bottomStart = topIterEnd;
-			for(int i=bottomStart, idx=0; i<bottomIterEnd; i++, idx++){
-                               	bottom[idx] = nodeCache[i];
-                       	}
+		
+			int topStart = topEnd+topSize;
+			int bottomEnd = topEnd+topSize;
+			int bottomStart = bottomEnd+bottomSize;
 			
-			// Is targetIndex a top node, and what are its binary path indecies?
-			int targetVal = nodeCache[targetIndex];
-			bool processing = false;
-			bool falseify = false;
-			int finalize=-1;
-			for(int i=layerStartDescriptor; i<topIterEnd; i++){
-				int grabbed = nodeCache[i];
-				for(int j=bottomStart; j>=bottomStart; j++){
-					int zero = nodeCache[j];
-					if(!(j+1<bottomIterEnd)){
-						std::string msg = "isTopNode(targetIndex:"+std::to_string(targetIndex)+", int *nodeCache, nodeCache_s:"+std::to_string(nodeCache_s)+", int *zeroIndex:"+std::to_string(zeroIndex[0])+", int *oneIndex:"+std::to_string(oneIndex[0])+") - bottom check out of bounds ";
-						msg += std::to_string(j);
-						msg += "+1 < ";
-						msg += std::to_string(bottomIterEnd);
-						this->setError(503, msg.c_str());
-						return false;
-						//i=topIterEnd;
-						//break;
-					}
-					int one = nodeCache[j+1];
-					int sum = zero + one;
-					if(sum == grabbed){ // top node / leaf.
-						// node is valid; but is it related to our target node?
-						bottomStart = j + 2;
-						if(i == targetIndex){
-							if(finalize != -1){
-								if((finalize == j) || (finalize == j+1)){
-									return false;
-								}else{
-									return true;
-								}
-							}
-							zeroIndex[0] = j;
-							oneIndex[0] = j+1;
-							return falseify == true ? false : true;
-						}
-						processing = false;
+			int isTop = -1;
+			// This gets processed backwords (root to leaf)
+			for(int i=topEnd, j=0, tracer=-1, tracerIdx=0; i<topStart && i<nodeCache_s && bottomEnd+j < nodeCache_s; i++){
+				int a=0, b=0;
+				int sum = nodeCache[i];
+				if(tracer == -1){
+					tracer = nodeCache[bottomEnd+j];
+					tracerIdx=bottomEnd+j;
+					j++;
+					i--;
+					continue;
+				}
+				if(i == targetIndex && isTop == -1)
+					isTop = 1;
+				if(isTop != -1){
+					if(sum == tracer + nodeCache[bottomEnd+j]){
+                                        	zeroIndex[0] = tracerIdx;
+                                        	oneIndex[0] = bottomEnd+j;
+                                        	break;
+                                	}
+					if(sum == tracer + nodeCache[i+1]){
+						zeroIndex[0] = tracerIdx;
+						oneIndex[0] = i+1;
 						break;
 					}
-					
-					if(!(i+1<nodeCache_s)){
-						processing = false;
-						this->setError(504, "Unhandled error - top check out of bounds.");
-						return false;
-						//printf("Unhandled error - top check out of bounds.");
-						//break;
+					tracer=-1;
+					i--;
+					continue;
+				}else{
+					if(sum == tracer + nodeCache[bottomEnd+j]){
+						j++;
+						tracer=-1;
+						continue;	
 					}
-					one = nodeCache[i+1];
-					sum = zero+one;
-					if(sum == grabbed){ // bottom node / interier node
-						// node is valid; but is it related to our target node?
-						bottomStart = j + 1;
-						if(i == targetIndex){
-							if(finalize != -1){
-                                                                if((finalize == j) || (finalize == i+1)){
-                                                                        return false;
-                                                                }else{
-                                                                        return true;
-                                                                }
-                                                        }
-							zeroIndex[0] = j;
-							oneIndex[0] = i+1;
-							if(targetIndex == topStart){
-								return true;
-							}else{
-								finalize = targetIndex;
-								targetIndex--;
-								bottomStart = topIterEnd;
-								i = layerStartDescriptor-1;
-								break;
-							}
-						}
-						processing = false;
+					if(sum == tracer + nodeCache[i+1]){
 						if(i+1 == targetIndex){
-							falseify = true;
+							isTop = 0;
 						}
-						break;
+						tracer = -1;
 					}
-				
-					// we gotta maintain the I index; but shift the J starting index by 1.
-					// if we don't get a match on this bottom row, then we have bad data.
-					//printf("Nothing found yet, bump j start, keep i.\n");
-						i--; // we only want to do this once.
-					processing = true;
-					bottomStart++;
-					break;
 				}
 			}
 
-                        delete[] bottom;
-                        delete[] top;
-			return true;
+			return isTop == 1 ? true : false;
 		}
 
 		bool seedLayers(void){
@@ -648,7 +583,10 @@ class HuffmanCoding{
 			int *workBuffer = new int[workBuffer_s];
 			int topLayerStart = this->getTopLayerStart();
 			size_t topLayerSize = topLayerStart + 1;
+			
+			// The top layer for post-seed operations is off by 2, and is grown out of order/scale
 
+			printf("Top layer Start : %d\n", topLayerStart);
 			for(int i=topLayerStart, tracer=-1, sum=-1; i>=0; i--){
 				int z=0, o=0;
 				if(i==0 && (topLayerSize%2) == 1){
@@ -660,13 +598,17 @@ class HuffmanCoding{
 					workBuffer_fill++;
 					break;
 				}
-				if(!this->isTopNode(i, this->treeData, this->treeData_s, &z, &o)){
+				if(!this->isTopNode(i, this->treeData, this->treeData_s, &z, &o) && i != 0){
+					printf("%d '%d' is bottom node, skipping...\n", i, this->treeData[i]);
 					continue;
+				}else{
+					printf("%d '%d' is a top node.\n", i, this->treeData[i]);
 				}
 				if(tracer == -1){
 					tracer = this->treeData[i];
 					continue;
 				}
+				printf("dbg : tracer, node, sum: %d | %d | %d\n", tracer, this->treeData[i], sum);
 				if(sum == -1){
 					sum = tracer + this->treeData[i];
 					workBuffer[workBuffer_fill] = sum;
@@ -680,13 +622,14 @@ class HuffmanCoding{
 					workBuffer[workBuffer_fill] = sum;
 					workBuffer_fill++;
 					tracer = -1;
+					continue;
 				}
 				if(sum < treeData[i]){
 					sum = tracer + sum;
+					printf("entry value %d is bottom node\n", sum);
 					workBuffer[workBuffer_fill] = sum;
 					workBuffer_fill++;
-					tracer = -1;
-					i++;
+					tracer = treeData[i];
 					continue;
 				}
 				if(sum > treeData[i]){
@@ -697,6 +640,10 @@ class HuffmanCoding{
 					continue;
 				}
 			}
+			printf("Work buffer : ");
+			for(int i=0; i<workBuffer_fill; i++)
+				printf("%d ", workBuffer[i]);
+			printf("\n");
 						
 			// push original data to end of array
 			size_t originalSize = this->treeData_s;
@@ -741,12 +688,11 @@ class HuffmanCoding{
 					this->setError(702, "plantTree(void) - Failed to grow tree layer.");
 					return false;
 				}
-				if(startSize != this->treeData_s){
-					startSize = this->treeData_s;
-				}else{
-					break;
-				}
-		
+				this->printTree();
+			}
+			if(this->treeData[0] != this->frequencyMax){
+				this->setError(3333, "plantTree(void) - Failed to grow tree, tree is corrupt.");
+				return false;
 			}
 
 			int zero=-1, one=-1;
