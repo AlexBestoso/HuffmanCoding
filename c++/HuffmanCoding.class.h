@@ -395,6 +395,9 @@ class HuffmanCoding{
 				this->setError(502, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - target index out of bounds.");
 				return false;
 			}
+
+			zeroIndex[0] = -1;
+			oneIndex[0] = -1;
 			
 			// Identify relative layer offsets and sizes.
 			int topEnd = 0;
@@ -415,6 +418,7 @@ class HuffmanCoding{
 			
 			int isTop = -1;
 			// This gets processed backwords (root to leaf)
+			printf("\ttargetIndex : %d\n", targetIndex);
 			for(int i=topEnd, j=0, tracer=-1, tracerIdx=0; i<topStart && i<nodeCache_s && bottomEnd+j < nodeCache_s; i++){
 				int a=0, b=0;
 				int sum = nodeCache[i];
@@ -425,6 +429,7 @@ class HuffmanCoding{
 					i--;
 					continue;
 				}
+				//printf("\ti, tracer, current, sum, isTop : %d| %d | %d | %d | %d\n", i, tracer, nodeCache[bottomEnd+j], sum, isTop);
 				if(i == targetIndex && isTop == -1)
 					isTop = 1;
 				if(isTop != -1){
@@ -454,6 +459,12 @@ class HuffmanCoding{
 						tracer = -1;
 					}
 				}
+			}
+
+			printf("\tzero : %d | one %d\n", zeroIndex[0], oneIndex[0]);
+			if(zeroIndex[0] == -1 && oneIndex[0] == -1){
+				this->setError(33335, "isTopNode() - failed to identify node source values.");
+				return false;
 			}
 
 			return isTop == 1 ? true : false;
@@ -608,9 +619,10 @@ class HuffmanCoding{
 					tracer = this->treeData[i];
 					continue;
 				}
-				printf("dbg : tracer, node, sum: %d | %d | %d\n", tracer, this->treeData[i], sum);
+				printf("dbg : tracer, node, sum: %d | %d | %d ->", tracer, this->treeData[i], sum);
 				if(sum == -1){
 					sum = tracer + this->treeData[i];
+					printf("%d\n", sum);
 					workBuffer[workBuffer_fill] = sum;
 					workBuffer_fill++;
 					tracer = -1;
@@ -619,6 +631,7 @@ class HuffmanCoding{
 
 				if(sum == treeData[i]){
 					sum = this->treeData[i] + tracer;
+					printf("%d\n", sum);
 					workBuffer[workBuffer_fill] = sum;
 					workBuffer_fill++;
 					tracer = -1;
@@ -626,7 +639,7 @@ class HuffmanCoding{
 				}
 				if(sum < treeData[i]){
 					sum = tracer + sum;
-					printf("entry value %d is bottom node\n", sum);
+					printf("%d\n", sum);
 					workBuffer[workBuffer_fill] = sum;
 					workBuffer_fill++;
 					tracer = treeData[i];
@@ -634,6 +647,7 @@ class HuffmanCoding{
 				}
 				if(sum > treeData[i]){
 					sum = tracer + this->treeData[i];
+					printf("%d\n", sum);
 					workBuffer[workBuffer_fill] = sum;
 					workBuffer_fill++;
 					tracer = -1;
