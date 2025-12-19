@@ -12,6 +12,7 @@ class HuffmanCoding{
 		size_t codeTable_s;
 
 		int *treeData;
+		int *treeDataTypes;
 		size_t treeData_s;
 		
 		bool tablesSorted;
@@ -22,7 +23,10 @@ class HuffmanCoding{
 		void destroyTreeData(void){
 			if(this->treeData != NULL)
 				delete[] this->treeData;
+			if(this->treeDataTypes != NULL)
+				delete[] this->treeDataTypes;
 			this->treeData = NULL;
+			this->treeDataTypes = NULL;
 			this->treeData_s = 0;
 		}
 		void resizeTreeData(size_t size){
@@ -30,19 +34,27 @@ class HuffmanCoding{
                                 this->destroyTreeData();
                         }else if(this->treeData == NULL){
                                 this->treeData = new int[size];
+				this->treeDataTypes = new int[size];
                                 this->treeData_s = size;
                         }else{
                                 size_t oldSize = this->treeData_s;
                                 int *transfer = new int[oldSize];
-                                for(int i=0; i<oldSize; i++)
+				int *transferTwo = new int[oldSize];
+                                for(int i=0; i<oldSize; i++){
                                         transfer[i] = this->treeData[i];
-                                this->destroyTreeLetters();
+					transferTwo[i] = this->treeDataTypes[i];
+				}
+                                this->destroyTreeData();
                                 this->treeData = new int[size];
+				this->treeDataTypes = new int[size];
                                 this->treeData_s = size;
                                 for(int i=0; i<this->treeData_s && i<oldSize; i++){
                                         this->treeData[i] = transfer[i];
+					this->treeDataTypes[i] = transferTwo[i];
                                 }
+				
                                 delete[] transfer;
+				delete[] transferTwo;
                         }
                 }
 		bool validateTreeData(void){
@@ -398,10 +410,51 @@ class HuffmanCoding{
 		// find the start of the previous layer, and determine if the target value is a bottom or top node.
 		bool nodeValueIsValid(int target, int start, int size, int *nodeCache, size_t nodeCache_s){
 			// ensure target is within start and size bounds.
+			if(!(target <= start) && !(target > start-size)){
+				this->setError(4456, "nodeValueIsValid() - target is out of row bounds.");
+				return false;
+			}
 			// ensure node cache is valid.
+			if(nodeCache == NULL || nodeCache_s <= 0){
+				this->setError(45444, "nodeValueIsValid() - nodeCache is invalid.");
+				return false;
+			}
 			// check if there's a layer beneath. No layer, return true, all top nodes.
+			if(target >= (nodeCache_s - this->frequencies_s)){
+				return true;
+			}
 			// calculate lower layer start and size.
+			if(start < 0 || start >= nodeCache_s){
+				this->setError(46778, "nodeValueIsValid() - start out of bounds.");
+				return false;
+			}
+			int lowerLayerSize=0;
+			for(int i=start, tracer = nodeCache[start]; i<nodeCache_s; i++){
+				if(nodeCache[i] > tracer){
+					break;
+				}
+				lowerLayerSize++;
+				tracer = nodeCache[i];
+			}	
+			int lowerLayerStart=start+lowerLayerSize;
 			// generate sums until target
+			bool found=false;
+			for(int i=lowerLayerStart, j=start, tracer=-1,sum=-1; (i>=0 && i>start) && (j >= 0 && j>(start-size)); i--){
+				if(tracer==-1){
+					tracer = nodeCache[i];
+					continue;
+				}
+				if(sum == -1){
+					if(found){
+						return true;
+					}
+					sum = tracer + nodeCache[i];
+					if(j == sum) found = true;
+					j--;
+					tracer = -1;
+					continue;
+				}
+			}
 			// once target found, if end of buffer, return true, its a top node.
 			// once target found, store variables, calcuate next sum.
 			// if the next sum is created using the prior sum, return false, it's a bottom node.
@@ -543,11 +596,14 @@ class HuffmanCoding{
 				return false;
 			}
 			this->resizeTreeData(this->frequencies_s);
-			for(int i=0; i<this->treeData_s; i++)
+			for(int i=0; i<this->treeData_s; i++){
 				this->treeData[i] = this->frequencies[i];
+				this->treeDataTypes[i] = 1; // base layer all top nodes.
+			}
 
 			size_t workBuffer_s = this->treeData_s;
 			int *workBuffer = new int[workBuffer_s];
+			int *workTypeBuffer = new int[workBuffer_s];
 			size_t workBuffer_fill=0;
 
 			for(int i=treeData_s-1, tracer=-1, sum=-1; workBuffer_fill < workBuffer_s && i>=0; i--){
@@ -558,6 +614,8 @@ class HuffmanCoding{
 						return false;
 					}
 					workBuffer[workBuffer_fill] = sum+treeData[i];
+					workTypeBuffer[workBuffer_fill] = 1;
+					workTypeBuffer[workBuffer_fill-1] = 0;
 					workBuffer_fill++;
 					break;
 				}
@@ -572,53 +630,53 @@ class HuffmanCoding{
 				if(sum == -1){
 					sum = tracer + treeData[i];
 					workBuffer[workBuffer_fill] = sum;
+					workTypeBuffer[workBuffer_fill] = 0;// assume current is a bottom, there was no previous.
 					workBuffer_fill++;
 					tracer = -1;
 					continue;
 				}
 
-				// if sum and future are equal, use the future.
-				if(sum == treeData[i]){
-					sum = treeData[i] + tracer;
+				if(tracer == this->treeData[i] || sum >= this->treeData[i]){
+					sum = this->treeData[i] + tracer;
 					workBuffer[workBuffer_fill] = sum;
+					workTypeBuffer[workBuffer_fill] = 1; // assum current is bottom buffer
+					workTypeBuffer[workBuffer_fill-1] = 1; // we know that the previous was a top buffer
+					tracer = -1;
 					workBuffer_fill++;
-					tracer=-1;
 					continue;
+					
 				}
 
 				// if sum is less than future, use the sum, and move future to tracer,
-				if(sum < treeData[i]){
+				if(sum < this->treeData[i]){
 					sum = tracer+sum;
 					workBuffer[workBuffer_fill] = sum;
+					workTypeBuffer[workBuffer_fill] = 1; // assum current is bottom buffer
+					workTypeBuffer[workBuffer_fill-1] = 0; // we know that the previous was a bottom buffer
 					workBuffer_fill++;
-					i++;
-					tracer = -1;
-					continue;
-				}
-
-				// if future is less than sum, use future, repop tracer.
-				if(sum > treeData[i]){
-					sum = treeData[i] + tracer;
-					workBuffer[workBuffer_fill] = sum;
-					workBuffer_fill++;
-					tracer = -1;
+					tracer = this->treeData[i];
 					continue;
 				}
 			}
+			workTypeBuffer[workBuffer_fill-1] = 1; // last layer value always a top node.
+
 			// push original data to end of array
 			size_t originalSize = this->treeData_s;
 			this->resizeTreeData(originalSize+workBuffer_fill);
 			for(int i=this->treeData_s-1, track=0;  track<originalSize && i>=0; i--, track++){
 				if((i-workBuffer_fill) < 0){break;}
 				this->treeData[i] = this->treeData[i-workBuffer_fill];
+				this->treeDataTypes[i] = this->treeDataTypes[i-workBuffer_fill];
 			}
 
 			// populate front of array with new data
 			for(int i=0; i<workBuffer_fill && (workBuffer_fill-1-i) >= 0; i++){
 				this->treeData[i] = workBuffer[workBuffer_fill-1-i];
+				this->treeDataTypes[i] = workTypeBuffer[workBuffer_fill-1-i];
 			}
 			
 			delete[] workBuffer;
+			delete[] workTypeBuffer;
 			return true;
 
 		}
@@ -655,6 +713,7 @@ class HuffmanCoding{
 			size_t workBuffer_fill=0;
 			size_t workBuffer_s = this->frequencies_s;
 			int *workBuffer = new int[workBuffer_s];
+			int *workTypeBuffer = new int[workBuffer_s];
 			int topLayerStart = this->getTopLayerStart();
 			size_t topLayerSize = topLayerStart + 1;
 			
@@ -669,10 +728,12 @@ class HuffmanCoding{
 						return false;
 					}
 					workBuffer[workBuffer_fill] = this->treeData[i] + sum;
+					workTypeBuffer[workBuffer_fill] = 1;
+					workTypeBuffer[workBuffer_fill-1] = 0;
 					workBuffer_fill++;
 					break;
 				}
-				if(!this->isTopNode(i, this->treeData, this->treeData_s, &z, &o) && i != 0){
+				if(this->treeDataTypes[i] == 0 && i != 0){
 					if(this->failed()){
 						printf("TRIED TARGET : %d\n", i);
 						this->setError(334, "growLayer(void) - isTopNode check failed.");
@@ -688,41 +749,40 @@ class HuffmanCoding{
 				printf("dbg : tracer, node, sum: %d | %d | %d ->", tracer, this->treeData[i], sum);
 				if(sum == -1){
 					sum = tracer + this->treeData[i];
-					printf("%d\n", sum);
+					printf("%d - S\n", sum);
 					workBuffer[workBuffer_fill] = sum;
+					workTypeBuffer[workBuffer_fill] = 0;
 					workBuffer_fill++;
 					tracer = -1;
 					continue;
 				}
 
-				if(sum == treeData[i]){
+				if(tracer == this->treeData[i] || sum >= treeData[i]){
 					sum = this->treeData[i] + tracer;
-					printf("%d\n", sum);
+					printf("%d - A\n", sum);
 					workBuffer[workBuffer_fill] = sum;
+					workTypeBuffer[workBuffer_fill] = 0;
+					workTypeBuffer[workBuffer_fill-1] = 1;
 					workBuffer_fill++;
 					tracer = -1;
 					continue;
 				}
-				if(sum < treeData[i]){
+				if(sum < this->treeData[i]){
 					sum = tracer + sum;
-					printf("%d\n", sum);
+					printf("%d - B\n", sum);
 					workBuffer[workBuffer_fill] = sum;
+					workTypeBuffer[workBuffer_fill] = 0;
+					workTypeBuffer[workBuffer_fill-1] = 0;
 					workBuffer_fill++;
 					tracer = treeData[i];
 					continue;
 				}
-				if(sum > treeData[i]){
-					sum = tracer + this->treeData[i];
-					printf("%d\n", sum);
-					workBuffer[workBuffer_fill] = sum;
-					workBuffer_fill++;
-					tracer = -1;
-					continue;
-				}
 			}
+			workTypeBuffer[workBuffer_fill-1] = 1;
+
 			printf("Work buffer : ");
 			for(int i=0; i<workBuffer_fill; i++)
-				printf("%d ", workBuffer[i]);
+				printf("%d:%s ", workBuffer[i], workTypeBuffer[i] == 0 ? "B" : "T");
 			printf("\n");
 						
 			// push original data to end of array
@@ -731,15 +791,18 @@ class HuffmanCoding{
 			for(int i=this->treeData_s-1, track=0;  track<originalSize && i>=0; i--, track++){
 				if((i-workBuffer_fill) < 0){break;}
 				this->treeData[i] = this->treeData[i-workBuffer_fill];
+				this->treeDataTypes[i] = this->treeDataTypes[i-workBuffer_fill];
 			}
 
 			// populate front of array with new data
 			for(int i=0; i<workBuffer_fill && (workBuffer_fill-1-i) >= 0; i++){
 				this->treeData[i] = workBuffer[workBuffer_fill-1-i];
+				this->treeDataTypes[i] = workTypeBuffer[workBuffer_fill-1-i];
 			}
 
 
 			delete[] workBuffer;
+			delete[] workTypeBuffer;
 			return true;
 		}
 	
@@ -1235,6 +1298,7 @@ class HuffmanCoding{
 			this->frequencies_s = 0;
 			this->tablesSorted = false;
 			this->treeData=NULL;
+			this->treeDataTypes = NULL;
 			this->treeData_s = 0;
 			this->clearError();
 		}
@@ -1286,7 +1350,7 @@ class HuffmanCoding{
 				return;
 			}
 			for(int i=0; i<this->treeData_s; i++){
-				printf("[%d]%d ", i, this->treeData[i]);
+				printf("[%d|%s]%d ", i, this->treeDataTypes[i] == 0 ? "bottom" : "top", this->treeData[i]);
 			}
 		}
 
