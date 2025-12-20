@@ -1,32 +1,9 @@
 # Huffman Coding - c++
 
 Development Notes : 
-TODO:
 
-So I need a way of better processing this shit.
+Problem, After grow layer detects a bottom node, we need to flip the context to account for odd layer elements.
+And if we hit another bottom layer, it need to switch back to even layer element handling.
 
-     83          49         27                     
-     34          22         15        12   6                  
-     19    15    12    10   8    7    6    4    2
-     10 9  8 7   6 6   5 5  4 4  4 3  3 3  2 2  1 1 
-  
-This is a better visuzalization.
-To know which node belongs where, we need to calculate from the bottom, or maintain a second tree array that
-tells us via lookup if a node index is a usable node.
-
-
-
-
-
-
-
-
-
-Frequencies (mex:8272): 
-707   468~   455     442    429   415    402    394     382    373    360    344    328   311    297    281    270   253    234   217   200   188   172    154   142    129   109   96  75  52   38   24  13~
-
-239 236   232 229   226 222   220 216   213 209   206 202   200 198   196 192   190 188   185 183   177 174   170 167   161 158   153 151   146 142   139 136   134 130   123 118   116 113   104 101   99 96   92 88   84 79   75 72   70 65   64 57   52 50   46 39   36 29   23 20   18 11   8 5
-
-120 119   118 118   116 116   115 114   114 112   112 110   110 110   108 108   107 106   105 104   104 102   102 100   100 100   100 98   98 98   96 96   96 94   94 94   93 92   92 91   89 88   88 86   86 84   84 83   81 80   80 78   77 76   76 75   74 72   72 70   70 69   68 68   68 66   66 64   62 61   60 58   58 58   58 55   52 52   51 50   50 49   48 48   46 46   45 43   42 42   40 39   38 37   36 36   36 34   33 32   32 32   30 27   26 26   26 24   24 22   20 19   18 18   16 13   12 11   10 10   10 8   6 5   4 4   3 2
-
-60 60   60 59   59 59   59 59   58 58   58 58   58 57   57 57   57 57   56 56   56 56   55 55   55 55   55 55   54 54   54 54   54 53   53 53   53 52   52 52   52 52   51 51   51 51   50 50   50 50   50 50   50 50   49 49   49 49   49 49   48 48   48 48   48 48   47 47   47 47   47 47   47 46   46 46   46 46   46 45   45 44   44 44   44 44   43 43   43 43   42 42   42 42   42 41   41 40   40 40   40 40   39 39   39 38   38 38   38 38   38 37   37 37   36 36   36 36   35 35   35 35   35 34   34 34   34 34   34 34   33 33   33 33   32 32   31 31   31 30   30 30   29 29   29 29   29 29   29 29   28 27   26 26   26 26   26 25   25 25   25 25   25 24   24 24   24 24   23 23   23 23   23 22   22 21   21 21   21 21   20 20   20 19   19 19   19 18   18 18   18 18   18 18   17 17   17 16   16 16   16 16   16 16   15 15   14 13   13 13   13 13   13 13   12 12   12 12   11 10   10 10   10 9   9 9   9 9   8 8   7 6   6 6   6 5   5 5   5 5   5 5   4 4   3 3   3 2   2 2   2 2   2 1   1 1
+If it's odd, then the last value will always be a top node, and the second to last will always be a bottom.
+if it's even, it SHOULD be both top nodes.

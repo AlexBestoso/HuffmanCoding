@@ -459,7 +459,7 @@ class HuffmanCoding{
 			// once target found, store variables, calcuate next sum.
 			// if the next sum is created using the prior sum, return false, it's a bottom node.
 			// else return true, it's a top node.	
-			return true;
+			return found;
 		}
 		bool isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex){
 			if(nodeCache == NULL){
@@ -714,12 +714,18 @@ class HuffmanCoding{
 			size_t workBuffer_s = this->frequencies_s;
 			int *workBuffer = new int[workBuffer_s];
 			int *workTypeBuffer = new int[workBuffer_s];
-			int topLayerStart = this->getTopLayerStart();
-			size_t topLayerSize = topLayerStart + 1;
+			
+			size_t layerCount = this->countLayers();
+			int *layerIndecies = new int[layerCount];
+			this->getLayerIndecies(layerIndecies, layerCount);
+			printf("DBG grow Layer, count : %ld\n", layerCount);
+			int topLayerStart = layerIndecies[0]-1;//this->getTopLayerStart();
+			size_t topLayerSize = topLayerStart+1;
 			
 
 			// TODO: Investigate if this modular equation is throwing things off.
 			printf("\tTop layer Start : %d\n", topLayerStart);
+			printf("\tTop layer Size : %ld\n", topLayerSize);
 			for(int i=topLayerStart, tracer=-1, sum=-1; i>=0; i--){
 				int z=0, o=0;
 				if(i==0 && (topLayerSize%2) == 1){
@@ -1273,18 +1279,34 @@ class HuffmanCoding{
 		}
 
 		int countLayers(void){
-			int ret = 0;
+			int ret = 1;
 			if(!this->validateTreeData()){
 				this->setError(111, "countLayers() - invalid tree data.");
 				return -1;
 			}
 			
-			// TODO: go through the layers, increment at each. 
-			// make sure the final layer is actually counted.
-			for(int i=0; i<){
-
+			for(int i=0, track=this->treeData[0]; i<this->treeData_s; i++){
+				if(track < this->treeData[i])
+					ret++;
+				track = this->treeData[i];
 			}
 			return ret;
+		}
+		
+		bool getLayerIndecies(int *out, size_t out_s){
+			if(!this->validateTreeData()){
+				this->setError(4444, "getLayerIndecies() - invalid tree data.");
+				return false;
+			}
+			for(int i=0, j=0, track=this->treeData[0]; j<out_s && i<this->treeData_s; i++){
+				if(track < this->treeData[i]){
+					out[j] = i;
+					j++;
+				}
+				track = this->treeData[i];
+			}
+			//out[out_s-1] = this->treeData_s-1;
+			return true;
 		}
 
 	public:
@@ -1359,27 +1381,32 @@ class HuffmanCoding{
 		}
 
 		void printTree(void){
-			printf("Tree : ");
 			if(this->treeData == NULL || this->treeData_s <= 0){
 				printf("NULL\n");
 				return;
 			}
 			
-			size_t layerCount = 0;
-			if(this->treeData_s <= this->frequencies_s){
-				layerCount = 1;
-			}
-			for(int i=0, tracer=this->treeData[0]; i<this->treeData_s; i++){
-				if(tracer == -1){
-					tracer=this->treeData[i];
-					continue;
-				}
-
-				if(){}
+			size_t layerCount = this->countLayers();
+			int *layerIndecies = new int[layerCount];
+			if(!getLayerIndecies(layerIndecies, layerCount)){
+				printf("Failed to print tree.\n");
+				return;
 			}
 			
-			for(int i=0; i<this->treeData_s; i++){
-				printf("[%d|%s]%d ", i, this->treeDataTypes[i] == 0 ? "bottom" : "top", this->treeData[i]);
+			printf("\nTree Layers Count : %ld\n", layerCount);	
+			printf("Tree Layer 0:");
+			for(int i=0, j=0, pretty=0; i<this->treeData_s && j<layerCount; i++){
+				if(i==layerIndecies[j]){
+					printf("\n\n");
+					j++;
+					pretty = 0;
+					printf("Tree Layer %d:\n", j);
+				}else if((pretty%7) == 0){
+					printf("\n");
+				}
+				
+				printf("[%d|%s]%d\t", i, this->treeDataTypes[i] == 0 ? "\033[0;31mbottom\033[0m" : "\033[0;32mtop\033[0m", this->treeData[i]);
+				pretty++;
 			}
 		}
 
