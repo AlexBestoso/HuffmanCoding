@@ -1272,6 +1272,21 @@ class HuffmanCoding{
 			this->error_msg += "["+std::to_string(c)+"] " + m+"\n";
 		}
 
+		int countLayers(void){
+			int ret = 0;
+			if(!this->validateTreeData()){
+				this->setError(111, "countLayers() - invalid tree data.");
+				return -1;
+			}
+			
+			// TODO: go through the layers, increment at each. 
+			// make sure the final layer is actually counted.
+			for(int i=0; i<){
+
+			}
+			return ret;
+		}
+
 	public:
 		char *out;
 		size_t out_s;
@@ -1349,6 +1364,20 @@ class HuffmanCoding{
 				printf("NULL\n");
 				return;
 			}
+			
+			size_t layerCount = 0;
+			if(this->treeData_s <= this->frequencies_s){
+				layerCount = 1;
+			}
+			for(int i=0, tracer=this->treeData[0]; i<this->treeData_s; i++){
+				if(tracer == -1){
+					tracer=this->treeData[i];
+					continue;
+				}
+
+				if(){}
+			}
+			
 			for(int i=0; i<this->treeData_s; i++){
 				printf("[%d|%s]%d ", i, this->treeDataTypes[i] == 0 ? "bottom" : "top", this->treeData[i]);
 			}
