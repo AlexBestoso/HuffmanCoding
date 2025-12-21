@@ -727,18 +727,28 @@ class HuffmanCoding{
 			// TODO: Investigate if this modular equation is throwing things off.
 			printf("\tTop layer Start : %d\n", topLayerStart);
 			printf("\tTop layer Size : %ld\n", topLayerSize);
-			bool oddMode = (this->treeData_s % 2) == 1 ? true : false; 
+			bool oddMode = (topLayerSize % 2) == 1 ? true : false; 
 			for(int i=topLayerStart, tracer=-1, sum=-1; i>=0; i--){
+				if(this->treeDataTypes[i] == 0){ // it's a bottom node, don't use it.
+					printf("Skipping node [%d]%d and flipping mode from %d to %d\n", i, this->treeData[i], oddMode, oddMode ? 0 : 1);
+					oddMode = oddMode ? false : true;
+					continue;
+				}
 				if(oddMode){
 					if(i==0){
-						sum = this->treeData[i] + sum;
-                                	        printf("%d - I ODD\n", sum);
+						if(sum == -1){
+							sum = this->treeData[i] + tracer;
+                                	        	printf("%d + %d = %d - I ODD\n",this->treeData[i], tracer, sum);
+						}else{
+                                	        	printf("%d + %d = ",this->treeData[i], sum);
+							sum = this->treeData[i] + sum;
+                                	        	printf("%d - I ODD\n", sum);
+						}
                                 	        workBuffer[workBuffer_fill] = sum;
                                 	        workTypeBuffer[workBuffer_fill] = 1;
                                 	        workTypeBuffer[workBuffer_fill-1] = 0;
                                 	        workBuffer_fill++;
                                 	        tracer = this->treeData[i];
-						oddMode = ~oddMode;
                                 	        continue;
 
 					}
@@ -748,7 +758,7 @@ class HuffmanCoding{
 					}
 					if(sum == -1){
                                 	        sum = tracer + this->treeData[i];
-                                	        printf("%d - S\n", sum);
+                                	        printf("%d + %d = %d - S\n",this->treeData[i], tracer, sum);
                                 	        workBuffer[workBuffer_fill] = sum;
                                 	        workTypeBuffer[workBuffer_fill] = 0;
                                 	        workBuffer_fill++;
@@ -758,7 +768,7 @@ class HuffmanCoding{
 
                                 	if(tracer == this->treeData[i] || sum >= treeData[i]){
                                 	        sum = this->treeData[i] + tracer;
-                                	        printf("%d - A\n", sum);
+                                	        printf("%d + %d = %d - A\n",this->treeData[i], tracer, sum);
                                 	        workBuffer[workBuffer_fill] = sum;
                                 	        workTypeBuffer[workBuffer_fill] = 0;
                                 	        workTypeBuffer[workBuffer_fill-1] = 1;
@@ -767,6 +777,7 @@ class HuffmanCoding{
                                 	        continue;
                                 	}
                                 	if(sum < this->treeData[i]){
+                                	        printf("%d + %d = ", tracer, sum);
                                 	        sum = tracer + sum;
                                 	        printf("%d - B\n", sum);
                                 	        workBuffer[workBuffer_fill] = sum;
@@ -774,7 +785,7 @@ class HuffmanCoding{
                                 	        workTypeBuffer[workBuffer_fill-1] = 0;
                                 	        workBuffer_fill++;
                                 	        tracer = treeData[i];
-						oddMode = ~oddMode;
+						oddMode = oddMode ? false : true;
                                 	        continue;
                                 	}
 					continue;
@@ -787,7 +798,7 @@ class HuffmanCoding{
 				}
 				if(i==0){
 					sum = this->treeData[i] + tracer;
-                                        printf("%d - I EVEN\n", sum);
+                                	printf("%d + %d = %d - I EVEN\n",this->treeData[i], tracer, sum);
                                         workBuffer[workBuffer_fill] = sum;
                                         workTypeBuffer[workBuffer_fill] = 1;
                                         workTypeBuffer[workBuffer_fill-1] = 1;
@@ -797,7 +808,7 @@ class HuffmanCoding{
 				}
 				if(sum == -1){
                                         sum = tracer + this->treeData[i];
-                                        printf("%d - S\n", sum);
+                                	printf("%d + %d = %d - S\n",this->treeData[i], tracer, sum);
                                         workBuffer[workBuffer_fill] = sum;
                                         workTypeBuffer[workBuffer_fill] = 0;
                                         workBuffer_fill++;
@@ -807,7 +818,7 @@ class HuffmanCoding{
 
                                 if(tracer == this->treeData[i] || sum >= treeData[i]){
                                         sum = this->treeData[i] + tracer;
-                                        printf("%d - A\n", sum);
+                                	printf("%d + %d = %d - A\n",this->treeData[i], tracer, sum);
                                         workBuffer[workBuffer_fill] = sum;
                                         workTypeBuffer[workBuffer_fill] = 0;
                                         workTypeBuffer[workBuffer_fill-1] = 1;
@@ -816,14 +827,15 @@ class HuffmanCoding{
                                         continue;
                                 }
                                 if(sum < this->treeData[i]){
+                                	printf("%d + %d = ",tracer, sum);
                                         sum = tracer + sum;
-                                        printf("%d - B\n", sum);
+                                	printf("%d - B\n",sum);
                                         workBuffer[workBuffer_fill] = sum;
                                         workTypeBuffer[workBuffer_fill] = 0;
                                         workTypeBuffer[workBuffer_fill-1] = 0;
                                         workBuffer_fill++;
                                         tracer = treeData[i];
-					oddMode = ~oddMode;
+					oddMode = oddMode ? false : true;
                                         continue;
                                 }
 			}
