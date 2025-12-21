@@ -2,6 +2,10 @@
 
 Development Notes : 
 
+implement oddMode in grow tree 
+
+
+
 Problem, After grow layer detects a bottom node, we need to flip the context to account for odd layer elements.
 And if we hit another bottom layer, it need to switch back to even layer element handling.
 

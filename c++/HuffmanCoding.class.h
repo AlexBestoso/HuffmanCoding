@@ -681,6 +681,7 @@ class HuffmanCoding{
 
 		}
 
+		[[deprecated("getTopLayerStart() is depricated.")]]
 		int getTopLayerStart(void){
 			if(!this->validateTreeData()){
 				this->setError(1212, "getTopLayerStart() - invalid treeData.");
@@ -726,7 +727,23 @@ class HuffmanCoding{
 			// TODO: Investigate if this modular equation is throwing things off.
 			printf("\tTop layer Start : %d\n", topLayerStart);
 			printf("\tTop layer Size : %ld\n", topLayerSize);
+			bool oddMode = (this->treeSize % 2) == 1 ? true : false; 
 			for(int i=topLayerStart, tracer=-1, sum=-1; i>=0; i--){
+				if(oddMode){
+					if(tracer == -1){
+					
+					}
+					// if detected a bottom node, flip the mode.
+				//		oddMode = ~oddMode;
+					continue;
+				}
+				if(tracer == -1){
+				
+				}
+				// Even mode
+				// if detected a bottom node, flip the mode.
+				//	oddMode = ~oddMode;
+
 				int z=0, o=0;
 				if(i==0 && (topLayerSize%2) == 1){
 					if(sum == -1){
