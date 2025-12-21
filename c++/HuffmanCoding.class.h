@@ -727,79 +727,105 @@ class HuffmanCoding{
 			// TODO: Investigate if this modular equation is throwing things off.
 			printf("\tTop layer Start : %d\n", topLayerStart);
 			printf("\tTop layer Size : %ld\n", topLayerSize);
-			bool oddMode = (this->treeSize % 2) == 1 ? true : false; 
+			bool oddMode = (this->treeData_s % 2) == 1 ? true : false; 
 			for(int i=topLayerStart, tracer=-1, sum=-1; i>=0; i--){
 				if(oddMode){
-					if(tracer == -1){
-					
-					}
-					// if detected a bottom node, flip the mode.
-				//		oddMode = ~oddMode;
-					continue;
-				}
-				if(tracer == -1){
-				
-				}
-				// Even mode
-				// if detected a bottom node, flip the mode.
-				//	oddMode = ~oddMode;
+					if(i==0){
+						sum = this->treeData[i] + sum;
+                                	        printf("%d - I ODD\n", sum);
+                                	        workBuffer[workBuffer_fill] = sum;
+                                	        workTypeBuffer[workBuffer_fill] = 1;
+                                	        workTypeBuffer[workBuffer_fill-1] = 0;
+                                	        workBuffer_fill++;
+                                	        tracer = this->treeData[i];
+						oddMode = ~oddMode;
+                                	        continue;
 
-				int z=0, o=0;
-				if(i==0 && (topLayerSize%2) == 1){
+					}
+					if(tracer == -1){
+						tracer = this->treeData[i];
+						continue;
+					}
 					if(sum == -1){
-						this->setError(333, "growLayer(void) - invalid sum!");
-						return false;
-					}
-					workBuffer[workBuffer_fill] = this->treeData[i] + sum;
-					workTypeBuffer[workBuffer_fill] = 1;
-					workTypeBuffer[workBuffer_fill-1] = 0;
-					workBuffer_fill++;
-					break;
-				}
-				if(this->treeDataTypes[i] == 0 && i != 0){
-					if(this->failed()){
-						printf("TRIED TARGET : %d\n", i);
-						this->setError(334, "growLayer(void) - isTopNode check failed.");
-						return false;
-					}
-					printf("\t\t%d '%d' is bottom node, skipping...\n", i, this->treeData[i]);
+                                	        sum = tracer + this->treeData[i];
+                                	        printf("%d - S\n", sum);
+                                	        workBuffer[workBuffer_fill] = sum;
+                                	        workTypeBuffer[workBuffer_fill] = 0;
+                                	        workBuffer_fill++;
+                               		        tracer = -1;
+                                	        continue;
+                                	}
+
+                                	if(tracer == this->treeData[i] || sum >= treeData[i]){
+                                	        sum = this->treeData[i] + tracer;
+                                	        printf("%d - A\n", sum);
+                                	        workBuffer[workBuffer_fill] = sum;
+                                	        workTypeBuffer[workBuffer_fill] = 0;
+                                	        workTypeBuffer[workBuffer_fill-1] = 1;
+                                	        workBuffer_fill++;
+                                	        tracer = -1;
+                                	        continue;
+                                	}
+                                	if(sum < this->treeData[i]){
+                                	        sum = tracer + sum;
+                                	        printf("%d - B\n", sum);
+                                	        workBuffer[workBuffer_fill] = sum;
+                                	        workTypeBuffer[workBuffer_fill] = 0;
+                                	        workTypeBuffer[workBuffer_fill-1] = 0;
+                                	        workBuffer_fill++;
+                                	        tracer = treeData[i];
+						oddMode = ~oddMode;
+                                	        continue;
+                                	}
 					continue;
 				}
+
+				// Even mode
 				if(tracer == -1){
 					tracer = this->treeData[i];
 					continue;
 				}
-				printf("dbg : tracer, node, sum: %d | %d | %d ->", tracer, this->treeData[i], sum);
-				if(sum == -1){
-					sum = tracer + this->treeData[i];
-					printf("%d - S\n", sum);
-					workBuffer[workBuffer_fill] = sum;
-					workTypeBuffer[workBuffer_fill] = 0;
-					workBuffer_fill++;
-					tracer = -1;
-					continue;
-				}
-
-				if(tracer == this->treeData[i] || sum >= treeData[i]){
+				if(i==0){
 					sum = this->treeData[i] + tracer;
-					printf("%d - A\n", sum);
-					workBuffer[workBuffer_fill] = sum;
-					workTypeBuffer[workBuffer_fill] = 0;
-					workTypeBuffer[workBuffer_fill-1] = 1;
-					workBuffer_fill++;
-					tracer = -1;
+                                        printf("%d - I EVEN\n", sum);
+                                        workBuffer[workBuffer_fill] = sum;
+                                        workTypeBuffer[workBuffer_fill] = 1;
+                                        workTypeBuffer[workBuffer_fill-1] = 1;
+                                        workBuffer_fill++;
+                                        tracer = -1;
 					continue;
 				}
-				if(sum < this->treeData[i]){
-					sum = tracer + sum;
-					printf("%d - B\n", sum);
-					workBuffer[workBuffer_fill] = sum;
-					workTypeBuffer[workBuffer_fill] = 0;
-					workTypeBuffer[workBuffer_fill-1] = 0;
-					workBuffer_fill++;
-					tracer = treeData[i];
-					continue;
-				}
+				if(sum == -1){
+                                        sum = tracer + this->treeData[i];
+                                        printf("%d - S\n", sum);
+                                        workBuffer[workBuffer_fill] = sum;
+                                        workTypeBuffer[workBuffer_fill] = 0;
+                                        workBuffer_fill++;
+                                        tracer = -1;
+                                        continue;
+                                }
+
+                                if(tracer == this->treeData[i] || sum >= treeData[i]){
+                                        sum = this->treeData[i] + tracer;
+                                        printf("%d - A\n", sum);
+                                        workBuffer[workBuffer_fill] = sum;
+                                        workTypeBuffer[workBuffer_fill] = 0;
+                                        workTypeBuffer[workBuffer_fill-1] = 1;
+                                        workBuffer_fill++;
+                                        tracer = -1;
+                                        continue;
+                                }
+                                if(sum < this->treeData[i]){
+                                        sum = tracer + sum;
+                                        printf("%d - B\n", sum);
+                                        workBuffer[workBuffer_fill] = sum;
+                                        workTypeBuffer[workBuffer_fill] = 0;
+                                        workTypeBuffer[workBuffer_fill-1] = 0;
+                                        workBuffer_fill++;
+                                        tracer = treeData[i];
+					oddMode = ~oddMode;
+                                        continue;
+                                }
 			}
 			workTypeBuffer[workBuffer_fill-1] = 1;
 
