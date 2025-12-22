@@ -889,139 +889,85 @@ class HuffmanCoding{
 				oneIndex[0] = (convertedTarget % 2) == 0 ? -1 : targetIndex;
 				return true;
 			}
-	
-			// determine which layer target is part of.
-			int targetLayer = -1;
-			for(int i=0; i<layerCount; i++){
-				if(targetIndex > layerIndecies[i]){
+			
+			int targetLayer = 0;
+			for(int i=layerCount-1; i>=0; i--){
+				if(i == 0){
+					targetLayer = 0;
+					break;
+				}
+				if((targetIndex<=layerIndecies[i]) && (targetIndex>layerIndecies[i-1])){
 					targetLayer = i;
+					break;
 				}
 			}
+			size_t targetLayerSize = targetLayer <= 0 ? layerIndecies[0] : layerIndecies[targetLayer] - layerIndecies[targetLayer-1];
 
-			
-			// Determine if the target index is at the base layer, if so, map target to the proper zero/one index output.
-			int bottomLayer = targetLayer+1;
-			if(bottomLayer >= layerCount || this->frequencies_s == this->treeData_s){
-				if(targetLayer-1 < 0){
-					this->setError(5345, "getSubIndecies() - invalid targetIndex and layer");
-					return false;
-				}
-				int targetLayerSize = targetLayer-1 < 0 ? this->frequencies_s: layerIndecies[targetLayer] - layerIndecies[targetLayer-1];
-				int convertedIdx = targetIndex - (this->treeData_s - targetLayerSize);
-				bool oddMode = (targetLayerSize % 2) == 1 ? true : false;
-				if(oddMode){
-					if(convertedIdx == 0){
-						zeroIndex[0] = targetIndex;
-						oneIndex[0] = -1;
-					}else{
-						zeroIndex[0] = (convertedIdx%2) == 0 ? -1 	   : targetIndex;
-						oneIndex[0] = (convertedIdx%2) == 0  ? targetIndex : -1;
-					}
-					return true;	
-				}
-				// Even Mode
-				zeroIndex[0] = (convertedIdx%2) == 0  ? targetIndex : -1;
-				oneIndex[0]  = (convertedIdx%2) == 0  ? -1 	    : targetIndex;
-				return true;	
+			int sourceLayer = targetLayer+1;
+			if(sourceLayer >= layerCount){
+				this->setError(42343, "getSubIndecies() - source layer is out of bounds.");
+				return false;
 			}
-
-			// We're not processing the base layer, so we need to use the layer prior to our target,
-			// and determine which two nodes created said target's value.
 			
-			int targetLayerSize = targetLayer == 0 ? layerIndecies[targetLayer] : layerIndecies[targetLayer] - layerIndecies[targetLayer-1];
-			int bottomLayerSize = bottomLayer == 0 ? layerIndecies[bottomLayer] : layerIndecies[bottomLayer] - layerIndecies[bottomLayer-1];
-			bool oddMode = (bottomLayerSize % 2) == 0 ? false : true;
-			for(int i=layerIndecies[bottomLayer], j=layerIndecies[targetLayer], tracer=-1, sum=-1; i>bottomLayerSize && j>targetLayerSize; i--){
-				if(!this->treeDataTypes[i]){
-					continue;
-				}
-				if(oddMode){
-					if(i==0){
-						if(sum == -1){
-							sum = this->treeData[i] + tracer;
-							if(j == targetIndex){
-								zeroIndex[0] = i;
-								oneIndex[0] = i+1;
-								return true;
-							}
-						}else{
-							sum = this->treeData[i] + sum;
-							if(j == targetIndex){
-								zeroIndex[0] = i;
-								oneIndex[0] = j+1;
-								return true;
-							}
-						}
-						this->setError(3422, "getSubIndecies() - filed to find sub indecies.");
-						return false;
+			for(int i=layerIndecies[sourceLayer],j=layerIndecies[targetLayer], sum=-1, tracer=-1; i>layerIndecies[targetLayer] && j>=0; i--){
+				if(targetIndex == j){
+					if(((layerIndecies[targetLayer] - layerIndecies[sourceLayer]) % 2) == 1 && i==0){
+						zeroIndex[0] = i;
+						oneIndex[0] = j;
 					}
 					if(tracer == -1){
-						tracer = this->treeData[i];
-						continue;
+						oneIndex[0] = i;
+						zeroIndex[0] = i-1;
+					}else if(sum == -1){
+						zeroIndex[0] = i;
+						oneIndex[0] = i+1;
+					}else if(sum < this->treeData[i]){
+						zeroIndex[0] = i+1;
+						oneIndex[0] = j;
+					}else{
+						zeroIndex[0] = i;
+						oneIndex[0] = i+1;
 					}
-					if(sum == -1 || tracer == this->treeData[i] || sum >= this->treeData[i]){
-						sum = this->treeData[i] + tracer;
-						if(sum != this->treeData[j]){
-							this->setError(43456, "getSubIndecies() - invalid tree detected.");
-							return false;
-						}
-						if(j == targetIndex){
-							zeroIndex[0] = i;
-							oneIndex[0] = i+1;
-							return true;
-						}
-						tracer = -1;
-						j--;
-					}
-					if(sum < this->treeData[i]){
-						sum = tracer + sum;
-						if(sum != this->treeData[j]){
-                                	                this->setError(43457, "getSubIndecies() - invalid tree detected.");
-                                	                return false;
-                                	        }
-						if(j == targetIndex){
-							zeroIndex[0] = i+1;
-							oneIndex[0] = j+1;
-							return true;
-						}
-					}
-					continue;
+					
+					return true;
 				}
-				// Even Mode
+				if(this->treeDataTypes[i] == 0) continue;
+
 				if(tracer == -1){
 					tracer = this->treeData[i];
 					continue;
 				}
-				if(sum == -1 || tracer == this->treeData[i] || sum >= this->treeData[i] || i==0){
+				if(sum == -1){
 					sum = this->treeData[i] + tracer;
 					if(sum != this->treeData[j]){
-						this->setError(43457, "getSubIndecies() - invalid tree detected.");
+						this->setError(7564, "getSubIndecies() - First sum failure.");
 						return false;
 					}
-					if(j == targetIndex){
-						zeroIndex[0] = i;
-						oneIndex[0] = i+1;
-						return true;
-					}
-					tracer = -1;
 					j--;
+					tracer=-1;
 					continue;
 				}
 				if(sum < this->treeData[i]){
-					sum = tracer + sum;
+					sum = sum + tracer;
 					if(sum != this->treeData[j]){
-                                                this->setError(43457, "getSubIndecies() - invalid tree detected.");
+                                                this->setError(7567, "getSubIndecies() - First sum failure.");
                                                 return false;
                                         }
-					if(j == targetIndex){
-						zeroIndex[0] = i+1;
-						oneIndex[0] = j+1;
-						return true;
-					}
+					tracer = this->treeData[i];
+					j--;
+					continue;
 				}
+
+				sum = this->treeData[i] + tracer;
+				if(sum != this->treeData[j]){
+                        		this->setError(7567, "getSubIndecies() - First sum failure.");
+                        		return false;
+                        	}
+				tracer = -1;
+				j--;
 			}
-			std::string errMsg = "getSubIndecies("+std::to_string(targetIndex)+") - filed to find sub indecies.";
-			this->setError(3433, errMsg.c_str());
+			std::string msg = "getSubIndecies(target:"+std::to_string(targetIndex)+") - dbg : sourceLayer:"+std::to_string(sourceLayer)+" | targetLayer:"+std::to_string(targetLayer);
+			this->setError(4444, msg.c_str());
 			return false;
 		}
 
@@ -1052,26 +998,6 @@ class HuffmanCoding{
 			off_t tableCode_o = this->frequencies_s;
 
 			// generate code table.
-			for(int i=this->treeData_s-1; i>=0; i--){
-				int targetIdx = i;
-				int targetLayer = -1;
-				for(int j=0; j<layerCount; j++){
-					if(targetIdx > layerIndecies[j]){
-						targetLayer = j;
-						break;
-					}
-				}
-				if(targetLayer < 0){
-					this->setError(45545, "generateCodeTable() - failed to identify target layer.");
-					return false;
-				}
-				int zero=-1;
-				int one=-1;
-				if(!this->getSubIndecies(targetIdx, layerIndecies, layerCount, &zero, &one)){
-					this->setError(34234, "generateCodeTable() - failed to get sub index for target.");
-					return false;
-				}
-			}
 			return true;
 		}
 
