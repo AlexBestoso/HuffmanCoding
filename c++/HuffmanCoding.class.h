@@ -868,6 +868,27 @@ class HuffmanCoding{
 				this->setError(3234, "getSubIndecies() - layerIndecies is invalid or null.");
 				return false;
 			}
+
+			if(targetIndex >= this->treeData_s-this->frequencies_s && targetIndex<this->treeData_s){
+				int convertedTarget = targetIndex - (this->treeData_s-this->frequencies_s);
+				if(convertedTarget < 0){
+					this->setError(6546, "getSubIndecies() - failed to convert target index into useable value.");
+					return false;
+				}
+				if((this->frequencies_s%2) == 1){
+					if(convertedTarget == 0){
+						zeroIndex[0] = targetIndex;
+						oneIndex[0] = -1;
+						return true;
+					}
+					zeroIndex[0] = (convertedTarget % 2) == 0 ? -1 : targetIndex;
+					oneIndex[0] = (convertedTarget % 2) == 0 ? targetIndex : -1;
+					return true;
+				}
+				zeroIndex[0] = (convertedTarget % 2) == 0 ? targetIndex : -1;
+				oneIndex[0] = (convertedTarget % 2) == 0 ? -1 : targetIndex;
+				return true;
+			}
 	
 			// determine which layer target is part of.
 			int targetLayer = -1;
@@ -999,7 +1020,8 @@ class HuffmanCoding{
 					}
 				}
 			}
-			this->setError(3433, "getSubIndecies() - filed to find sub indecies.");
+			std::string errMsg = "getSubIndecies("+std::to_string(targetIndex)+") - filed to find sub indecies.";
+			this->setError(3433, errMsg.c_str());
 			return false;
 		}
 
