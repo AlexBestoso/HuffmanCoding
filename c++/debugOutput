@@ -1,438 +1,378 @@
-When we get our first bottom node in this output example, it changes  the rremaining layer into an odd layer.
-this oddness isn't being accounted for. As a result, we miss the last value in the work buffer, which results in a boottom  node being miss-marked, and a top node from being excluded from the tree.
-
-
-morningstar@bestosotech: (6-test-with-all-256-bytes): ~/Documents/GithubRepositories/HuffmanCoding/c++ 8=D~ ./main.o 
 [*] Running Huffman Coding 256 Byte Test
-[*] Generating random byte frequencies...8272 bytes.
+[*] Generating random byte frequencies...7943 bytes.
 [*] Original Msg : 
 	Run ./main.o debug to view generated message.
-[*] Attempting Compression...debug Size : 0
-Tree : [0|top]120 [1|top]119 [2|top]118 [3|top]118 [4|top]116 [5|top]116 [6|top]115 [7|top]114 [8|top]114 [9|top]112 [10|top]112 [11|top]110 [12|top]110 [13|top]110 [14|top]108 [15|top]108 [16|top]107 [17|top]106 [18|top]105 [19|top]104 [20|top]104 [21|top]102 [22|top]102 [23|top]100 [24|top]100 [25|top]100 [26|top]100 [27|top]98 [28|top]98 [29|top]98 [30|top]96 [31|top]96 [32|top]96 [33|top]94 [34|top]94 [35|top]94 [36|top]93 [37|top]92 [38|top]92 [39|top]91 [40|top]89 [41|top]88 [42|top]88 [43|top]86 [44|top]86 [45|top]84 [46|top]84 [47|top]83 [48|top]81 [49|top]80 [50|top]80 [51|top]78 [52|top]77 [53|top]76 [54|top]76 [55|top]75 [56|top]74 [57|top]72 [58|top]72 [59|top]70 [60|top]70 [61|top]69 [62|top]68 [63|top]68 [64|top]68 [65|top]66 [66|top]66 [67|top]64 [68|top]62 [69|top]61 [70|top]60 [71|top]58 [72|top]58 [73|top]58 [74|top]58 [75|top]55 [76|top]52 [77|top]52 [78|top]51 [79|top]50 [80|top]50 [81|top]49 [82|top]48 [83|top]48 [84|top]46 [85|top]46 [86|top]45 [87|top]43 [88|top]42 [89|top]42 [90|top]40 [91|top]39 [92|top]38 [93|top]37 [94|top]36 [95|top]36 [96|top]36 [97|top]34 [98|top]33 [99|top]32 [100|top]32 [101|top]32 [102|top]30 [103|top]27 [104|top]26 [105|top]26 [106|top]26 [107|top]24 [108|top]24 [109|top]21 [110|top]20 [111|top]19 [112|top]18 [113|top]18 [114|top]16 [115|top]13 [116|top]12 [117|top]11 [118|top]10 [119|top]10 [120|top]10 [121|top]8 [122|top]6 [123|top]5 [124|top]4 [125|top]4 [126|top]3 [127|top]2 [128|top]60 [129|top]60 [130|top]60 [131|top]59 [132|top]59 [133|top]59 [134|top]59 [135|top]59 [136|top]58 [137|top]58 [138|top]58 [139|top]58 [140|top]58 [141|top]57 [142|top]57 [143|top]57 [144|top]57 [145|top]57 [146|top]56 [147|top]56 [148|top]56 [149|top]56 [150|top]55 [151|top]55 [152|top]55 [153|top]55 [154|top]55 [155|top]55 [156|top]54 [157|top]54 [158|top]54 [159|top]54 [160|top]54 [161|top]53 [162|top]53 [163|top]53 [164|top]53 [165|top]52 [166|top]52 [167|top]52 [168|top]52 [169|top]52 [170|top]51 [171|top]51 [172|top]51 [173|top]51 [174|top]50 [175|top]50 [176|top]50 [177|top]50 [178|top]50 [179|top]50 [180|top]50 [181|top]50 [182|top]49 [183|top]49 [184|top]49 [185|top]49 [186|top]49 [187|top]49 [188|top]48 [189|top]48 [190|top]48 [191|top]48 [192|top]48 [193|top]48 [194|top]47 [195|top]47 [196|top]47 [197|top]47 [198|top]47 [199|top]47 [200|top]47 [201|top]46 [202|top]46 [203|top]46 [204|top]46 [205|top]46 [206|top]46 [207|top]45 [208|top]45 [209|top]44 [210|top]44 [211|top]44 [212|top]44 [213|top]44 [214|top]43 [215|top]43 [216|top]43 [217|top]43 [218|top]42 [219|top]42 [220|top]42 [221|top]42 [222|top]42 [223|top]41 [224|top]41 [225|top]40 [226|top]40 [227|top]40 [228|top]40 [229|top]40 [230|top]39 [231|top]39 [232|top]39 [233|top]38 [234|top]38 [235|top]38 [236|top]38 [237|top]38 [238|top]38 [239|top]37 [240|top]37 [241|top]37 [242|top]36 [243|top]36 [244|top]36 [245|top]36 [246|top]35 [247|top]35 [248|top]35 [249|top]35 [250|top]35 [251|top]34 [252|top]34 [253|top]34 [254|top]34 [255|top]34 [256|top]34 [257|top]34 [258|top]33 [259|top]33 [260|top]33 [261|top]33 [262|top]32 [263|top]32 [264|top]31 [265|top]31 [266|top]31 [267|top]30 [268|top]30 [269|top]30 [270|top]29 [271|top]29 [272|top]29 [273|top]29 [274|top]29 [275|top]29 [276|top]29 [277|top]29 [278|top]28 [279|top]27 [280|top]26 [281|top]26 [282|top]26 [283|top]26 [284|top]26 [285|top]25 [286|top]25 [287|top]25 [288|top]25 [289|top]25 [290|top]25 [291|top]24 [292|top]24 [293|top]24 [294|top]24 [295|top]24 [296|top]23 [297|top]23 [298|top]23 [299|top]23 [300|top]23 [301|top]22 [302|top]22 [303|top]21 [304|top]21 [305|top]21 [306|top]21 [307|top]21 [308|top]20 [309|top]20 [310|top]20 [311|top]19 [312|top]19 [313|top]19 [314|top]19 [315|top]18 [316|top]18 [317|top]18 [318|top]18 [319|top]18 [320|top]18 [321|top]18 [322|top]17 [323|top]17 [324|top]17 [325|top]16 [326|top]16 [327|top]16 [328|top]16 [329|top]16 [330|top]16 [331|top]16 [332|top]15 [333|top]15 [334|top]14 [335|top]13 [336|top]13 [337|top]13 [338|top]13 [339|top]13 [340|top]13 [341|top]13 [342|top]12 [343|top]12 [344|top]12 [345|top]12 [346|top]11 [347|top]10 [348|top]10 [349|top]10 [350|top]10 [351|top]9 [352|top]9 [353|top]9 [354|top]9 [355|top]9 [356|top]8 [357|top]8 [358|top]7 [359|top]6 [360|top]6 [361|top]6 [362|top]6 [363|top]5 [364|top]5 [365|top]5 [366|top]5 [367|top]5 [368|top]5 [369|top]5 [370|top]4 [371|top]4 [372|top]3 [373|top]3 [374|top]3 [375|top]2 [376|top]2 [377|top]2 [378|top]2 [379|top]2 [380|top]2 [381|top]1 [382|top]1 [383|top]1 debug Size : 384
-	Top layer Start : 127
-dbg : tracer, node, sum: 2 | 3 | -1 ->5 - S
-dbg : tracer, node, sum: 4 | 4 | 5 ->8 - A
-dbg : tracer, node, sum: 5 | 6 | 8 ->11 - A
-dbg : tracer, node, sum: 8 | 10 | 11 ->18 - A
-dbg : tracer, node, sum: 10 | 10 | 18 ->20 - A
-dbg : tracer, node, sum: 11 | 12 | 20 ->23 - A
-dbg : tracer, node, sum: 13 | 16 | 23 ->29 - A
-dbg : tracer, node, sum: 18 | 18 | 29 ->36 - A
-dbg : tracer, node, sum: 19 | 20 | 36 ->39 - A
-dbg : tracer, node, sum: 21 | 24 | 39 ->45 - A
-dbg : tracer, node, sum: 24 | 26 | 45 ->50 - A
-dbg : tracer, node, sum: 26 | 26 | 50 ->52 - A
-dbg : tracer, node, sum: 27 | 30 | 52 ->57 - A
-dbg : tracer, node, sum: 32 | 32 | 57 ->64 - A
-dbg : tracer, node, sum: 32 | 33 | 64 ->65 - A
-dbg : tracer, node, sum: 34 | 36 | 65 ->70 - A
-dbg : tracer, node, sum: 36 | 36 | 70 ->72 - A
-dbg : tracer, node, sum: 37 | 38 | 72 ->75 - A
-dbg : tracer, node, sum: 39 | 40 | 75 ->79 - A
-dbg : tracer, node, sum: 42 | 42 | 79 ->84 - A
-dbg : tracer, node, sum: 43 | 45 | 84 ->88 - A
-dbg : tracer, node, sum: 46 | 46 | 88 ->92 - A
-dbg : tracer, node, sum: 48 | 48 | 92 ->96 - A
-dbg : tracer, node, sum: 49 | 50 | 96 ->99 - A
-dbg : tracer, node, sum: 50 | 51 | 99 ->101 - A
-dbg : tracer, node, sum: 52 | 52 | 101 ->104 - A
-dbg : tracer, node, sum: 55 | 58 | 104 ->113 - A
-dbg : tracer, node, sum: 58 | 58 | 113 ->116 - A
-dbg : tracer, node, sum: 58 | 60 | 116 ->118 - A
-dbg : tracer, node, sum: 61 | 62 | 118 ->123 - A
-dbg : tracer, node, sum: 64 | 66 | 123 ->130 - A
-dbg : tracer, node, sum: 66 | 68 | 130 ->134 - A
-dbg : tracer, node, sum: 68 | 68 | 134 ->136 - A
-dbg : tracer, node, sum: 69 | 70 | 136 ->139 - A
-dbg : tracer, node, sum: 70 | 72 | 139 ->142 - A
-dbg : tracer, node, sum: 72 | 74 | 142 ->146 - A
-dbg : tracer, node, sum: 75 | 76 | 146 ->151 - A
-dbg : tracer, node, sum: 76 | 77 | 151 ->153 - A
-dbg : tracer, node, sum: 78 | 80 | 153 ->158 - A
-dbg : tracer, node, sum: 80 | 81 | 158 ->161 - A
-dbg : tracer, node, sum: 83 | 84 | 161 ->167 - A
-dbg : tracer, node, sum: 84 | 86 | 167 ->170 - A
-dbg : tracer, node, sum: 86 | 88 | 170 ->174 - A
-dbg : tracer, node, sum: 88 | 89 | 174 ->177 - A
-dbg : tracer, node, sum: 91 | 92 | 177 ->183 - A
-dbg : tracer, node, sum: 92 | 93 | 183 ->185 - A
-dbg : tracer, node, sum: 94 | 94 | 185 ->188 - A
-dbg : tracer, node, sum: 94 | 96 | 188 ->190 - A
-dbg : tracer, node, sum: 96 | 96 | 190 ->192 - A
-dbg : tracer, node, sum: 98 | 98 | 192 ->196 - A
-dbg : tracer, node, sum: 98 | 100 | 196 ->198 - A
-dbg : tracer, node, sum: 100 | 100 | 198 ->200 - A
-dbg : tracer, node, sum: 100 | 102 | 200 ->202 - A
-dbg : tracer, node, sum: 102 | 104 | 202 ->206 - A
-dbg : tracer, node, sum: 104 | 105 | 206 ->209 - A
-dbg : tracer, node, sum: 106 | 107 | 209 ->213 - A
-dbg : tracer, node, sum: 108 | 108 | 213 ->216 - A
-dbg : tracer, node, sum: 110 | 110 | 216 ->220 - A
-dbg : tracer, node, sum: 110 | 112 | 220 ->222 - A
-dbg : tracer, node, sum: 112 | 114 | 222 ->226 - A
-dbg : tracer, node, sum: 114 | 115 | 226 ->229 - A
-dbg : tracer, node, sum: 116 | 116 | 229 ->232 - A
-dbg : tracer, node, sum: 118 | 118 | 232 ->236 - A
-dbg : tracer, node, sum: 119 | 120 | 236 ->239 - A
-Work buffer : 5:T 8:T 11:T 18:T 20:T 23:T 29:T 36:T 39:T 45:T 50:T 52:T 57:T 64:T 65:T 70:T 72:T 75:T 79:T 84:T 88:T 92:T 96:T 99:T 101:T 104:T 113:T 116:T 118:T 123:T 130:T 134:T 136:T 139:T 142:T 146:T 151:T 153:T 158:T 161:T 167:T 170:T 174:T 177:T 183:T 185:T 188:T 190:T 192:T 196:T 198:T 200:T 202:T 206:T 209:T 213:T 216:T 220:T 222:T 226:T 229:T 232:T 236:T 239:T 
-Tree : [0|top]239 [1|top]236 [2|top]232 [3|top]229 [4|top]226 [5|top]222 [6|top]220 [7|top]216 [8|top]213 [9|top]209 [10|top]206 [11|top]202 [12|top]200 [13|top]198 [14|top]196 [15|top]192 [16|top]190 [17|top]188 [18|top]185 [19|top]183 [20|top]177 [21|top]174 [22|top]170 [23|top]167 [24|top]161 [25|top]158 [26|top]153 [27|top]151 [28|top]146 [29|top]142 [30|top]139 [31|top]136 [32|top]134 [33|top]130 [34|top]123 [35|top]118 [36|top]116 [37|top]113 [38|top]104 [39|top]101 [40|top]99 [41|top]96 [42|top]92 [43|top]88 [44|top]84 [45|top]79 [46|top]75 [47|top]72 [48|top]70 [49|top]65 [50|top]64 [51|top]57 [52|top]52 [53|top]50 [54|top]45 [55|top]39 [56|top]36 [57|top]29 [58|top]23 [59|top]20 [60|top]18 [61|top]11 [62|top]8 [63|top]5 [64|top]120 [65|top]119 [66|top]118 [67|top]118 [68|top]116 [69|top]116 [70|top]115 [71|top]114 [72|top]114 [73|top]112 [74|top]112 [75|top]110 [76|top]110 [77|top]110 [78|top]108 [79|top]108 [80|top]107 [81|top]106 [82|top]105 [83|top]104 [84|top]104 [85|top]102 [86|top]102 [87|top]100 [88|top]100 [89|top]100 [90|top]100 [91|top]98 [92|top]98 [93|top]98 [94|top]96 [95|top]96 [96|top]96 [97|top]94 [98|top]94 [99|top]94 [100|top]93 [101|top]92 [102|top]92 [103|top]91 [104|top]89 [105|top]88 [106|top]88 [107|top]86 [108|top]86 [109|top]84 [110|top]84 [111|top]83 [112|top]81 [113|top]80 [114|top]80 [115|top]78 [116|top]77 [117|top]76 [118|top]76 [119|top]75 [120|top]74 [121|top]72 [122|top]72 [123|top]70 [124|top]70 [125|top]69 [126|top]68 [127|top]68 [128|top]68 [129|top]66 [130|top]66 [131|top]64 [132|top]62 [133|top]61 [134|top]60 [135|top]58 [136|top]58 [137|top]58 [138|top]58 [139|top]55 [140|top]52 [141|top]52 [142|top]51 [143|top]50 [144|top]50 [145|top]49 [146|top]48 [147|top]48 [148|top]46 [149|top]46 [150|top]45 [151|top]43 [152|top]42 [153|top]42 [154|top]40 [155|top]39 [156|top]38 [157|top]37 [158|top]36 [159|top]36 [160|top]36 [161|top]34 [162|top]33 [163|top]32 [164|top]32 [165|top]32 [166|top]30 [167|top]27 [168|top]26 [169|top]26 [170|top]26 [171|top]24 [172|top]24 [173|top]21 [174|top]20 [175|top]19 [176|top]18 [177|top]18 [178|top]16 [179|top]13 [180|top]12 [181|top]11 [182|top]10 [183|top]10 [184|top]10 [185|top]8 [186|top]6 [187|top]5 [188|top]4 [189|top]4 [190|top]3 [191|top]2 [192|top]60 [193|top]60 [194|top]60 [195|top]59 [196|top]59 [197|top]59 [198|top]59 [199|top]59 [200|top]58 [201|top]58 [202|top]58 [203|top]58 [204|top]58 [205|top]57 [206|top]57 [207|top]57 [208|top]57 [209|top]57 [210|top]56 [211|top]56 [212|top]56 [213|top]56 [214|top]55 [215|top]55 [216|top]55 [217|top]55 [218|top]55 [219|top]55 [220|top]54 [221|top]54 [222|top]54 [223|top]54 [224|top]54 [225|top]53 [226|top]53 [227|top]53 [228|top]53 [229|top]52 [230|top]52 [231|top]52 [232|top]52 [233|top]52 [234|top]51 [235|top]51 [236|top]51 [237|top]51 [238|top]50 [239|top]50 [240|top]50 [241|top]50 [242|top]50 [243|top]50 [244|top]50 [245|top]50 [246|top]49 [247|top]49 [248|top]49 [249|top]49 [250|top]49 [251|top]49 [252|top]48 [253|top]48 [254|top]48 [255|top]48 [256|top]48 [257|top]48 [258|top]47 [259|top]47 [260|top]47 [261|top]47 [262|top]47 [263|top]47 [264|top]47 [265|top]46 [266|top]46 [267|top]46 [268|top]46 [269|top]46 [270|top]46 [271|top]45 [272|top]45 [273|top]44 [274|top]44 [275|top]44 [276|top]44 [277|top]44 [278|top]43 [279|top]43 [280|top]43 [281|top]43 [282|top]42 [283|top]42 [284|top]42 [285|top]42 [286|top]42 [287|top]41 [288|top]41 [289|top]40 [290|top]40 [291|top]40 [292|top]40 [293|top]40 [294|top]39 [295|top]39 [296|top]39 [297|top]38 [298|top]38 [299|top]38 [300|top]38 [301|top]38 [302|top]38 [303|top]37 [304|top]37 [305|top]37 [306|top]36 [307|top]36 [308|top]36 [309|top]36 [310|top]35 [311|top]35 [312|top]35 [313|top]35 [314|top]35 [315|top]34 [316|top]34 [317|top]34 [318|top]34 [319|top]34 [320|top]34 [321|top]34 [322|top]33 [323|top]33 [324|top]33 [325|top]33 [326|top]32 [327|top]32 [328|top]31 [329|top]31 [330|top]31 [331|top]30 [332|top]30 [333|top]30 [334|top]29 [335|top]29 [336|top]29 [337|top]29 [338|top]29 [339|top]29 [340|top]29 [341|top]29 [342|top]28 [343|top]27 [344|top]26 [345|top]26 [346|top]26 [347|top]26 [348|top]26 [349|top]25 [350|top]25 [351|top]25 [352|top]25 [353|top]25 [354|top]25 [355|top]24 [356|top]24 [357|top]24 [358|top]24 [359|top]24 [360|top]23 [361|top]23 [362|top]23 [363|top]23 [364|top]23 [365|top]22 [366|top]22 [367|top]21 [368|top]21 [369|top]21 [370|top]21 [371|top]21 [372|top]20 [373|top]20 [374|top]20 [375|top]19 [376|top]19 [377|top]19 [378|top]19 [379|top]18 [380|top]18 [381|top]18 [382|top]18 [383|top]18 [384|top]18 [385|top]18 [386|top]17 [387|top]17 [388|top]17 [389|top]16 [390|top]16 [391|top]16 [392|top]16 [393|top]16 [394|top]16 [395|top]16 [396|top]15 [397|top]15 [398|top]14 [399|top]13 [400|top]13 [401|top]13 [402|top]13 [403|top]13 [404|top]13 [405|top]13 [406|top]12 [407|top]12 [408|top]12 [409|top]12 [410|top]11 [411|top]10 [412|top]10 [413|top]10 [414|top]10 [415|top]9 [416|top]9 [417|top]9 [418|top]9 [419|top]9 [420|top]8 [421|top]8 [422|top]7 [423|top]6 [424|top]6 [425|top]6 [426|top]6 [427|top]5 [428|top]5 [429|top]5 [430|top]5 [431|top]5 [432|top]5 [433|top]5 [434|top]4 [435|top]4 [436|top]3 [437|top]3 [438|top]3 [439|top]2 [440|top]2 [441|top]2 [442|top]2 [443|top]2 [444|top]2 [445|top]1 [446|top]1 [447|top]1 debug Size : 448
-	Top layer Start : 63
-dbg : tracer, node, sum: 5 | 8 | -1 ->13 - S
-dbg : tracer, node, sum: 11 | 18 | 13 ->24 - B
-dbg : tracer, node, sum: 18 | 20 | 24 ->38 - A
-dbg : tracer, node, sum: 23 | 29 | 38 ->52 - A
-dbg : tracer, node, sum: 36 | 39 | 52 ->75 - A
-dbg : tracer, node, sum: 45 | 50 | 75 ->95 - A
-dbg : tracer, node, sum: 52 | 57 | 95 ->109 - A
-dbg : tracer, node, sum: 64 | 65 | 109 ->129 - A
-dbg : tracer, node, sum: 70 | 72 | 129 ->142 - A
-dbg : tracer, node, sum: 75 | 79 | 142 ->154 - A
-dbg : tracer, node, sum: 84 | 88 | 154 ->172 - A
-dbg : tracer, node, sum: 92 | 96 | 172 ->188 - A
-dbg : tracer, node, sum: 99 | 101 | 188 ->200 - A
-dbg : tracer, node, sum: 104 | 113 | 200 ->217 - A
-dbg : tracer, node, sum: 116 | 118 | 217 ->234 - A
-dbg : tracer, node, sum: 123 | 130 | 234 ->253 - A
-dbg : tracer, node, sum: 134 | 136 | 253 ->270 - A
-dbg : tracer, node, sum: 139 | 142 | 270 ->281 - A
-dbg : tracer, node, sum: 146 | 151 | 281 ->297 - A
-dbg : tracer, node, sum: 153 | 158 | 297 ->311 - A
-dbg : tracer, node, sum: 161 | 167 | 311 ->328 - A
-dbg : tracer, node, sum: 170 | 174 | 328 ->344 - A
-dbg : tracer, node, sum: 177 | 183 | 344 ->360 - A
-dbg : tracer, node, sum: 185 | 188 | 360 ->373 - A
-dbg : tracer, node, sum: 190 | 192 | 373 ->382 - A
-dbg : tracer, node, sum: 196 | 198 | 382 ->394 - A
-dbg : tracer, node, sum: 200 | 202 | 394 ->402 - A
-dbg : tracer, node, sum: 206 | 209 | 402 ->415 - A
-dbg : tracer, node, sum: 213 | 216 | 415 ->429 - A
-dbg : tracer, node, sum: 220 | 222 | 429 ->442 - A
-dbg : tracer, node, sum: 226 | 229 | 442 ->455 - A
-dbg : tracer, node, sum: 232 | 236 | 455 ->468 - A
-Work buffer : 13:B 24:T 38:T 52:T 75:T 95:T 109:T 129:T 142:T 154:T 172:T 188:T 200:T 217:T 234:T 253:T 270:T 281:T 297:T 311:T 328:T 344:T 360:T 373:T 382:T 394:T 402:T 415:T 429:T 442:T 455:T 468:T 
-Tree : [0|top]468 [1|top]455 [2|top]442 [3|top]429 [4|top]415 [5|top]402 [6|top]394 [7|top]382 [8|top]373 [9|top]360 [10|top]344 [11|top]328 [12|top]311 [13|top]297 [14|top]281 [15|top]270 [16|top]253 [17|top]234 [18|top]217 [19|top]200 [20|top]188 [21|top]172 [22|top]154 [23|top]142 [24|top]129 [25|top]109 [26|top]95 [27|top]75 [28|top]52 [29|top]38 [30|top]24 [31|bottom]13 [32|top]239 [33|top]236 [34|top]232 [35|top]229 [36|top]226 [37|top]222 [38|top]220 [39|top]216 [40|top]213 [41|top]209 [42|top]206 [43|top]202 [44|top]200 [45|top]198 [46|top]196 [47|top]192 [48|top]190 [49|top]188 [50|top]185 [51|top]183 [52|top]177 [53|top]174 [54|top]170 [55|top]167 [56|top]161 [57|top]158 [58|top]153 [59|top]151 [60|top]146 [61|top]142 [62|top]139 [63|top]136 [64|top]134 [65|top]130 [66|top]123 [67|top]118 [68|top]116 [69|top]113 [70|top]104 [71|top]101 [72|top]99 [73|top]96 [74|top]92 [75|top]88 [76|top]84 [77|top]79 [78|top]75 [79|top]72 [80|top]70 [81|top]65 [82|top]64 [83|top]57 [84|top]52 [85|top]50 [86|top]45 [87|top]39 [88|top]36 [89|top]29 [90|top]23 [91|top]20 [92|top]18 [93|top]11 [94|top]8 [95|top]5 [96|top]120 [97|top]119 [98|top]118 [99|top]118 [100|top]116 [101|top]116 [102|top]115 [103|top]114 [104|top]114 [105|top]112 [106|top]112 [107|top]110 [108|top]110 [109|top]110 [110|top]108 [111|top]108 [112|top]107 [113|top]106 [114|top]105 [115|top]104 [116|top]104 [117|top]102 [118|top]102 [119|top]100 [120|top]100 [121|top]100 [122|top]100 [123|top]98 [124|top]98 [125|top]98 [126|top]96 [127|top]96 [128|top]96 [129|top]94 [130|top]94 [131|top]94 [132|top]93 [133|top]92 [134|top]92 [135|top]91 [136|top]89 [137|top]88 [138|top]88 [139|top]86 [140|top]86 [141|top]84 [142|top]84 [143|top]83 [144|top]81 [145|top]80 [146|top]80 [147|top]78 [148|top]77 [149|top]76 [150|top]76 [151|top]75 [152|top]74 [153|top]72 [154|top]72 [155|top]70 [156|top]70 [157|top]69 [158|top]68 [159|top]68 [160|top]68 [161|top]66 [162|top]66 [163|top]64 [164|top]62 [165|top]61 [166|top]60 [167|top]58 [168|top]58 [169|top]58 [170|top]58 [171|top]55 [172|top]52 [173|top]52 [174|top]51 [175|top]50 [176|top]50 [177|top]49 [178|top]48 [179|top]48 [180|top]46 [181|top]46 [182|top]45 [183|top]43 [184|top]42 [185|top]42 [186|top]40 [187|top]39 [188|top]38 [189|top]37 [190|top]36 [191|top]36 [192|top]36 [193|top]34 [194|top]33 [195|top]32 [196|top]32 [197|top]32 [198|top]30 [199|top]27 [200|top]26 [201|top]26 [202|top]26 [203|top]24 [204|top]24 [205|top]21 [206|top]20 [207|top]19 [208|top]18 [209|top]18 [210|top]16 [211|top]13 [212|top]12 [213|top]11 [214|top]10 [215|top]10 [216|top]10 [217|top]8 [218|top]6 [219|top]5 [220|top]4 [221|top]4 [222|top]3 [223|top]2 [224|top]60 [225|top]60 [226|top]60 [227|top]59 [228|top]59 [229|top]59 [230|top]59 [231|top]59 [232|top]58 [233|top]58 [234|top]58 [235|top]58 [236|top]58 [237|top]57 [238|top]57 [239|top]57 [240|top]57 [241|top]57 [242|top]56 [243|top]56 [244|top]56 [245|top]56 [246|top]55 [247|top]55 [248|top]55 [249|top]55 [250|top]55 [251|top]55 [252|top]54 [253|top]54 [254|top]54 [255|top]54 [256|top]54 [257|top]53 [258|top]53 [259|top]53 [260|top]53 [261|top]52 [262|top]52 [263|top]52 [264|top]52 [265|top]52 [266|top]51 [267|top]51 [268|top]51 [269|top]51 [270|top]50 [271|top]50 [272|top]50 [273|top]50 [274|top]50 [275|top]50 [276|top]50 [277|top]50 [278|top]49 [279|top]49 [280|top]49 [281|top]49 [282|top]49 [283|top]49 [284|top]48 [285|top]48 [286|top]48 [287|top]48 [288|top]48 [289|top]48 [290|top]47 [291|top]47 [292|top]47 [293|top]47 [294|top]47 [295|top]47 [296|top]47 [297|top]46 [298|top]46 [299|top]46 [300|top]46 [301|top]46 [302|top]46 [303|top]45 [304|top]45 [305|top]44 [306|top]44 [307|top]44 [308|top]44 [309|top]44 [310|top]43 [311|top]43 [312|top]43 [313|top]43 [314|top]42 [315|top]42 [316|top]42 [317|top]42 [318|top]42 [319|top]41 [320|top]41 [321|top]40 [322|top]40 [323|top]40 [324|top]40 [325|top]40 [326|top]39 [327|top]39 [328|top]39 [329|top]38 [330|top]38 [331|top]38 [332|top]38 [333|top]38 [334|top]38 [335|top]37 [336|top]37 [337|top]37 [338|top]36 [339|top]36 [340|top]36 [341|top]36 [342|top]35 [343|top]35 [344|top]35 [345|top]35 [346|top]35 [347|top]34 [348|top]34 [349|top]34 [350|top]34 [351|top]34 [352|top]34 [353|top]34 [354|top]33 [355|top]33 [356|top]33 [357|top]33 [358|top]32 [359|top]32 [360|top]31 [361|top]31 [362|top]31 [363|top]30 [364|top]30 [365|top]30 [366|top]29 [367|top]29 [368|top]29 [369|top]29 [370|top]29 [371|top]29 [372|top]29 [373|top]29 [374|top]28 [375|top]27 [376|top]26 [377|top]26 [378|top]26 [379|top]26 [380|top]26 [381|top]25 [382|top]25 [383|top]25 [384|top]25 [385|top]25 [386|top]25 [387|top]24 [388|top]24 [389|top]24 [390|top]24 [391|top]24 [392|top]23 [393|top]23 [394|top]23 [395|top]23 [396|top]23 [397|top]22 [398|top]22 [399|top]21 [400|top]21 [401|top]21 [402|top]21 [403|top]21 [404|top]20 [405|top]20 [406|top]20 [407|top]19 [408|top]19 [409|top]19 [410|top]19 [411|top]18 [412|top]18 [413|top]18 [414|top]18 [415|top]18 [416|top]18 [417|top]18 [418|top]17 [419|top]17 [420|top]17 [421|top]16 [422|top]16 [423|top]16 [424|top]16 [425|top]16 [426|top]16 [427|top]16 [428|top]15 [429|top]15 [430|top]14 [431|top]13 [432|top]13 [433|top]13 [434|top]13 [435|top]13 [436|top]13 [437|top]13 [438|top]12 [439|top]12 [440|top]12 [441|top]12 [442|top]11 [443|top]10 [444|top]10 [445|top]10 [446|top]10 [447|top]9 [448|top]9 [449|top]9 [450|top]9 [451|top]9 [452|top]8 [453|top]8 [454|top]7 [455|top]6 [456|top]6 [457|top]6 [458|top]6 [459|top]5 [460|top]5 [461|top]5 [462|top]5 [463|top]5 [464|top]5 [465|top]5 [466|top]4 [467|top]4 [468|top]3 [469|top]3 [470|top]3 [471|top]2 [472|top]2 [473|top]2 [474|top]2 [475|top]2 [476|top]2 [477|top]1 [478|top]1 [479|top]1 debug Size : 480
-	Top layer Start : 31
-		31 '13' is bottom node, skipping...
-dbg : tracer, node, sum: 24 | 38 | -1 ->62 - S
-dbg : tracer, node, sum: 52 | 75 | 62 ->114 - B
-dbg : tracer, node, sum: 75 | 95 | 114 ->170 - A
-dbg : tracer, node, sum: 109 | 129 | 170 ->238 - A
-dbg : tracer, node, sum: 142 | 154 | 238 ->296 - A
-dbg : tracer, node, sum: 172 | 188 | 296 ->360 - A
-dbg : tracer, node, sum: 200 | 217 | 360 ->417 - A
-dbg : tracer, node, sum: 234 | 253 | 417 ->487 - A
-dbg : tracer, node, sum: 270 | 281 | 487 ->551 - A
-dbg : tracer, node, sum: 297 | 311 | 551 ->608 - A
-dbg : tracer, node, sum: 328 | 344 | 608 ->672 - A
-dbg : tracer, node, sum: 360 | 373 | 672 ->733 - A
-dbg : tracer, node, sum: 382 | 394 | 733 ->776 - A
-dbg : tracer, node, sum: 402 | 415 | 776 ->817 - A
-dbg : tracer, node, sum: 429 | 442 | 817 ->871 - A
-dbg : tracer, node, sum: 455 | 468 | 871 ->923 - A
-Work buffer : 62:B 114:T 170:T 238:T 296:T 360:T 417:T 487:T 551:T 608:T 672:T 733:T 776:T 817:T 871:T 923:T 
-Tree : [0|top]923 [1|top]871 [2|top]817 [3|top]776 [4|top]733 [5|top]672 [6|top]608 [7|top]551 [8|top]487 [9|top]417 [10|top]360 [11|top]296 [12|top]238 [13|top]170 [14|top]114 [15|bottom]62 [16|top]468 [17|top]455 [18|top]442 [19|top]429 [20|top]415 [21|top]402 [22|top]394 [23|top]382 [24|top]373 [25|top]360 [26|top]344 [27|top]328 [28|top]311 [29|top]297 [30|top]281 [31|top]270 [32|top]253 [33|top]234 [34|top]217 [35|top]200 [36|top]188 [37|top]172 [38|top]154 [39|top]142 [40|top]129 [41|top]109 [42|top]95 [43|top]75 [44|top]52 [45|top]38 [46|top]24 [47|bottom]13 [48|top]239 [49|top]236 [50|top]232 [51|top]229 [52|top]226 [53|top]222 [54|top]220 [55|top]216 [56|top]213 [57|top]209 [58|top]206 [59|top]202 [60|top]200 [61|top]198 [62|top]196 [63|top]192 [64|top]190 [65|top]188 [66|top]185 [67|top]183 [68|top]177 [69|top]174 [70|top]170 [71|top]167 [72|top]161 [73|top]158 [74|top]153 [75|top]151 [76|top]146 [77|top]142 [78|top]139 [79|top]136 [80|top]134 [81|top]130 [82|top]123 [83|top]118 [84|top]116 [85|top]113 [86|top]104 [87|top]101 [88|top]99 [89|top]96 [90|top]92 [91|top]88 [92|top]84 [93|top]79 [94|top]75 [95|top]72 [96|top]70 [97|top]65 [98|top]64 [99|top]57 [100|top]52 [101|top]50 [102|top]45 [103|top]39 [104|top]36 [105|top]29 [106|top]23 [107|top]20 [108|top]18 [109|top]11 [110|top]8 [111|top]5 [112|top]120 [113|top]119 [114|top]118 [115|top]118 [116|top]116 [117|top]116 [118|top]115 [119|top]114 [120|top]114 [121|top]112 [122|top]112 [123|top]110 [124|top]110 [125|top]110 [126|top]108 [127|top]108 [128|top]107 [129|top]106 [130|top]105 [131|top]104 [132|top]104 [133|top]102 [134|top]102 [135|top]100 [136|top]100 [137|top]100 [138|top]100 [139|top]98 [140|top]98 [141|top]98 [142|top]96 [143|top]96 [144|top]96 [145|top]94 [146|top]94 [147|top]94 [148|top]93 [149|top]92 [150|top]92 [151|top]91 [152|top]89 [153|top]88 [154|top]88 [155|top]86 [156|top]86 [157|top]84 [158|top]84 [159|top]83 [160|top]81 [161|top]80 [162|top]80 [163|top]78 [164|top]77 [165|top]76 [166|top]76 [167|top]75 [168|top]74 [169|top]72 [170|top]72 [171|top]70 [172|top]70 [173|top]69 [174|top]68 [175|top]68 [176|top]68 [177|top]66 [178|top]66 [179|top]64 [180|top]62 [181|top]61 [182|top]60 [183|top]58 [184|top]58 [185|top]58 [186|top]58 [187|top]55 [188|top]52 [189|top]52 [190|top]51 [191|top]50 [192|top]50 [193|top]49 [194|top]48 [195|top]48 [196|top]46 [197|top]46 [198|top]45 [199|top]43 [200|top]42 [201|top]42 [202|top]40 [203|top]39 [204|top]38 [205|top]37 [206|top]36 [207|top]36 [208|top]36 [209|top]34 [210|top]33 [211|top]32 [212|top]32 [213|top]32 [214|top]30 [215|top]27 [216|top]26 [217|top]26 [218|top]26 [219|top]24 [220|top]24 [221|top]21 [222|top]20 [223|top]19 [224|top]18 [225|top]18 [226|top]16 [227|top]13 [228|top]12 [229|top]11 [230|top]10 [231|top]10 [232|top]10 [233|top]8 [234|top]6 [235|top]5 [236|top]4 [237|top]4 [238|top]3 [239|top]2 [240|top]60 [241|top]60 [242|top]60 [243|top]59 [244|top]59 [245|top]59 [246|top]59 [247|top]59 [248|top]58 [249|top]58 [250|top]58 [251|top]58 [252|top]58 [253|top]57 [254|top]57 [255|top]57 [256|top]57 [257|top]57 [258|top]56 [259|top]56 [260|top]56 [261|top]56 [262|top]55 [263|top]55 [264|top]55 [265|top]55 [266|top]55 [267|top]55 [268|top]54 [269|top]54 [270|top]54 [271|top]54 [272|top]54 [273|top]53 [274|top]53 [275|top]53 [276|top]53 [277|top]52 [278|top]52 [279|top]52 [280|top]52 [281|top]52 [282|top]51 [283|top]51 [284|top]51 [285|top]51 [286|top]50 [287|top]50 [288|top]50 [289|top]50 [290|top]50 [291|top]50 [292|top]50 [293|top]50 [294|top]49 [295|top]49 [296|top]49 [297|top]49 [298|top]49 [299|top]49 [300|top]48 [301|top]48 [302|top]48 [303|top]48 [304|top]48 [305|top]48 [306|top]47 [307|top]47 [308|top]47 [309|top]47 [310|top]47 [311|top]47 [312|top]47 [313|top]46 [314|top]46 [315|top]46 [316|top]46 [317|top]46 [318|top]46 [319|top]45 [320|top]45 [321|top]44 [322|top]44 [323|top]44 [324|top]44 [325|top]44 [326|top]43 [327|top]43 [328|top]43 [329|top]43 [330|top]42 [331|top]42 [332|top]42 [333|top]42 [334|top]42 [335|top]41 [336|top]41 [337|top]40 [338|top]40 [339|top]40 [340|top]40 [341|top]40 [342|top]39 [343|top]39 [344|top]39 [345|top]38 [346|top]38 [347|top]38 [348|top]38 [349|top]38 [350|top]38 [351|top]37 [352|top]37 [353|top]37 [354|top]36 [355|top]36 [356|top]36 [357|top]36 [358|top]35 [359|top]35 [360|top]35 [361|top]35 [362|top]35 [363|top]34 [364|top]34 [365|top]34 [366|top]34 [367|top]34 [368|top]34 [369|top]34 [370|top]33 [371|top]33 [372|top]33 [373|top]33 [374|top]32 [375|top]32 [376|top]31 [377|top]31 [378|top]31 [379|top]30 [380|top]30 [381|top]30 [382|top]29 [383|top]29 [384|top]29 [385|top]29 [386|top]29 [387|top]29 [388|top]29 [389|top]29 [390|top]28 [391|top]27 [392|top]26 [393|top]26 [394|top]26 [395|top]26 [396|top]26 [397|top]25 [398|top]25 [399|top]25 [400|top]25 [401|top]25 [402|top]25 [403|top]24 [404|top]24 [405|top]24 [406|top]24 [407|top]24 [408|top]23 [409|top]23 [410|top]23 [411|top]23 [412|top]23 [413|top]22 [414|top]22 [415|top]21 [416|top]21 [417|top]21 [418|top]21 [419|top]21 [420|top]20 [421|top]20 [422|top]20 [423|top]19 [424|top]19 [425|top]19 [426|top]19 [427|top]18 [428|top]18 [429|top]18 [430|top]18 [431|top]18 [432|top]18 [433|top]18 [434|top]17 [435|top]17 [436|top]17 [437|top]16 [438|top]16 [439|top]16 [440|top]16 [441|top]16 [442|top]16 [443|top]16 [444|top]15 [445|top]15 [446|top]14 [447|top]13 [448|top]13 [449|top]13 [450|top]13 [451|top]13 [452|top]13 [453|top]13 [454|top]12 [455|top]12 [456|top]12 [457|top]12 [458|top]11 [459|top]10 [460|top]10 [461|top]10 [462|top]10 [463|top]9 [464|top]9 [465|top]9 [466|top]9 [467|top]9 [468|top]8 [469|top]8 [470|top]7 [471|top]6 [472|top]6 [473|top]6 [474|top]6 [475|top]5 [476|top]5 [477|top]5 [478|top]5 [479|top]5 [480|top]5 [481|top]5 [482|top]4 [483|top]4 [484|top]3 [485|top]3 [486|top]3 [487|top]2 [488|top]2 [489|top]2 [490|top]2 [491|top]2 [492|top]2 [493|top]1 [494|top]1 [495|top]1 debug Size : 496
-	Top layer Start : 15
-		15 '62' is bottom node, skipping...
-dbg : tracer, node, sum: 114 | 170 | -1 ->284 - S
-dbg : tracer, node, sum: 238 | 296 | 284 ->522 - B
-dbg : tracer, node, sum: 296 | 360 | 522 ->656 - A
-dbg : tracer, node, sum: 417 | 487 | 656 ->904 - A
-dbg : tracer, node, sum: 551 | 608 | 904 ->1159 - A
-dbg : tracer, node, sum: 672 | 733 | 1159 ->1405 - A
-dbg : tracer, node, sum: 776 | 817 | 1405 ->1593 - A
-dbg : tracer, node, sum: 871 | 923 | 1593 ->1794 - A
-Work buffer : 284:B 522:T 656:T 904:T 1159:T 1405:T 1593:T 1794:T 
-Tree : [0|top]1794 [1|top]1593 [2|top]1405 [3|top]1159 [4|top]904 [5|top]656 [6|top]522 [7|bottom]284 [8|top]923 [9|top]871 [10|top]817 [11|top]776 [12|top]733 [13|top]672 [14|top]608 [15|top]551 [16|top]487 [17|top]417 [18|top]360 [19|top]296 [20|top]238 [21|top]170 [22|top]114 [23|bottom]62 [24|top]468 [25|top]455 [26|top]442 [27|top]429 [28|top]415 [29|top]402 [30|top]394 [31|top]382 [32|top]373 [33|top]360 [34|top]344 [35|top]328 [36|top]311 [37|top]297 [38|top]281 [39|top]270 [40|top]253 [41|top]234 [42|top]217 [43|top]200 [44|top]188 [45|top]172 [46|top]154 [47|top]142 [48|top]129 [49|top]109 [50|top]95 [51|top]75 [52|top]52 [53|top]38 [54|top]24 [55|bottom]13 [56|top]239 [57|top]236 [58|top]232 [59|top]229 [60|top]226 [61|top]222 [62|top]220 [63|top]216 [64|top]213 [65|top]209 [66|top]206 [67|top]202 [68|top]200 [69|top]198 [70|top]196 [71|top]192 [72|top]190 [73|top]188 [74|top]185 [75|top]183 [76|top]177 [77|top]174 [78|top]170 [79|top]167 [80|top]161 [81|top]158 [82|top]153 [83|top]151 [84|top]146 [85|top]142 [86|top]139 [87|top]136 [88|top]134 [89|top]130 [90|top]123 [91|top]118 [92|top]116 [93|top]113 [94|top]104 [95|top]101 [96|top]99 [97|top]96 [98|top]92 [99|top]88 [100|top]84 [101|top]79 [102|top]75 [103|top]72 [104|top]70 [105|top]65 [106|top]64 [107|top]57 [108|top]52 [109|top]50 [110|top]45 [111|top]39 [112|top]36 [113|top]29 [114|top]23 [115|top]20 [116|top]18 [117|top]11 [118|top]8 [119|top]5 [120|top]120 [121|top]119 [122|top]118 [123|top]118 [124|top]116 [125|top]116 [126|top]115 [127|top]114 [128|top]114 [129|top]112 [130|top]112 [131|top]110 [132|top]110 [133|top]110 [134|top]108 [135|top]108 [136|top]107 [137|top]106 [138|top]105 [139|top]104 [140|top]104 [141|top]102 [142|top]102 [143|top]100 [144|top]100 [145|top]100 [146|top]100 [147|top]98 [148|top]98 [149|top]98 [150|top]96 [151|top]96 [152|top]96 [153|top]94 [154|top]94 [155|top]94 [156|top]93 [157|top]92 [158|top]92 [159|top]91 [160|top]89 [161|top]88 [162|top]88 [163|top]86 [164|top]86 [165|top]84 [166|top]84 [167|top]83 [168|top]81 [169|top]80 [170|top]80 [171|top]78 [172|top]77 [173|top]76 [174|top]76 [175|top]75 [176|top]74 [177|top]72 [178|top]72 [179|top]70 [180|top]70 [181|top]69 [182|top]68 [183|top]68 [184|top]68 [185|top]66 [186|top]66 [187|top]64 [188|top]62 [189|top]61 [190|top]60 [191|top]58 [192|top]58 [193|top]58 [194|top]58 [195|top]55 [196|top]52 [197|top]52 [198|top]51 [199|top]50 [200|top]50 [201|top]49 [202|top]48 [203|top]48 [204|top]46 [205|top]46 [206|top]45 [207|top]43 [208|top]42 [209|top]42 [210|top]40 [211|top]39 [212|top]38 [213|top]37 [214|top]36 [215|top]36 [216|top]36 [217|top]34 [218|top]33 [219|top]32 [220|top]32 [221|top]32 [222|top]30 [223|top]27 [224|top]26 [225|top]26 [226|top]26 [227|top]24 [228|top]24 [229|top]21 [230|top]20 [231|top]19 [232|top]18 [233|top]18 [234|top]16 [235|top]13 [236|top]12 [237|top]11 [238|top]10 [239|top]10 [240|top]10 [241|top]8 [242|top]6 [243|top]5 [244|top]4 [245|top]4 [246|top]3 [247|top]2 [248|top]60 [249|top]60 [250|top]60 [251|top]59 [252|top]59 [253|top]59 [254|top]59 [255|top]59 [256|top]58 [257|top]58 [258|top]58 [259|top]58 [260|top]58 [261|top]57 [262|top]57 [263|top]57 [264|top]57 [265|top]57 [266|top]56 [267|top]56 [268|top]56 [269|top]56 [270|top]55 [271|top]55 [272|top]55 [273|top]55 [274|top]55 [275|top]55 [276|top]54 [277|top]54 [278|top]54 [279|top]54 [280|top]54 [281|top]53 [282|top]53 [283|top]53 [284|top]53 [285|top]52 [286|top]52 [287|top]52 [288|top]52 [289|top]52 [290|top]51 [291|top]51 [292|top]51 [293|top]51 [294|top]50 [295|top]50 [296|top]50 [297|top]50 [298|top]50 [299|top]50 [300|top]50 [301|top]50 [302|top]49 [303|top]49 [304|top]49 [305|top]49 [306|top]49 [307|top]49 [308|top]48 [309|top]48 [310|top]48 [311|top]48 [312|top]48 [313|top]48 [314|top]47 [315|top]47 [316|top]47 [317|top]47 [318|top]47 [319|top]47 [320|top]47 [321|top]46 [322|top]46 [323|top]46 [324|top]46 [325|top]46 [326|top]46 [327|top]45 [328|top]45 [329|top]44 [330|top]44 [331|top]44 [332|top]44 [333|top]44 [334|top]43 [335|top]43 [336|top]43 [337|top]43 [338|top]42 [339|top]42 [340|top]42 [341|top]42 [342|top]42 [343|top]41 [344|top]41 [345|top]40 [346|top]40 [347|top]40 [348|top]40 [349|top]40 [350|top]39 [351|top]39 [352|top]39 [353|top]38 [354|top]38 [355|top]38 [356|top]38 [357|top]38 [358|top]38 [359|top]37 [360|top]37 [361|top]37 [362|top]36 [363|top]36 [364|top]36 [365|top]36 [366|top]35 [367|top]35 [368|top]35 [369|top]35 [370|top]35 [371|top]34 [372|top]34 [373|top]34 [374|top]34 [375|top]34 [376|top]34 [377|top]34 [378|top]33 [379|top]33 [380|top]33 [381|top]33 [382|top]32 [383|top]32 [384|top]31 [385|top]31 [386|top]31 [387|top]30 [388|top]30 [389|top]30 [390|top]29 [391|top]29 [392|top]29 [393|top]29 [394|top]29 [395|top]29 [396|top]29 [397|top]29 [398|top]28 [399|top]27 [400|top]26 [401|top]26 [402|top]26 [403|top]26 [404|top]26 [405|top]25 [406|top]25 [407|top]25 [408|top]25 [409|top]25 [410|top]25 [411|top]24 [412|top]24 [413|top]24 [414|top]24 [415|top]24 [416|top]23 [417|top]23 [418|top]23 [419|top]23 [420|top]23 [421|top]22 [422|top]22 [423|top]21 [424|top]21 [425|top]21 [426|top]21 [427|top]21 [428|top]20 [429|top]20 [430|top]20 [431|top]19 [432|top]19 [433|top]19 [434|top]19 [435|top]18 [436|top]18 [437|top]18 [438|top]18 [439|top]18 [440|top]18 [441|top]18 [442|top]17 [443|top]17 [444|top]17 [445|top]16 [446|top]16 [447|top]16 [448|top]16 [449|top]16 [450|top]16 [451|top]16 [452|top]15 [453|top]15 [454|top]14 [455|top]13 [456|top]13 [457|top]13 [458|top]13 [459|top]13 [460|top]13 [461|top]13 [462|top]12 [463|top]12 [464|top]12 [465|top]12 [466|top]11 [467|top]10 [468|top]10 [469|top]10 [470|top]10 [471|top]9 [472|top]9 [473|top]9 [474|top]9 [475|top]9 [476|top]8 [477|top]8 [478|top]7 [479|top]6 [480|top]6 [481|top]6 [482|top]6 [483|top]5 [484|top]5 [485|top]5 [486|top]5 [487|top]5 [488|top]5 [489|top]5 [490|top]4 [491|top]4 [492|top]3 [493|top]3 [494|top]3 [495|top]2 [496|top]2 [497|top]2 [498|top]2 [499|top]2 [500|top]2 [501|top]1 [502|top]1 [503|top]1 debug Size : 504
-	Top layer Start : 7
-		7 '284' is bottom node, skipping...
-dbg : tracer, node, sum: 522 | 656 | -1 ->1178 - S
-dbg : tracer, node, sum: 904 | 1159 | 1178 ->2063 - A
-dbg : tracer, node, sum: 1405 | 1593 | 2063 ->2998 - A
-Work buffer : 1178:T 2063:T 2998:T 
-Tree : [0|top]2998 [1|top]2063 [2|top]1178 [3|top]1794 [4|top]1593 [5|top]1405 [6|top]1159 [7|top]904 [8|top]656 [9|top]522 [10|bottom]284 [11|top]923 [12|top]871 [13|top]817 [14|top]776 [15|top]733 [16|top]672 [17|top]608 [18|top]551 [19|top]487 [20|top]417 [21|top]360 [22|top]296 [23|top]238 [24|top]170 [25|top]114 [26|bottom]62 [27|top]468 [28|top]455 [29|top]442 [30|top]429 [31|top]415 [32|top]402 [33|top]394 [34|top]382 [35|top]373 [36|top]360 [37|top]344 [38|top]328 [39|top]311 [40|top]297 [41|top]281 [42|top]270 [43|top]253 [44|top]234 [45|top]217 [46|top]200 [47|top]188 [48|top]172 [49|top]154 [50|top]142 [51|top]129 [52|top]109 [53|top]95 [54|top]75 [55|top]52 [56|top]38 [57|top]24 [58|bottom]13 [59|top]239 [60|top]236 [61|top]232 [62|top]229 [63|top]226 [64|top]222 [65|top]220 [66|top]216 [67|top]213 [68|top]209 [69|top]206 [70|top]202 [71|top]200 [72|top]198 [73|top]196 [74|top]192 [75|top]190 [76|top]188 [77|top]185 [78|top]183 [79|top]177 [80|top]174 [81|top]170 [82|top]167 [83|top]161 [84|top]158 [85|top]153 [86|top]151 [87|top]146 [88|top]142 [89|top]139 [90|top]136 [91|top]134 [92|top]130 [93|top]123 [94|top]118 [95|top]116 [96|top]113 [97|top]104 [98|top]101 [99|top]99 [100|top]96 [101|top]92 [102|top]88 [103|top]84 [104|top]79 [105|top]75 [106|top]72 [107|top]70 [108|top]65 [109|top]64 [110|top]57 [111|top]52 [112|top]50 [113|top]45 [114|top]39 [115|top]36 [116|top]29 [117|top]23 [118|top]20 [119|top]18 [120|top]11 [121|top]8 [122|top]5 [123|top]120 [124|top]119 [125|top]118 [126|top]118 [127|top]116 [128|top]116 [129|top]115 [130|top]114 [131|top]114 [132|top]112 [133|top]112 [134|top]110 [135|top]110 [136|top]110 [137|top]108 [138|top]108 [139|top]107 [140|top]106 [141|top]105 [142|top]104 [143|top]104 [144|top]102 [145|top]102 [146|top]100 [147|top]100 [148|top]100 [149|top]100 [150|top]98 [151|top]98 [152|top]98 [153|top]96 [154|top]96 [155|top]96 [156|top]94 [157|top]94 [158|top]94 [159|top]93 [160|top]92 [161|top]92 [162|top]91 [163|top]89 [164|top]88 [165|top]88 [166|top]86 [167|top]86 [168|top]84 [169|top]84 [170|top]83 [171|top]81 [172|top]80 [173|top]80 [174|top]78 [175|top]77 [176|top]76 [177|top]76 [178|top]75 [179|top]74 [180|top]72 [181|top]72 [182|top]70 [183|top]70 [184|top]69 [185|top]68 [186|top]68 [187|top]68 [188|top]66 [189|top]66 [190|top]64 [191|top]62 [192|top]61 [193|top]60 [194|top]58 [195|top]58 [196|top]58 [197|top]58 [198|top]55 [199|top]52 [200|top]52 [201|top]51 [202|top]50 [203|top]50 [204|top]49 [205|top]48 [206|top]48 [207|top]46 [208|top]46 [209|top]45 [210|top]43 [211|top]42 [212|top]42 [213|top]40 [214|top]39 [215|top]38 [216|top]37 [217|top]36 [218|top]36 [219|top]36 [220|top]34 [221|top]33 [222|top]32 [223|top]32 [224|top]32 [225|top]30 [226|top]27 [227|top]26 [228|top]26 [229|top]26 [230|top]24 [231|top]24 [232|top]21 [233|top]20 [234|top]19 [235|top]18 [236|top]18 [237|top]16 [238|top]13 [239|top]12 [240|top]11 [241|top]10 [242|top]10 [243|top]10 [244|top]8 [245|top]6 [246|top]5 [247|top]4 [248|top]4 [249|top]3 [250|top]2 [251|top]60 [252|top]60 [253|top]60 [254|top]59 [255|top]59 [256|top]59 [257|top]59 [258|top]59 [259|top]58 [260|top]58 [261|top]58 [262|top]58 [263|top]58 [264|top]57 [265|top]57 [266|top]57 [267|top]57 [268|top]57 [269|top]56 [270|top]56 [271|top]56 [272|top]56 [273|top]55 [274|top]55 [275|top]55 [276|top]55 [277|top]55 [278|top]55 [279|top]54 [280|top]54 [281|top]54 [282|top]54 [283|top]54 [284|top]53 [285|top]53 [286|top]53 [287|top]53 [288|top]52 [289|top]52 [290|top]52 [291|top]52 [292|top]52 [293|top]51 [294|top]51 [295|top]51 [296|top]51 [297|top]50 [298|top]50 [299|top]50 [300|top]50 [301|top]50 [302|top]50 [303|top]50 [304|top]50 [305|top]49 [306|top]49 [307|top]49 [308|top]49 [309|top]49 [310|top]49 [311|top]48 [312|top]48 [313|top]48 [314|top]48 [315|top]48 [316|top]48 [317|top]47 [318|top]47 [319|top]47 [320|top]47 [321|top]47 [322|top]47 [323|top]47 [324|top]46 [325|top]46 [326|top]46 [327|top]46 [328|top]46 [329|top]46 [330|top]45 [331|top]45 [332|top]44 [333|top]44 [334|top]44 [335|top]44 [336|top]44 [337|top]43 [338|top]43 [339|top]43 [340|top]43 [341|top]42 [342|top]42 [343|top]42 [344|top]42 [345|top]42 [346|top]41 [347|top]41 [348|top]40 [349|top]40 [350|top]40 [351|top]40 [352|top]40 [353|top]39 [354|top]39 [355|top]39 [356|top]38 [357|top]38 [358|top]38 [359|top]38 [360|top]38 [361|top]38 [362|top]37 [363|top]37 [364|top]37 [365|top]36 [366|top]36 [367|top]36 [368|top]36 [369|top]35 [370|top]35 [371|top]35 [372|top]35 [373|top]35 [374|top]34 [375|top]34 [376|top]34 [377|top]34 [378|top]34 [379|top]34 [380|top]34 [381|top]33 [382|top]33 [383|top]33 [384|top]33 [385|top]32 [386|top]32 [387|top]31 [388|top]31 [389|top]31 [390|top]30 [391|top]30 [392|top]30 [393|top]29 [394|top]29 [395|top]29 [396|top]29 [397|top]29 [398|top]29 [399|top]29 [400|top]29 [401|top]28 [402|top]27 [403|top]26 [404|top]26 [405|top]26 [406|top]26 [407|top]26 [408|top]25 [409|top]25 [410|top]25 [411|top]25 [412|top]25 [413|top]25 [414|top]24 [415|top]24 [416|top]24 [417|top]24 [418|top]24 [419|top]23 [420|top]23 [421|top]23 [422|top]23 [423|top]23 [424|top]22 [425|top]22 [426|top]21 [427|top]21 [428|top]21 [429|top]21 [430|top]21 [431|top]20 [432|top]20 [433|top]20 [434|top]19 [435|top]19 [436|top]19 [437|top]19 [438|top]18 [439|top]18 [440|top]18 [441|top]18 [442|top]18 [443|top]18 [444|top]18 [445|top]17 [446|top]17 [447|top]17 [448|top]16 [449|top]16 [450|top]16 [451|top]16 [452|top]16 [453|top]16 [454|top]16 [455|top]15 [456|top]15 [457|top]14 [458|top]13 [459|top]13 [460|top]13 [461|top]13 [462|top]13 [463|top]13 [464|top]13 [465|top]12 [466|top]12 [467|top]12 [468|top]12 [469|top]11 [470|top]10 [471|top]10 [472|top]10 [473|top]10 [474|top]9 [475|top]9 [476|top]9 [477|top]9 [478|top]9 [479|top]8 [480|top]8 [481|top]7 [482|top]6 [483|top]6 [484|top]6 [485|top]6 [486|top]5 [487|top]5 [488|top]5 [489|top]5 [490|top]5 [491|top]5 [492|top]5 [493|top]4 [494|top]4 [495|top]3 [496|top]3 [497|top]3 [498|top]2 [499|top]2 [500|top]2 [501|top]2 [502|top]2 [503|top]2 [504|top]1 [505|top]1 [506|top]1 debug Size : 507
-	Top layer Start : 2
-dbg : tracer, node, sum: 1178 | 2063 | -1 ->3241 - S
-Work buffer : 3241:B 6239:T 
-Tree : [0|top]6239 [1|bottom]3241 [2|top]2998 [3|top]2063 [4|top]1178 [5|top]1794 [6|top]1593 [7|top]1405 [8|top]1159 [9|top]904 [10|top]656 [11|top]522 [12|bottom]284 [13|top]923 [14|top]871 [15|top]817 [16|top]776 [17|top]733 [18|top]672 [19|top]608 [20|top]551 [21|top]487 [22|top]417 [23|top]360 [24|top]296 [25|top]238 [26|top]170 [27|top]114 [28|bottom]62 [29|top]468 [30|top]455 [31|top]442 [32|top]429 [33|top]415 [34|top]402 [35|top]394 [36|top]382 [37|top]373 [38|top]360 [39|top]344 [40|top]328 [41|top]311 [42|top]297 [43|top]281 [44|top]270 [45|top]253 [46|top]234 [47|top]217 [48|top]200 [49|top]188 [50|top]172 [51|top]154 [52|top]142 [53|top]129 [54|top]109 [55|top]95 [56|top]75 [57|top]52 [58|top]38 [59|top]24 [60|bottom]13 [61|top]239 [62|top]236 [63|top]232 [64|top]229 [65|top]226 [66|top]222 [67|top]220 [68|top]216 [69|top]213 [70|top]209 [71|top]206 [72|top]202 [73|top]200 [74|top]198 [75|top]196 [76|top]192 [77|top]190 [78|top]188 [79|top]185 [80|top]183 [81|top]177 [82|top]174 [83|top]170 [84|top]167 [85|top]161 [86|top]158 [87|top]153 [88|top]151 [89|top]146 [90|top]142 [91|top]139 [92|top]136 [93|top]134 [94|top]130 [95|top]123 [96|top]118 [97|top]116 [98|top]113 [99|top]104 [100|top]101 [101|top]99 [102|top]96 [103|top]92 [104|top]88 [105|top]84 [106|top]79 [107|top]75 [108|top]72 [109|top]70 [110|top]65 [111|top]64 [112|top]57 [113|top]52 [114|top]50 [115|top]45 [116|top]39 [117|top]36 [118|top]29 [119|top]23 [120|top]20 [121|top]18 [122|top]11 [123|top]8 [124|top]5 [125|top]120 [126|top]119 [127|top]118 [128|top]118 [129|top]116 [130|top]116 [131|top]115 [132|top]114 [133|top]114 [134|top]112 [135|top]112 [136|top]110 [137|top]110 [138|top]110 [139|top]108 [140|top]108 [141|top]107 [142|top]106 [143|top]105 [144|top]104 [145|top]104 [146|top]102 [147|top]102 [148|top]100 [149|top]100 [150|top]100 [151|top]100 [152|top]98 [153|top]98 [154|top]98 [155|top]96 [156|top]96 [157|top]96 [158|top]94 [159|top]94 [160|top]94 [161|top]93 [162|top]92 [163|top]92 [164|top]91 [165|top]89 [166|top]88 [167|top]88 [168|top]86 [169|top]86 [170|top]84 [171|top]84 [172|top]83 [173|top]81 [174|top]80 [175|top]80 [176|top]78 [177|top]77 [178|top]76 [179|top]76 [180|top]75 [181|top]74 [182|top]72 [183|top]72 [184|top]70 [185|top]70 [186|top]69 [187|top]68 [188|top]68 [189|top]68 [190|top]66 [191|top]66 [192|top]64 [193|top]62 [194|top]61 [195|top]60 [196|top]58 [197|top]58 [198|top]58 [199|top]58 [200|top]55 [201|top]52 [202|top]52 [203|top]51 [204|top]50 [205|top]50 [206|top]49 [207|top]48 [208|top]48 [209|top]46 [210|top]46 [211|top]45 [212|top]43 [213|top]42 [214|top]42 [215|top]40 [216|top]39 [217|top]38 [218|top]37 [219|top]36 [220|top]36 [221|top]36 [222|top]34 [223|top]33 [224|top]32 [225|top]32 [226|top]32 [227|top]30 [228|top]27 [229|top]26 [230|top]26 [231|top]26 [232|top]24 [233|top]24 [234|top]21 [235|top]20 [236|top]19 [237|top]18 [238|top]18 [239|top]16 [240|top]13 [241|top]12 [242|top]11 [243|top]10 [244|top]10 [245|top]10 [246|top]8 [247|top]6 [248|top]5 [249|top]4 [250|top]4 [251|top]3 [252|top]2 [253|top]60 [254|top]60 [255|top]60 [256|top]59 [257|top]59 [258|top]59 [259|top]59 [260|top]59 [261|top]58 [262|top]58 [263|top]58 [264|top]58 [265|top]58 [266|top]57 [267|top]57 [268|top]57 [269|top]57 [270|top]57 [271|top]56 [272|top]56 [273|top]56 [274|top]56 [275|top]55 [276|top]55 [277|top]55 [278|top]55 [279|top]55 [280|top]55 [281|top]54 [282|top]54 [283|top]54 [284|top]54 [285|top]54 [286|top]53 [287|top]53 [288|top]53 [289|top]53 [290|top]52 [291|top]52 [292|top]52 [293|top]52 [294|top]52 [295|top]51 [296|top]51 [297|top]51 [298|top]51 [299|top]50 [300|top]50 [301|top]50 [302|top]50 [303|top]50 [304|top]50 [305|top]50 [306|top]50 [307|top]49 [308|top]49 [309|top]49 [310|top]49 [311|top]49 [312|top]49 [313|top]48 [314|top]48 [315|top]48 [316|top]48 [317|top]48 [318|top]48 [319|top]47 [320|top]47 [321|top]47 [322|top]47 [323|top]47 [324|top]47 [325|top]47 [326|top]46 [327|top]46 [328|top]46 [329|top]46 [330|top]46 [331|top]46 [332|top]45 [333|top]45 [334|top]44 [335|top]44 [336|top]44 [337|top]44 [338|top]44 [339|top]43 [340|top]43 [341|top]43 [342|top]43 [343|top]42 [344|top]42 [345|top]42 [346|top]42 [347|top]42 [348|top]41 [349|top]41 [350|top]40 [351|top]40 [352|top]40 [353|top]40 [354|top]40 [355|top]39 [356|top]39 [357|top]39 [358|top]38 [359|top]38 [360|top]38 [361|top]38 [362|top]38 [363|top]38 [364|top]37 [365|top]37 [366|top]37 [367|top]36 [368|top]36 [369|top]36 [370|top]36 [371|top]35 [372|top]35 [373|top]35 [374|top]35 [375|top]35 [376|top]34 [377|top]34 [378|top]34 [379|top]34 [380|top]34 [381|top]34 [382|top]34 [383|top]33 [384|top]33 [385|top]33 [386|top]33 [387|top]32 [388|top]32 [389|top]31 [390|top]31 [391|top]31 [392|top]30 [393|top]30 [394|top]30 [395|top]29 [396|top]29 [397|top]29 [398|top]29 [399|top]29 [400|top]29 [401|top]29 [402|top]29 [403|top]28 [404|top]27 [405|top]26 [406|top]26 [407|top]26 [408|top]26 [409|top]26 [410|top]25 [411|top]25 [412|top]25 [413|top]25 [414|top]25 [415|top]25 [416|top]24 [417|top]24 [418|top]24 [419|top]24 [420|top]24 [421|top]23 [422|top]23 [423|top]23 [424|top]23 [425|top]23 [426|top]22 [427|top]22 [428|top]21 [429|top]21 [430|top]21 [431|top]21 [432|top]21 [433|top]20 [434|top]20 [435|top]20 [436|top]19 [437|top]19 [438|top]19 [439|top]19 [440|top]18 [441|top]18 [442|top]18 [443|top]18 [444|top]18 [445|top]18 [446|top]18 [447|top]17 [448|top]17 [449|top]17 [450|top]16 [451|top]16 [452|top]16 [453|top]16 [454|top]16 [455|top]16 [456|top]16 [457|top]15 [458|top]15 [459|top]14 [460|top]13 [461|top]13 [462|top]13 [463|top]13 [464|top]13 [465|top]13 [466|top]13 [467|top]12 [468|top]12 [469|top]12 [470|top]12 [471|top]11 [472|top]10 [473|top]10 [474|top]10 [475|top]10 [476|top]9 [477|top]9 [478|top]9 [479|top]9 [480|top]9 [481|top]8 [482|top]8 [483|top]7 [484|top]6 [485|top]6 [486|top]6 [487|top]6 [488|top]5 [489|top]5 [490|top]5 [491|top]5 [492|top]5 [493|top]5 [494|top]5 [495|top]4 [496|top]4 [497|top]3 [498|top]3 [499|top]3 [500|top]2 [501|top]2 [502|top]2 [503|top]2 [504|top]2 [505|top]2 [506|top]1 [507|top]1 [508|top]1 debug Size : 509
-	Top layer Start : 4
-dbg : tracer, node, sum: 1178 | 2063 | -1 ->3241 - S
-		1 '3241' is bottom node, skipping...
-Work buffer : 3241:B 9480:T 
-Tree : [0|top]9480 [1|bottom]3241 [2|top]6239 [3|bottom]3241 [4|top]2998 [5|top]2063 [6|top]1178 [7|top]1794 [8|top]1593 [9|top]1405 [10|top]1159 [11|top]904 [12|top]656 [13|top]522 [14|bottom]284 [15|top]923 [16|top]871 [17|top]817 [18|top]776 [19|top]733 [20|top]672 [21|top]608 [22|top]551 [23|top]487 [24|top]417 [25|top]360 [26|top]296 [27|top]238 [28|top]170 [29|top]114 [30|bottom]62 [31|top]468 [32|top]455 [33|top]442 [34|top]429 [35|top]415 [36|top]402 [37|top]394 [38|top]382 [39|top]373 [40|top]360 [41|top]344 [42|top]328 [43|top]311 [44|top]297 [45|top]281 [46|top]270 [47|top]253 [48|top]234 [49|top]217 [50|top]200 [51|top]188 [52|top]172 [53|top]154 [54|top]142 [55|top]129 [56|top]109 [57|top]95 [58|top]75 [59|top]52 [60|top]38 [61|top]24 [62|bottom]13 [63|top]239 [64|top]236 [65|top]232 [66|top]229 [67|top]226 [68|top]222 [69|top]220 [70|top]216 [71|top]213 [72|top]209 [73|top]206 [74|top]202 [75|top]200 [76|top]198 [77|top]196 [78|top]192 [79|top]190 [80|top]188 [81|top]185 [82|top]183 [83|top]177 [84|top]174 [85|top]170 [86|top]167 [87|top]161 [88|top]158 [89|top]153 [90|top]151 [91|top]146 [92|top]142 [93|top]139 [94|top]136 [95|top]134 [96|top]130 [97|top]123 [98|top]118 [99|top]116 [100|top]113 [101|top]104 [102|top]101 [103|top]99 [104|top]96 [105|top]92 [106|top]88 [107|top]84 [108|top]79 [109|top]75 [110|top]72 [111|top]70 [112|top]65 [113|top]64 [114|top]57 [115|top]52 [116|top]50 [117|top]45 [118|top]39 [119|top]36 [120|top]29 [121|top]23 [122|top]20 [123|top]18 [124|top]11 [125|top]8 [126|top]5 [127|top]120 [128|top]119 [129|top]118 [130|top]118 [131|top]116 [132|top]116 [133|top]115 [134|top]114 [135|top]114 [136|top]112 [137|top]112 [138|top]110 [139|top]110 [140|top]110 [141|top]108 [142|top]108 [143|top]107 [144|top]106 [145|top]105 [146|top]104 [147|top]104 [148|top]102 [149|top]102 [150|top]100 [151|top]100 [152|top]100 [153|top]100 [154|top]98 [155|top]98 [156|top]98 [157|top]96 [158|top]96 [159|top]96 [160|top]94 [161|top]94 [162|top]94 [163|top]93 [164|top]92 [165|top]92 [166|top]91 [167|top]89 [168|top]88 [169|top]88 [170|top]86 [171|top]86 [172|top]84 [173|top]84 [174|top]83 [175|top]81 [176|top]80 [177|top]80 [178|top]78 [179|top]77 [180|top]76 [181|top]76 [182|top]75 [183|top]74 [184|top]72 [185|top]72 [186|top]70 [187|top]70 [188|top]69 [189|top]68 [190|top]68 [191|top]68 [192|top]66 [193|top]66 [194|top]64 [195|top]62 [196|top]61 [197|top]60 [198|top]58 [199|top]58 [200|top]58 [201|top]58 [202|top]55 [203|top]52 [204|top]52 [205|top]51 [206|top]50 [207|top]50 [208|top]49 [209|top]48 [210|top]48 [211|top]46 [212|top]46 [213|top]45 [214|top]43 [215|top]42 [216|top]42 [217|top]40 [218|top]39 [219|top]38 [220|top]37 [221|top]36 [222|top]36 [223|top]36 [224|top]34 [225|top]33 [226|top]32 [227|top]32 [228|top]32 [229|top]30 [230|top]27 [231|top]26 [232|top]26 [233|top]26 [234|top]24 [235|top]24 [236|top]21 [237|top]20 [238|top]19 [239|top]18 [240|top]18 [241|top]16 [242|top]13 [243|top]12 [244|top]11 [245|top]10 [246|top]10 [247|top]10 [248|top]8 [249|top]6 [250|top]5 [251|top]4 [252|top]4 [253|top]3 [254|top]2 [255|top]60 [256|top]60 [257|top]60 [258|top]59 [259|top]59 [260|top]59 [261|top]59 [262|top]59 [263|top]58 [264|top]58 [265|top]58 [266|top]58 [267|top]58 [268|top]57 [269|top]57 [270|top]57 [271|top]57 [272|top]57 [273|top]56 [274|top]56 [275|top]56 [276|top]56 [277|top]55 [278|top]55 [279|top]55 [280|top]55 [281|top]55 [282|top]55 [283|top]54 [284|top]54 [285|top]54 [286|top]54 [287|top]54 [288|top]53 [289|top]53 [290|top]53 [291|top]53 [292|top]52 [293|top]52 [294|top]52 [295|top]52 [296|top]52 [297|top]51 [298|top]51 [299|top]51 [300|top]51 [301|top]50 [302|top]50 [303|top]50 [304|top]50 [305|top]50 [306|top]50 [307|top]50 [308|top]50 [309|top]49 [310|top]49 [311|top]49 [312|top]49 [313|top]49 [314|top]49 [315|top]48 [316|top]48 [317|top]48 [318|top]48 [319|top]48 [320|top]48 [321|top]47 [322|top]47 [323|top]47 [324|top]47 [325|top]47 [326|top]47 [327|top]47 [328|top]46 [329|top]46 [330|top]46 [331|top]46 [332|top]46 [333|top]46 [334|top]45 [335|top]45 [336|top]44 [337|top]44 [338|top]44 [339|top]44 [340|top]44 [341|top]43 [342|top]43 [343|top]43 [344|top]43 [345|top]42 [346|top]42 [347|top]42 [348|top]42 [349|top]42 [350|top]41 [351|top]41 [352|top]40 [353|top]40 [354|top]40 [355|top]40 [356|top]40 [357|top]39 [358|top]39 [359|top]39 [360|top]38 [361|top]38 [362|top]38 [363|top]38 [364|top]38 [365|top]38 [366|top]37 [367|top]37 [368|top]37 [369|top]36 [370|top]36 [371|top]36 [372|top]36 [373|top]35 [374|top]35 [375|top]35 [376|top]35 [377|top]35 [378|top]34 [379|top]34 [380|top]34 [381|top]34 [382|top]34 [383|top]34 [384|top]34 [385|top]33 [386|top]33 [387|top]33 [388|top]33 [389|top]32 [390|top]32 [391|top]31 [392|top]31 [393|top]31 [394|top]30 [395|top]30 [396|top]30 [397|top]29 [398|top]29 [399|top]29 [400|top]29 [401|top]29 [402|top]29 [403|top]29 [404|top]29 [405|top]28 [406|top]27 [407|top]26 [408|top]26 [409|top]26 [410|top]26 [411|top]26 [412|top]25 [413|top]25 [414|top]25 [415|top]25 [416|top]25 [417|top]25 [418|top]24 [419|top]24 [420|top]24 [421|top]24 [422|top]24 [423|top]23 [424|top]23 [425|top]23 [426|top]23 [427|top]23 [428|top]22 [429|top]22 [430|top]21 [431|top]21 [432|top]21 [433|top]21 [434|top]21 [435|top]20 [436|top]20 [437|top]20 [438|top]19 [439|top]19 [440|top]19 [441|top]19 [442|top]18 [443|top]18 [444|top]18 [445|top]18 [446|top]18 [447|top]18 [448|top]18 [449|top]17 [450|top]17 [451|top]17 [452|top]16 [453|top]16 [454|top]16 [455|top]16 [456|top]16 [457|top]16 [458|top]16 [459|top]15 [460|top]15 [461|top]14 [462|top]13 [463|top]13 [464|top]13 [465|top]13 [466|top]13 [467|top]13 [468|top]13 [469|top]12 [470|top]12 [471|top]12 [472|top]12 [473|top]11 [474|top]10 [475|top]10 [476|top]10 [477|top]10 [478|top]9 [479|top]9 [480|top]9 [481|top]9 [482|top]9 [483|top]8 [484|top]8 [485|top]7 [486|top]6 [487|top]6 [488|top]6 [489|top]6 [490|top]5 [491|top]5 [492|top]5 [493|top]5 [494|top]5 [495|top]5 [496|top]5 [497|top]4 [498|top]4 [499|top]3 [500|top]3 [501|top]3 [502|top]2 [503|top]2 [504|top]2 [505|top]2 [506|top]2 [507|top]2 [508|top]1 [509|top]1 [510|top]1 Failed. [3333] plantTree(void) - Failed to grow tree, tree is corrupt.
-[4608] encode() - failed to plant tree.
-[5] compress(char *data, size_t dataSize) - Failed to encode data.
+[*] Attempting Compression...Failed. [4444] getSubIndecies(target:1) - dbg : sourceLayer:1 | targetLayer:0
+[3434] generateCodeTable() - failed to get sub indecies.
+[5555] compress() - failed to generate code table.
 
 DATA DUMP
-Tree Letters : [0]� [1]� [2]� [3]
-                                  [4] [5]( [6]p [7]� [8] [9]/ [10]A [11]� [12]� [13] [14] [15]P [16]k [17]y [18]f [19]i [20]� [21]� [22]23]# [24]� [25]� [26]� [27]� [28]] [29]v [30]� [31]� [32]� [33]1 [34]F [35]� [36]� [37] [38]l [39]� [40]� [41]� [42]: [43]� [44]� [45]� [46]
- [47]O [48][ [49]d [50]� [51]� [52]� [53]� [54]@ [55]o [56]� [57]� [58]� [59]� [60] [61] [62]% [63]& [64]\ [65]q [66] [67]x [68]� [69]� [70]� [71]� [72]� [73] [74]; [75]D [76]a [77]~ [78]� [79], [80]� [81]` [82]b [83]m [84]� [85]� [86] [87]> [88]| [89]� [90]= [91]� [92]� [93]� [94]� [95]0 [96]H [97] [98]4 [99]? [100]h [101]� [102]j [103]� [104]� [105] [106]' [107]n [108]� [109]� [110]� [111]) [112]� [113]� [114]
-                                                                                                                                                                                                             [115]$ [116]G [117]� [118] [119]� [120]� [121]� [122]� [123]+ [124]W [125]� [126]� [127]� [128]� [129]� [130] [131]u [132]� [133]� [134]� [135]� [136] [137]< [138]T [139]g [140]� [141]� [142] [143] [144]3 [145]S [146]_ [147]e [148]s [149]� [150]* [151]� [152]B [153]{ [154] [155]� [156]� [157] [158]V [159]} [160]� [161]� [162]� [163] [164] [165]C [166]w [167]� [168]Q [169]� [170]� [171]� [172]� [173]� [174]� [175]^ [176]c [177]� [178]� [179]� [180]� [181]� [182]� [183] [184]	 [185]X [186]� [187]2 [188]L [189]R [190]U [191]� [192]� [193]� [194]K [195]r [196]� [197]! [198]" [199]5 [200]� [201]� [202]� [203]� [204]Y [205]� [206] [ [229]� [230]� [231] [232]- [233]N [234]� [235]7 [236]M [237]t [238]z [239]� [240]� [241]� [242]. [243]8 [244 [245]� [246]� [247] [248]� [249]9 [250]� [251]� [252]� [253]� [254]� [255]� 
+Tree Letters : [0]
+ [1]& [2]� [3]) [4]S [5]� [6]1 [7] [8]� [9] [10] [11]� [12]� [13] [14]� [15] [16]6 [17]K [18]Z [19]� [20]� [21]" [22]k [23]x [24]� [25]� [26] [27]4 [28]� [29]� [30]� [31]� [32]� [33] [34]  [35]v [36]� [37]� [38]� [39]� [40]� [41]F [42]H [43]� [44]� [45] [46] [47]/ [48]� [49]� [50]� [51] [52]b [53]� [54]� [55]o [56]| [57]� [58]r [59]� [60]� [61] [62]y [63]� [64]� [65]� [66]� [67]� [68] [69] [70]X [71]a [72]d [73]G [74]^ [75]� [76]� [77]� [78]� [79] [80]< [81]C [82]� [83]� [84]l [85]� [86]� [87]� [88] [89]@ [90]Y [91]h [92]� [93]9 [94]; [95]� [96]! [97]2 [98]e [99]� [100]� [101]� [102]103]7 [104]N [105]c [106]� [107]� [108]� [109]� [110]# [111]V [112]� [113]� [114]� [115]\ [116]g [117]� [118] [119]? [120]~ [121]� [122]� [123]� [124] [125] [126] [127] [128]t [129]� [130]+ [131]� [132]j [133]� [134]� [135]- [136]q [137]s [138]{ [139]� [140]D [141]� [142]� [143]� [144]� [145]( [146]i [147]� [148]� [149]� [150]T [151]� [152]� [153]� [154]O [155]W [156]� [157]� [158]� [159]� [160]� [161]� [162]� [163]L [164]u [165]� [166]� [167]� [168]� [169]� [1 [196]: [197]J [198]� [199]� [200] [201][176]R [177][ [178]� [179] [180]% [181]� [182]	 [183]M [184]� [185]� [186]� [187] [188]> [189]� [190]� [191]P [192]Q [193]� [194]� [195]
+                                         [202]* [203], [204]� [205]� [206]f [207]p [208] [209] [210]$ [211]5 [212]` [213]� [214]� [215]� [216]� [217]� [218]] [219]� [220]' [221]A [222]n [223]w [224]� [225]� [226]� [227]8 [228]� [229]� [230]� [231]� [232]� [233 [234]_ [235]� [236]� [237]U [238]m [239]� [240]
+                                                                                                  [241]� [242]. [243]3 [244]� [245]= [246]I [247]} [248]� [249]� [250]0 [251]� [252]� [253]B [254]E [255]� 
 
-Frequencies (mex:8272): [0]60 [1]60 [2]60 [3]59 [4]59 [5]59 [6]59 [7]59 [8]58 [9]58 [10]58 [11]58 [12]58 [13]57 [14]57 [15]57 [16]57 [17]57 [18]56 [19]56 [20]56 [21]56 [22]55 [23]55 [24]55 [25]55 [26]55 [27]55 [28]54 [29]54 [30]54 [31]54 [32]54 [33]53 [34]53 [35]53 [36]53 [37]52 [38]52 [39]52 [40]52 [41]52 [42]51 [43]51 [44]51 [45]51 [46]50 [47]50 [48]50 [49]50 [50]50 [51]50 [52]50 [53]50 [54]49 [55]49 [56]49 [57]49 [58]49 [59]49 [60]48 [61]48 [62]48 [63]48 [64]48 [65]48 [66]47 [67]47 [68]47 [69]47 [70]47 [71]47 [72]47 [73]46 [74]46 [75]46 [76]46 [77]46 [78]46 [79]45 [80]45 [81]44 [82]44 [83]44 [84]44 [85]44 [86]43 [87]43 [88]43 [89]43 [90]42 [91]42 [92]42 [93]42 [94]42 [95]41 [96]41 [97]40 [98]40 [99]40 [100]40 [101]40 [102]39 [103]39 [104]39 [105]38 [106]38 [107]38 [108]38 [109]38 [110]38 [111]37 [112]37 [113]37 [114]36 [115]36 [116]36 [117]36 [118]35 [119]35 [120]35 [121]35 [122]35 [123]34 [124]34 [125]34 [126]34 [127]34 [128]34 [129]34 [130]33 [131]33 [132]33 [133]33 [134]32 [135]32 [136]31 [137]31 [138]31 [139]30 [140]30 [141]30 [142]29 [143]29 [144]29 [145]29 [146]29 [147]29 [148]29 [149]29 [150]28 [151]27 [152]26 [153]26 [154]26 [155]26 [156]26 [157]25 [158]25 [159]25 [160]25 [161]25 [162]25 [163]24 [164]24 [165]24 [166]24 [167]24 [168]23 [169]23 [170]23 [171]23 [172]23 [173]22 [174]22 [175]21 [176]21 [177]21 [178]21 [179]21 [180]20 [181]20 [182]20 [183]19 [184]19 [185]19 [186]19 [187]18 [188]18 [189]18 [190]18 [191]18 [192]18 [193]18 [194]17 [195]17 [196]17 [197]16 [198]16 [199]16 [200]16 [201]16 [202]16 [203]16 [204]15 [205]15 [206]14 [207]13 [208]13 [209]13 [210]13 [211]13 [212]13 [213]13 [214]12 [215]12 [216]12 [217]12 [218]11 [219]10 [220]10 [221]10 [222]10 [223]9 [224]9 [225]9 [226]9 [227]9 [228]8 [229]8 [230]7 [231]6 [232]6 [233]6 [234]6 [235]5 [236]5 [237]5 [238]5 [239]5 [240]5 [241]5 [242]4 [243]4 [244]3 [245]3 [246]3 [247]2 [248]2 [249]2 [250]2 [251]2 [252]2 [253]1 [254]1 [255]1 
+Frequencies (mex:7943): [0]60 [1]60 [2]60 [3]59 [4]59 [5]59 [6]58 [7]58 [8]58 [9]57 [10]57 [11]57 [12]57 [13]56 [14]56 [15]55 [16]55 [17]55 [18]55 [19]55 [20]54 [21]54 [22]54 [23]54 [24]54 [25]54 [26]53 [27]53 [28]53 [29]53 [30]53 [31]53 [32]53 [33]52 [34]52 [35]52 [36]52 [37]52 [38]52 [39]52 [40]52 [41]51 [42]51 [43]51 [44]51 [45]50 [46]50 [47]50 [48]50 [49]50 [50]50 [51]49 [52]49 [53]49 [54]49 [55]48 [56]48 [57]48 [58]47 [59]47 [60]47 [61]46 [62]46 [63]46 [64]46 [65]46 [66]46 [67]46 [68]45 [69]45 [70]45 [71]45 [72]45 [73]44 [74]44 [75]44 [76]44 [77]44 [78]44 [79]43 [80]43 [81]43 [82]43 [83]43 [84]42 [85]42 [86]42 [87]42 [88]41 [89]41 [90]41 [91]41 [92]41 [93]40 [94]40 [95]40 [96]39 [97]39 [98]39 [99]39 [100]39 [101]38 [102]37 [103]37 [104]37 [105]37 [106]37 [107]37 [108]37 [109]37 [110]36 [111]36 [112]36 [113]36 [114]36 [115]35 [116]35 [117]35 [118]34 [119]34 [120]34 [121]34 [122]34 [123]34 [124]33 [125]33 [126]33 [127]33 [128]33 [129]33 [130]31 [131]31 [132]30 [133]29 [134]29 [135]28 [136]28 [137]28 [138]28 [139]28 [140]27 [141]27 [142]27 [143]27 [144]27 [145]26 [146]26 [147]26 [148]26 [149]26 [150]25 [151]25 [152]25 [153]25 [154]24 [155]24 [156]24 [157]24 [158]24 [159]24 [160]23 [161]23 [162]23 [163]22 [164]22 [165]22 [166]22 [167]22 [168]21 [169]21 [170]21 [171]20 [172]20 [173]20 [174]20 [175]20 [176]19 [177]19 [178]19 [179]18 [180]18 [181]18 [182]17 [183]17 [184]17 [185]17 [186]17 [187]16 [188]16 [189]16 [190]16 [191]15 [192]15 [193]15 [194]15 [195]14 [196]14 [197]14 [198]14 [199]14 [200]13 [201]13 [202]13 [203]13 [204]13 [205]13 [206]12 [207]12 [208]11 [209]11 [210]11 [211]11 [212]11 [213]11 [214]11 [215]11 [216]11 [217]11 [218]10 [219]10 [220]9 [221]9 [222]9 [223]9 [224]9 [225]9 [226]9 [227]8 [228]8 [229]8 [230]8 [231]8 [232]8 [233]7 [234]7 [235]7 [236]7 [237]6 [238]6 [239]6 [240]5 [241]5 [242]4 [243]4 [244]4 [245]3 [246]3 [247]3 [248]3 [249]3 [250]2 [251]2 [252]2 [253]1 [254]1 [255]1 
 
 Code Table : 
 	index | bit count |  code | char
-	0    | 0        |      | �
-	1    | 0        |      | �
-	2    | 0        |      | �
-	3    | 0        |      | 
+	0    | 3        | 010     | 
 
-	4    | 0        |      | 
-	5    | 0        |      | (
-	6    | 0        |      | p
-	7    | 0        |      | �
-	8    | 0        |      | 
-	9    | 0        |      | /
-	10    | 0        |      | A
-	11    | 0        |      | �
-	12    | 0        |      | �
-	13    | 0        |      | 
-	14    | 0        |      | 
-	15    | 0        |      | P
-	16    | 0        |      | k
-	17    | 0        |      | y
-	18    | 0        |      | f
-	19    | 0        |      | i
-	20    | 0        |      | �
-	21    | 0        |      | �
-	22    | 0        |      | 
-	3    | 0        |      | #
-	24    | 0        |      | �
-	25    | 0        |      | �
-	26    | 0        |      | �
-	27    | 0        |      | �
-	28    | 0        |      | ]
-	29    | 0        |      | v
-	30    | 0        |      | �
-	31    | 0        |      | �
-	32    | 0        |      | �
-	33    | 0        |      | 1
-	34    | 0        |      | F
-	35    | 0        |      | �
-	36    | 0        |      | �
-	37    | 0        |      | 
-	38    | 0        |      | l
-	39    | 0        |      | �
-	40    | 0        |      | �
-	41    | 0        |      | �
-	42    | 0        |      | :
-	43    | 0        |      | �
-	44    | 0        |      | �
-	45    | 0        |      | �
-	46    | 0        |      | 
+	1    | 3        | 011     | &
+	2    | 5        | 01000     | �
+	3    | 5        | 01001     | )
+	4    | 5        | 01010     | S
+	5    | 5        | 01011     | �
+	6    | 5        | 01100     | 1
+	7    | 5        | 01101     | 
+	8    | 5        | 01110     | �
+	9    | 5        | 01111     | 
+	10    | 7        | 0000000     | 
+	11    | 7        | 0000001     | �
+	12    | 7        | 0000010     | �
+	13    | 7        | 0000011     | 
+	14    | 7        | 0000100     | �
+	15    | 7        | 0000101     | 
+	16    | 7        | 0000110     | 6
+	17    | 7        | 0000111     | K
+	18    | 7        | 0001000     | Z
+	19    | 7        | 0001001     | �
+	20    | 7        | 0001010     | �
+	21    | 7        | 0001011     | "
+	22    | 7        | 0001100     | k
+	23    | 7        | 0001101     | x
+	24    | 7        | 0001110     | �
+	25    | 7        | 0001111     | �
+	26    | 7        | 0010000     | 
+	27    | 7        | 0010001     | 4
+	28    | 7        | 0010010     | �
+	29    | 7        | 0010011     | �
+	30    | 7        | 0010100     | �
+	31    | 7        | 0010101     | �
+	32    | 7        | 0010110     | �
+	33    | 7        | 0010111     | 
+	34    | 7        | 0011000     |  
+	35    | 7        | 0011001     | v
+	36    | 7        | 0011010     | �
+	37    | 7        | 0011011     | �
+	38    | 7        | 0011100     | �
+	39    | 7        | 0011101     | �
+	40    | 7        | 0011110     | �
+	41    | 7        | 0011111     | F
+	42    | 7        | 0100000     | H
+	43    | 7        | 0100001     | �
+	44    | 7        | 0100010     | �
+	45    | 7        | 0100011     | 
+	46    | 7        | 0100100     | 
+	47    | 7        | 0100101     | /
+	48    | 7        | 0100110     | �
+	49    | 7        | 0100111     | �
+	50    | 7        | 0101000     | �
+	51    | 7        | 0101001     | 
+	52    | 7        | 0101010     | b
+	53    | 7        | 0101011     | �
+	54    | 7        | 0101100     | �
+	55    | 7        | 0101101     | o
+	56    | 7        | 0101110     | |
+	57    | 7        | 0101111     | �
+	58    | 7        | 0110000     | r
+	59    | 7        | 0110001     | �
+	60    | 7        | 0110010     | �
+	61    | 7        | 0110011     | 
+	62    | 7        | 0110100     | y
+	63    | 7        | 0110101     | �
+	64    | 7        | 0110110     | �
+	65    | 7        | 0110111     | �
+	66    | 7        | 0111000     | �
+	67    | 7        | 0111001     | �
+	68    | 7        | 0111010     | 
+	69    | 7        | 0111011     | 
+	70    | 7        | 0111100     | X
+	71    | 7        | 0111101     | a
+	72    | 7        | 0111110     | d
+	73    | 7        | 0111111     | G
+	74    | 7        | 0000000     | ^
+	75    | 7        | 0000001     | �
+	76    | 7        | 0000010     | �
+	77    | 7        | 0000011     | �
+	78    | 7        | 0000100     | �
+	79    | 7        | 0000101     | 
+	80    | 7        | 0000110     | <
+	81    | 7        | 0000111     | C
+	82    | 7        | 0001000     | �
+	83    | 7        | 0001001     | �
+	84    | 7        | 0001010     | l
+	85    | 7        | 0001011     | �
+	86    | 7        | 0001100     | �
+	87    | 7        | 0001101     | �
+	88    | 7        | 0001110     | 
+	89    | 7        | 0001111     | @
+	90    | 7        | 0010000     | Y
+	91    | 7        | 0010001     | h
+	92    | 7        | 0010010     | �
+	93    | 7        | 0010011     | 9
+	94    | 7        | 0010100     | ;
+	95    | 7        | 0010101     | �
+	96    | 7        | 0010110     | !
+	97    | 7        | 0010111     | 2
+	98    | 7        | 0011000     | e
+	99    | 7        | 0011001     | �
+	100    | 7        | 0011010     | �
+	101    | 7        | 0011011     | �
+	102    | 7        | 0011100     | 
+	03    | 7        | 0011101     | 7
+	104    | 7        | 0011110     | N
+	105    | 7        | 0011111     | c
+	106    | 8        | 01000000     | �
+	107    | 8        | 01000001     | �
+	108    | 8        | 01000010     | �
+	109    | 8        | 01000011     | �
+	110    | 8        | 01000100     | #
+	111    | 8        | 01000101     | V
+	112    | 8        | 01000110     | �
+	113    | 8        | 01000111     | �
+	114    | 8        | 01001000     | �
+	115    | 8        | 01001001     | \
+	116    | 8        | 01001010     | g
+	117    | 8        | 01001011     | �
+	118    | 8        | 01001100     | 
+	119    | 8        | 01001101     | ?
+	120    | 8        | 01001110     | ~
+	121    | 8        | 01001111     | �
+	122    | 8        | 01010000     | �
+	123    | 8        | 01010001     | �
+	124    | 8        | 01010010     | 
+	125    | 8        | 01010011     | 
+	126    | 8        | 01010100     | 
+	127    | 8        | 01010101     | 
+	128    | 8        | 01010110     | t
+	129    | 8        | 01010111     | �
+	130    | 8        | 01011000     | +
+	131    | 8        | 01011001     | �
+	132    | 8        | 01011010     | j
+	133    | 8        | 01011011     | �
+	134    | 8        | 01011100     | �
+	135    | 8        | 01011101     | -
+	136    | 8        | 01011110     | q
+	137    | 8        | 01011111     | s
+	138    | 7        | 0100000     | {
+	139    | 7        | 0100001     | �
+	140    | 7        | 0100010     | D
+	141    | 7        | 0100011     | �
+	142    | 7        | 0100100     | �
+	143    | 7        | 0100101     | �
+	144    | 7        | 0100110     | �
+	145    | 7        | 0100111     | (
+	146    | 7        | 0101000     | i
+	147    | 7        | 0101001     | �
+	148    | 7        | 0101010     | �
+	149    | 7        | 0101011     | �
+	150    | 7        | 0101100     | T
+	151    | 7        | 0101101     | �
+	152    | 7        | 0101110     | �
+	153    | 7        | 0101111     | �
+	154    | 7        | 0110000     | O
+	155    | 7        | 0110001     | W
+	156    | 7        | 0110010     | �
+	157    | 7        | 0110011     | �
+	158    | 7        | 0110100     | �
+	159    | 7        | 0110101     | �
+	160    | 7        | 0110110     | �
+	161    | 7        | 0110111     | �
+	162    | 7        | 0111000     | �
+	163    | 7        | 0111001     | L
+	164    | 7        | 0111010     | u
+	165    | 7        | 0111011     | �
+	166    | 7        | 0111100     | �
+	167    | 7        | 0111101     | �
+	168    | 7        | 0111110     | �
+	169    | 7        | 0111111     | �
+	170    | 6        | 000000     | �
+	171    | 6        | 000001     | z
+	172    | 6        | 000010     | �
+	173    | 6        | 000011     | �
+	174    | 6        | 000100     | �
+	175    | 6        | 000101     | �
+	176    | 6        | 000110     | R
+	177    | 6        | 000111     | [
+	178    | 6        | 001000     | �
+	179    | 6        | 001001     | 
+	180    | 6        | 001010     | %
+	181    | 6        | 001011     | �
+	182    | 6        | 001100     | 	
+	183    | 6        | 001101     | M
+	184    | 6        | 001110     | �
+	185    | 6        | 001111     | �
+	186    | 8        | 00100000     | �
+	187    | 8        | 00100001     | 
+	188    | 8        | 00100010     | >
+	189    | 8        | 00100011     | �
+	190    | 8        | 00100100     | �
+	191    | 8        | 00100101     | P
+	192    | 8        | 00100110     | Q
+	193    | 8        | 00100111     | �
+	194    | 8        | 00101000     | �
+	195    | 8        | 00101001     | 
+	196    | 8        | 00101010     | :
+	197    | 8        | 00101011     | J
+	198    | 8        | 00101100     | �
+	199    | 8        | 00101101     | �
+	200    | 8        | 00101110     | 
+	201    | 8        | 00101111     | 
 
-	47    | 0        |      | O
-	48    | 0        |      | [
-	49    | 0        |      | d
-	50    | 0        |      | �
-	51    | 0        |      | �
-	52    | 0        |      | �
-	53    | 0        |      | �
-	54    | 0        |      | @
-	55    | 0        |      | o
-	56    | 0        |      | �
-	57    | 0        |      | �
-	58    | 0        |      | �
-	59    | 0        |      | �
-	60    | 0        |      | 
-	61    | 0        |      | 
-	62    | 0        |      | %
-	63    | 0        |      | &
-	64    | 0        |      | \
-	65    | 0        |      | q
-	66    | 0        |      | 
-	67    | 0        |      | x
-	68    | 0        |      | �
-	69    | 0        |      | �
-	70    | 0        |      | �
-	71    | 0        |      | �
-	72    | 0        |      | �
-	73    | 0        |      | 
-	74    | 0        |      | ;
-	75    | 0        |      | D
-	76    | 0        |      | a
-	77    | 0        |      | ~
-	78    | 0        |      | �
-	79    | 0        |      | ,
-	80    | 0        |      | �
-	81    | 0        |      | `
-	82    | 0        |      | b
-	83    | 0        |      | m
-	84    | 0        |      | �
-	85    | 0        |      | �
-	86    | 0        |      | 
-	87    | 0        |      | >
-	88    | 0        |      | |
-	89    | 0        |      | �
-	90    | 0        |      | =
-	91    | 0        |      | �
-	92    | 0        |      | �
-	93    | 0        |      | �
-	94    | 0        |      | �
-	95    | 0        |      | 0
-	96    | 0        |      | H
-	97    | 0        |      | 
-	98    | 0        |      | 4
-	99    | 0        |      | ?
-	100    | 0        |      | h
-	101    | 0        |      | �
-	102    | 0        |      | j
-	103    | 0        |      | �
-	104    | 0        |      | �
-	105    | 0        |      | 
-	106    | 0        |      | '
-	107    | 0        |      | n
-	108    | 0        |      | �
-	109    | 0        |      | �
-	110    | 0        |      | �
-	111    | 0        |      | )
-	112    | 0        |      | �
-	113    | 0        |      | �
-	114    | 0        |      | 
+	202    | 7        | 0010000     | *
+	203    | 7        | 0010001     | ,
+	204    | 7        | 0010010     | �
+	205    | 7        | 0010011     | �
+	206    | 7        | 0010100     | f
+	207    | 7        | 0010101     | p
+	208    | 7        | 0010110     | 
+	209    | 7        | 0010111     | 
+	210    | 7        | 0011000     | $
+	211    | 7        | 0011001     | 5
+	212    | 7        | 0011010     | `
+	213    | 7        | 0011011     | �
+	214    | 7        | 0011100     | �
+	215    | 7        | 0011101     | �
+	216    | 7        | 0011110     | �
+	217    | 7        | 0011111     | �
+	218    | 7        | 0100000     | ]
+	219    | 7        | 0100001     | �
+	220    | 7        | 0100010     | '
+	221    | 7        | 0100011     | A
+	222    | 7        | 0100100     | n
+	223    | 7        | 0100101     | w
+	224    | 7        | 0100110     | �
+	225    | 7        | 0100111     | �
+	226    | 7        | 0101000     | �
+	227    | 7        | 0101001     | 8
+	228    | 7        | 0101010     | �
+	229    | 7        | 0101011     | �
+	230    | 7        | 0101100     | �
+	231    | 7        | 0101101     | �
+	232    | 7        | 0101110     | �
+	233    | 7        | 0101111     | 
+	234    | 4        | 0000     | _
+	235    | 4        | 0001     | �
+	236    | 4        | 0010     | �
+	237    | 4        | 0011     | U
+	238    | 9        | 011001000     | m
+	239    | 9        | 011001000     | �
+	240    | 9        | 011001010     | 
 
-	115    | 0        |      | $
-	116    | 0        |      | G
-	117    | 0        |      | �
-	118    | 0        |      | 
-	119    | 0        |      | �
-	120    | 0        |      | �
-	121    | 0        |      | �
-	122    | 0        |      | �
-	123    | 0        |      | +
-	124    | 0        |      | W
-	125    | 0        |      | �
-	126    | 0        |      | �
-	127    | 0        |      | �
-	128    | 0        |      | �
-	129    | 0        |      | �
-	130    | 0        |      | 
-	131    | 0        |      | u
-	132    | 0        |      | �
-	133    | 0        |      | �
-	134    | 0        |      | �
-	135    | 0        |      | �
-	136    | 0        |      | 
-	137    | 0        |      | <
-	138    | 0        |      | T
-	139    | 0        |      | g
-	140    | 0        |      | �
-	141    | 0        |      | �
-	142    | 0        |      | 
-	143    | 0        |      | 
-	144    | 0        |      | 3
-	145    | 0        |      | S
-	146    | 0        |      | _
-	147    | 0        |      | e
-	148    | 0        |      | s
-	149    | 0        |      | �
-	150    | 0        |      | *
-	151    | 0        |      | �
-	152    | 0        |      | B
-	153    | 0        |      | {
-	154    | 0        |      | 
-	155    | 0        |      | �
-	156    | 0        |      | �
-	157    | 0        |      | 
-	158    | 0        |      | V
-	159    | 0        |      | }
-	160    | 0        |      | �
-	161    | 0        |      | �
-	162    | 0        |      | �
-	163    | 0        |      | 
-	164    | 0        |      | 
-	165    | 0        |      | C
-	166    | 0        |      | w
-	167    | 0        |      | �
-	168    | 0        |      | Q
-	169    | 0        |      | �
-	170    | 0        |      | �
-	171    | 0        |      | �
-	172    | 0        |      | �
-	173    | 0        |      | �
-	174    | 0        |      | �
-	175    | 0        |      | ^
-	176    | 0        |      | c
-	177    | 0        |      | �
-	178    | 0        |      | �
-	179    | 0        |      | �
-	180    | 0        |      | �
-	181    | 0        |      | �
-	182    | 0        |      | �
-	183    | 0        |      | 
-	184    | 0        |      | 	
-	185    | 0        |      | X
-	186    | 0        |      | �
-	187    | 0        |      | 2
-	188    | 0        |      | L
-	189    | 0        |      | R
-	190    | 0        |      | U
-	191    | 0        |      | �
-	192    | 0        |      | �
-	193    | 0        |      | �
-	194    | 0        |      | K
-	195    | 0        |      | r
-	196    | 0        |      | �
-	197    | 0        |      | !
-	198    | 0        |      | "
-	199    | 0        |      | 5
-	200    | 0        |      | �
-	201    | 0        |      | �
-	202    | 0        |      | �
-	203    | 0        |      | �
-	204    | 0        |      | Y
-	205    | 0        |      | �
-	206    | 0        |      | 
-	207    | 0        |      | E
-	208    | 0        |      | �
-	209    | 0        |      | �
-	210    | 0        |      | �
-	211    | 0        |      | �
-	212    | 0        |      | �
-	213    | 0        |      | �
-	214    | 0        |      | I
-	215    | 0        |      | Z
-	216    | 0        |      | �
-	217    | 0        |      | �
-	218    | 0        |      | �
-	219    | 0        |      | �
-	220    | 0        |      | �
-	221    | 0        |      | �
-	222    | 0        |      | �
-	223    | 0        |      |  
-	224    | 0        |      | 6
-	225    | 0        |      | J
-	226    | 0        |      | �
-	227    | 0        |      | �
-	228    | 0        |      | 
-	229    | 0        |      | �
-	230    | 0        |      | �
-	231    | 0        |      | 
-	232    | 0        |      | -
-	233    | 0        |      | N
-	234    | 0        |      | �
-	235    | 0        |      | 7
-	236    | 0        |      | M
-	237    | 0        |      | t
-	238    | 0        |      | z
-	239    | 0        |      | �
-	240    | 0        |      | �
-	241    | 0        |      | �
-	242    | 0        |      | .
-	243    | 0        |      | 8
-	244    | 0        |      | 
-	245    | 0        |      | �
-	246    | 0        |      | �
-	247    | 0        |      | 
-	248    | 0        |      | �
-	249    | 0        |      | 9
-	250    | 0        |      | �
-	251    | 0        |      | �
-	252    | 0        |      | �
-	253    | 0        |      | �
-	254    | 0        |      | �
-	255    | 0        |      | �
+	241    | 9        | 011001010     | �
+	242    | 8        | 01100100     | .
+	243    | 8        | 01100101     | 3
+	244    | 8        | 01100110     | �
+	245    | 8        | 01100111     | =
+	246    | 3        | 000     | I
+	247    | 3        | 001     | }
+	248    | 9        | 011010100     | �
+	249    | 9        | 011010100     | �
+	250    | 8        | 01101010     | 0
+	251    | 8        | 01101011     | �
+	252    | 9        | 011011000     | �
+	253    | 9        | 011011000     | B
+	254    | 9        | 011011010     | E
+	255    | 9        | 011011010     | �
 
 
-Tree : [0|top]9480 [1|bottom]3241 [2|top]6239 [3|bottom]3241 [4|top]2998 [5|top]2063 [6|top]1178 [7|top]1794 [8|top]1593 [9|top]1405 [10|top]1159 [11|top]904 [12|top]656 [13|top]522 [14|bottom]284 [15|top]923 [16|top]871 [17|top]817 [18|top]776 [19|top]733 [20|top]672 [21|top]608 [22|top]551 [23|top]487 [24|top]417 [25|top]360 [26|top]296 [27|top]238 [28|top]170 [29|top]114 [30|bottom]62 [31|top]468 [32|top]455 [33|top]442 [34|top]429 [35|top]415 [36|top]402 [37|top]394 [38|top]382 [39|top]373 [40|top]360 [41|top]344 [42|top]328 [43|top]311 [44|top]297 [45|top]281 [46|top]270 [47|top]253 [48|top]234 [49|top]217 [50|top]200 [51|top]188 [52|top]172 [53|top]154 [54|top]142 [55|top]129 [56|top]109 [57|top]95 [58|top]75 [59|top]52 [60|top]38 [61|top]24 [62|bottom]13 [63|top]239 [64|top]236 [65|top]232 [66|top]229 [67|top]226 [68|top]222 [69|top]220 [70|top]216 [71|top]213 [72|top]209 [73|top]206 [74|top]202 [75|top]200 [76|top]198 [77|top]196 [78|top]192 [79|top]190 [80|top]188 [81|top]185 [82|top]183 [83|top]177 [84|top]174 [85|top]170 [86|top]167 [87|top]161 [88|top]158 [89|top]153 [90|top]151 [91|top]146 [92|top]142 [93|top]139 [94|top]136 [95|top]134 [96|top]130 [97|top]123 [98|top]118 [99|top]116 [100|top]113 [101|top]104 [102|top]101 [103|top]99 [104|top]96 [105|top]92 [106|top]88 [107|top]84 [108|top]79 [109|top]75 [110|top]72 [111|top]70 [112|top]65 [113|top]64 [114|top]57 [115|top]52 [116|top]50 [117|top]45 [118|top]39 [119|top]36 [120|top]29 [121|top]23 [122|top]20 [123|top]18 [124|top]11 [125|top]8 [126|top]5 [127|top]120 [128|top]119 [129|top]118 [130|top]118 [131|top]116 [132|top]116 [133|top]115 [134|top]114 [135|top]114 [136|top]112 [137|top]112 [138|top]110 [139|top]110 [140|top]110 [141|top]108 [142|top]108 [143|top]107 [144|top]106 [145|top]105 [146|top]104 [147|top]104 [148|top]102 [149|top]102 [150|top]100 [151|top]100 [152|top]100 [153|top]100 [154|top]98 [155|top]98 [156|top]98 [157|top]96 [158|top]96 [159|top]96 [160|top]94 [161|top]94 [162|top]94 [163|top]93 [164|top]92 [165|top]92 [166|top]91 [167|top]89 [168|top]88 [169|top]88 [170|top]86 [171|top]86 [172|top]84 [173|top]84 [174|top]83 [175|top]81 [176|top]80 [177|top]80 [178|top]78 [179|top]77 [180|top]76 [181|top]76 [182|top]75 [183|top]74 [184|top]72 [185|top]72 [186|top]70 [187|top]70 [188|top]69 [189|top]68 [190|top]68 [191|top]68 [192|top]66 [193|top]66 [194|top]64 [195|top]62 [196|top]61 [197|top]60 [198|top]58 [199|top]58 [200|top]58 [201|top]58 [202|top]55 [203|top]52 [204|top]52 [205|top]51 [206|top]50 [207|top]50 [208|top]49 [209|top]48 [210|top]48 [211|top]46 [212|top]46 [213|top]45 [214|top]43 [215|top]42 [216|top]42 [217|top]40 [218|top]39 [219|top]38 [220|top]37 [221|top]36 [222|top]36 [223|top]36 [224|top]34 [225|top]33 [226|top]32 [227|top]32 [228|top]32 [229|top]30 [230|top]27 [231|top]26 [232|top]26 [233|top]26 [234|top]24 [235|top]24 [236|top]21 [237|top]20 [238|top]19 [239|top]18 [240|top]18 [241|top]16 [242|top]13 [243|top]12 [244|top]11 [245|top]10 [246|top]10 [247|top]10 [248|top]8 [249|top]6 [250|top]5 [251|top]4 [252|top]4 [253|top]3 [254|top]2 [255|top]60 [256|top]60 [257|top]60 [258|top]59 [259|top]59 [260|top]59 [261|top]59 [262|top]59 [263|top]58 [264|top]58 [265|top]58 [266|top]58 [267|top]58 [268|top]57 [269|top]57 [270|top]57 [271|top]57 [272|top]57 [273|top]56 [274|top]56 [275|top]56 [276|top]56 [277|top]55 [278|top]55 [279|top]55 [280|top]55 [281|top]55 [282|top]55 [283|top]54 [284|top]54 [285|top]54 [286|top]54 [287|top]54 [288|top]53 [289|top]53 [290|top]53 [291|top]53 [292|top]52 [293|top]52 [294|top]52 [295|top]52 [296|top]52 [297|top]51 [298|top]51 [299|top]51 [300|top]51 [301|top]50 [302|top]50 [303|top]50 [304|top]50 [305|top]50 [306|top]50 [307|top]50 [308|top]50 [309|top]49 [310|top]49 [311|top]49 [312|top]49 [313|top]49 [314|top]49 [315|top]48 [316|top]48 [317|top]48 [318|top]48 [319|top]48 [320|top]48 [321|top]47 [322|top]47 [323|top]47 [324|top]47 [325|top]47 [326|top]47 [327|top]47 [328|top]46 [329|top]46 [330|top]46 [331|top]46 [332|top]46 [333|top]46 [334|top]45 [335|top]45 [336|top]44 [337|top]44 [338|top]44 [339|top]44 [340|top]44 [341|top]43 [342|top]43 [343|top]43 [344|top]43 [345|top]42 [346|top]42 [347|top]42 [348|top]42 [349|top]42 [350|top]41 [351|top]41 [352|top]40 [353|top]40 [354|top]40 [355|top]40 [356|top]40 [357|top]39 [358|top]39 [359|top]39 [360|top]38 [361|top]38 [362|top]38 [363|top]38 [364|top]38 [365|top]38 [366|top]37 [367|top]37 [368|top]37 [369|top]36 [370|top]36 [371|top]36 [372|top]36 [373|top]35 [374|top]35 [375|top]35 [376|top]35 [377|top]35 [378|top]34 [379|top]34 [380|top]34 [381|top]34 [382|top]34 [383|top]34 [384|top]34 [385|top]33 [386|top]33 [387|top]33 [388|top]33 [389|top]32 [390|top]32 [391|top]31 [392|top]31 [393|top]31 [394|top]30 [395|top]30 [396|top]30 [397|top]29 [398|top]29 [399|top]29 [400|top]29 [401|top]29 [402|top]29 [403|top]29 [404|top]29 [405|top]28 [406|top]27 [407|top]26 [408|top]26 [409|top]26 [410|top]26 [411|top]26 [412|top]25 [413|top]25 [414|top]25 [415|top]25 [416|top]25 [417|top]25 [418|top]24 [419|top]24 [420|top]24 [421|top]24 [422|top]24 [423|top]23 [424|top]23 [425|top]23 [426|top]23 [427|top]23 [428|top]22 [429|top]22 [430|top]21 [431|top]21 [432|top]21 [433|top]21 [434|top]21 [435|top]20 [436|top]20 [437|top]20 [438|top]19 [439|top]19 [440|top]19 [441|top]19 [442|top]18 [443|top]18 [444|top]18 [445|top]18 [446|top]18 [447|top]18 [448|top]18 [449|top]17 [450|top]17 [451|top]17 [452|top]16 [453|top]16 [454|top]16 [455|top]16 [456|top]16 [457|top]16 [458|top]16 [459|top]15 [460|top]15 [461|top]14 [462|top]13 [463|top]13 [464|top]13 [465|top]13 [466|top]13 [467|top]13 [468|top]13 [469|top]12 [470|top]12 [471|top]12 [472|top]12 [473|top]11 [474|top]10 [475|top]10 [476|top]10 [477|top]10 [478|top]9 [479|top]9 [480|top]9 [481|top]9 [482|top]9 [483|top]8 [484|top]8 [485|top]7 [486|top]6 [487|top]6 [488|top]6 [489|top]6 [490|top]5 [491|top]5 [492|top]5 [493|top]5 [494|top]5 [495|top]5 [496|top]5 [497|top]4 [498|top]4 [499|top]3 [500|top]3 [501|top]3 [502|top]2 [503|top]2 [504|top]2 [505|top]2 [506|top]2 [507|top]2 [508|top]1 [509|top]1 [510|top]1 morningstar@bestosotech: (6-test-with-all-256-bytes): ~/Documents/GithubRepositories/HuffmanCoding/c++ 8=D~ 
 
+Tree Layers Count : 7
+Tree Layer 0|5:
+[0|top]7943	[1|bottom]4110	[2|top]3833	[3|top]2378	[4|top]1732	[5|bottom]946	
+
+Tree Layer 1|13:
+
+[6|top]2308	[7|top]1525	[8|top]1309	[9|top]1069	[10|top]786	[11|top]537	[12|top]409	
+[13|bottom]223	
+
+Tree Layer 2|29:
+
+[14|top]1470	[15|bottom]882	[16|top]838	[17|top]793	[18|top]732	[19|top]685	[20|top]624	
+[21|top]569	[22|top]500	[23|top]421	[24|top]365	[25|top]300	[26|top]237	[27|top]186	
+[28|top]138	[29|top]85	
+
+Tree Layer 3|61:
+
+[30|top]588	[31|top]448	[32|top]434	[33|top]423	[34|top]415	[35|top]403	[36|top]390	
+[37|top]371	[38|top]361	[39|top]349	[40|top]336	[41|top]321	[42|top]303	[43|top]292	
+[44|top]277	[45|top]266	[46|top]234	[47|top]217	[48|top]204	[49|top]190	[50|top]175	
+[51|top]159	[52|top]141	[53|top]126	[54|top]111	[55|top]98	[56|top]88	[57|top]74	
+[58|top]64	[59|top]49	[60|top]36	[61|bottom]21	
+
+Tree Layer 4|126:
+
+[62|top]357	[63|bottom]237	[64|top]231	[65|top]227	[66|top]221	[67|top]218	[68|top]216	
+[69|top]212	[70|top]211	[71|top]208	[72|top]207	[73|top]203	[74|top]200	[75|top]197	
+[76|top]193	[77|top]187	[78|top]184	[79|top]182	[80|top]179	[81|top]176	[82|top]173	
+[83|top]170	[84|top]166	[85|top]163	[86|top]158	[87|top]155	[88|top]148	[89|top]148	
+[90|top]144	[91|top]141	[92|top]136	[93|top]134	[94|top]132	[95|top]121	[96|top]113	
+[97|top]110	[98|top]107	[99|top]104	[100|top]100	[101|top]96	[102|top]94	[103|top]89	
+[104|top]86	[105|top]81	[106|top]78	[107|top]73	[108|top]68	[109|top]65	[110|top]61	
+[111|top]57	[112|top]54	[113|top]52	[114|top]46	[115|top]44	[116|top]44	[117|top]38	
+[118|top]36	[119|top]33	[120|top]31	[121|top]27	[122|top]22	[123|top]15	[124|top]12	
+[125|top]9	[126|bottom]5	
+
+Tree Layer 5|254:
+
+[127|top]120	[128|top]119	[129|top]118	[130|top]116	[131|top]115	[132|top]114	[133|top]113	
+[134|top]111	[135|top]110	[136|top]110	[137|top]108	[138|top]108	[139|top]108	[140|top]106	
+[141|top]106	[142|top]106	[143|top]105	[144|top]104	[145|top]104	[146|top]104	[147|top]103	
+[148|top]102	[149|top]101	[150|top]100	[151|top]100	[152|top]99	[153|top]98	[154|top]97	
+[155|top]96	[156|top]94	[157|top]93	[158|top]92	[159|top]92	[160|top]92	[161|top]90	
+[162|top]90	[163|top]89	[164|top]88	[165|top]88	[166|top]87	[167|top]86	[168|top]86	
+[169|top]84	[170|top]84	[171|top]82	[172|top]82	[173|top]81	[174|top]80	[175|top]78	
+[176|top]78	[177|top]77	[178|top]74	[179|top]74	[180|top]74	[181|top]74	[182|top]72	
+[183|top]72	[184|top]71	[185|top]70	[186|top]68	[187|top]68	[188|top]68	[189|top]66	
+[190|top]66	[191|top]66	[192|top]62	[193|top]59	[194|top]57	[195|top]56	[196|top]56	
+[197|top]54	[198|top]54	[199|top]53	[200|top]52	[201|top]52	[202|top]50	[203|top]50	
+[204|top]48	[205|top]48	[206|top]48	[207|top]46	[208|top]45	[209|top]44	[210|top]44	
+[211|top]42	[212|top]41	[213|top]40	[214|top]40	[215|top]38	[216|top]37	[217|top]36	
+[218|top]34	[219|top]34	[220|top]33	[221|top]32	[222|top]31	[223|top]30	[224|top]29	
+[225|top]28	[226|top]28	[227|top]26	[228|top]26	[229|top]26	[230|top]24	[231|top]22	
+[232|top]22	[233|top]22	[234|top]22	[235|top]22	[236|top]20	[237|top]18	[238|top]18	
+[239|top]18	[240|top]17	[241|top]16	[242|top]16	[243|top]15	[244|top]14	[245|top]13	
+[246|top]12	[247|top]10	[248|top]8	[249|top]7	[250|top]6	[251|top]6	[252|top]4	
+[253|top]3	[254|top]2	
+
+Tree Layer 6|510:
+
+[255|top]60	[256|top]60	[257|top]60	[258|top]59	[259|top]59	[260|top]59	[261|top]58	
+[262|top]58	[263|top]58	[264|top]57	[265|top]57	[266|top]57	[267|top]57	[268|top]56	
+[269|top]56	[270|top]55	[271|top]55	[272|top]55	[273|top]55	[274|top]55	[275|top]54	
+[276|top]54	[277|top]54	[278|top]54	[279|top]54	[280|top]54	[281|top]53	[282|top]53	
+[283|top]53	[284|top]53	[285|top]53	[286|top]53	[287|top]53	[288|top]52	[289|top]52	
+[290|top]52	[291|top]52	[292|top]52	[293|top]52	[294|top]52	[295|top]52	[296|top]51	
+[297|top]51	[298|top]51	[299|top]51	[300|top]50	[301|top]50	[302|top]50	[303|top]50	
+[304|top]50	[305|top]50	[306|top]49	[307|top]49	[308|top]49	[309|top]49	[310|top]48	
+[311|top]48	[312|top]48	[313|top]47	[314|top]47	[315|top]47	[316|top]46	[317|top]46	
+[318|top]46	[319|top]46	[320|top]46	[321|top]46	[322|top]46	[323|top]45	[324|top]45	
+[325|top]45	[326|top]45	[327|top]45	[328|top]44	[329|top]44	[330|top]44	[331|top]44	
+[332|top]44	[333|top]44	[334|top]43	[335|top]43	[336|top]43	[337|top]43	[338|top]43	
+[339|top]42	[340|top]42	[341|top]42	[342|top]42	[343|top]41	[344|top]41	[345|top]41	
+[346|top]41	[347|top]41	[348|top]40	[349|top]40	[350|top]40	[351|top]39	[352|top]39	
+[353|top]39	[354|top]39	[355|top]39	[356|top]38	[357|top]37	[358|top]37	[359|top]37	
+[360|top]37	[361|top]37	[362|top]37	[363|top]37	[364|top]37	[365|top]36	[366|top]36	
+[367|top]36	[368|top]36	[369|top]36	[370|top]35	[371|top]35	[372|top]35	[373|top]34	
+[374|top]34	[375|top]34	[376|top]34	[377|top]34	[378|top]34	[379|top]33	[380|top]33	
+[381|top]33	[382|top]33	[383|top]33	[384|top]33	[385|top]31	[386|top]31	[387|top]30	
+[388|top]29	[389|top]29	[390|top]28	[391|top]28	[392|top]28	[393|top]28	[394|top]28	
+[395|top]27	[396|top]27	[397|top]27	[398|top]27	[399|top]27	[400|top]26	[401|top]26	
+[402|top]26	[403|top]26	[404|top]26	[405|top]25	[406|top]25	[407|top]25	[408|top]25	
+[409|top]24	[410|top]24	[411|top]24	[412|top]24	[413|top]24	[414|top]24	[415|top]23	
+[416|top]23	[417|top]23	[418|top]22	[419|top]22	[420|top]22	[421|top]22	[422|top]22	
+[423|top]21	[424|top]21	[425|top]21	[426|top]20	[427|top]20	[428|top]20	[429|top]20	
+[430|top]20	[431|top]19	[432|top]19	[433|top]19	[434|top]18	[435|top]18	[436|top]18	
+[437|top]17	[438|top]17	[439|top]17	[440|top]17	[441|top]17	[442|top]16	[443|top]16	
+[444|top]16	[445|top]16	[446|top]15	[447|top]15	[448|top]15	[449|top]15	[450|top]14	
+[451|top]14	[452|top]14	[453|top]14	[454|top]14	[455|top]13	[456|top]13	[457|top]13	
+[458|top]13	[459|top]13	[460|top]13	[461|top]12	[462|top]12	[463|top]11	[464|top]11	
+[465|top]11	[466|top]11	[467|top]11	[468|top]11	[469|top]11	[470|top]11	[471|top]11	
+[472|top]11	[473|top]10	[474|top]10	[475|top]9	[476|top]9	[477|top]9	[478|top]9	
+[479|top]9	[480|top]9	[481|top]9	[482|top]8	[483|top]8	[484|top]8	[485|top]8	
+[486|top]8	[487|top]8	[488|top]7	[489|top]7	[490|top]7	[491|top]7	[492|top]6	
+[493|top]6	[494|top]6	[495|top]5	[496|top]5	[497|top]4	[498|top]4	[499|top]4	
+[500|top]3	[501|top]3	[502|top]3	[503|top]3	[504|top]3	[505|top]2	[506|top]2	
+[507|top]2	[508|top]1	[509|top]1	[510|top]1	
 
