@@ -6,164 +6,23 @@ class HuffmanCoding{
 	
 		int *frequencies;
 		size_t frequencies_s;
-		int frequencyMax;
 
 		int *codeTable;
 		size_t codeTable_s;
 
 		int *treeData;
-		int *treeDataTypes;
 		size_t treeData_s;
-		int treeDataLayerCount;
-
-		int *workQueue;
-		size_t workQueue_s;
 		
 		bool tablesSorted;
 
 		int error;
 		std::string error_msg;
 		
-		// TODO: implement work queue functions.
-		// Destroy, 
-		// push,
-		// pop,
-		void destroyWorkQueue(void){
-			if(this->workQueue != NULL){
-				delete[] this->workQueue;
-			}
-			this->workQueue = NULL;
-			this->workQueue_s = 0;
-		}
-		void resizeWorkQueue(size_t size){
-                        if(size == 0){
-                                this->destroyWorkQueue();
-                        }else if(this->workQueue == NULL){
-                                this->workQueue = new int[size];
-                                this->workQueue_s = size;
-                        }else{
-                                size_t oldSize = this->workQueue_s;
-                                int *transfer = new int[oldSize];
-                                for(int i=0; i<oldSize; i++){
-                                        transfer[i] = this->treeData[i];
-				}
-                                this->destroyWorkQueue();
-                                this->workQueue = new int[size];
-                                this->workQueue_s = size;
-                                for(int i=0; i<this->workQueue_s && i<oldSize; i++){
-                                        this->treeData[i] = transfer[i];
-                                }
-				
-                                delete[] transfer;
-                        }
-                }
-		bool validateWorkQueue(void){
-			if(this->workQueue == NULL){
-				this->setError(5645, "validateWorkQueue() - workQueue is null.");
-				return false;
-			}
-			if(this->workQueue_s <= 0){
-				this->setError(456456, "validateWorkQueue() - workQueue_s <= 0, treating as null.");
-				return false;
-			}
-			return true;
-		}
-		int pushWorkQueue(int val, int knownFill){
-			if(!this->validateFrequencies()){
-				this->setError(234, "pushWorkQueue() - invalid frequencies.");
-				return -1;
-			}
-			if(!this->validateWorkQueue()){
-				this->clearError();
-				this->resizeWorkQueue(this->frequencies_s);
-				for(int i=0; i<this->workQueue_s; i++)
-					this->workQueue[i] = -1;
-			}else if(this->workQueue[this->workQueue_s-1] != -1){
-				this->resizeWorkQueue(this->workQueue_s+1);
-				this->workQueue[this->workQueue_s-1] = -1;
-			}
-
-			int start = knownFill >= 0 && knownFill <workQueue_s ? knownFill : 0;
-			int fillSize = start;
-			bool failure=true;
-			for(int i=start; i<this->workQueue_s; i++){
-				if(this->workQueue[i] == -1){
-					failure=false;
-					this->workQueue[i] = val;
-					fillSize++;
-					break;
-				}
-				fillSize++;
-			}
-			if(failure){
-				this->setError(54355, "pushWorkQueue() - failed to push value.");
-				return -1;
-			}
-			return fillSize;
-		}
-		int popWorkQueue(void){
-			if(!this->validateWorkQueue()){
-				this->setError(5345, "popWorkQueue() - invalid work queue.");
-				return -1;
-			}
-			int ret = this->workQueue[0];
-			this->workQueue[0] = -1;
-			for(int i=1; i<this->workQueue_s; i++){
-				this->workQueue[i-1] = this->workQueue[i];
-				if(this->workQueue[i] == -1) break;
-				this->workQueue[i] = -1;
-				
-			}
-			return ret;
-		}
-
 		void destroyTreeData(void){
 			if(this->treeData != NULL)
 				delete[] this->treeData;
-			if(this->treeDataTypes != NULL)
-				delete[] this->treeDataTypes;
 			this->treeData = NULL;
-			this->treeDataTypes = NULL;
 			this->treeData_s = 0;
-		}
-		void resizeTreeData(size_t size){
-                        if(size == 0){
-                                this->destroyTreeData();
-                        }else if(this->treeData == NULL){
-                                this->treeData = new int[size];
-				this->treeDataTypes = new int[size];
-                                this->treeData_s = size;
-                        }else{
-                                size_t oldSize = this->treeData_s;
-                                int *transfer = new int[oldSize];
-				int *transferTwo = new int[oldSize];
-                                for(int i=0; i<oldSize; i++){
-                                        transfer[i] = this->treeData[i];
-					transferTwo[i] = this->treeDataTypes[i];
-				}
-                                this->destroyTreeData();
-                                this->treeData = new int[size];
-				this->treeDataTypes = new int[size];
-                                this->treeData_s = size;
-                                for(int i=0; i<this->treeData_s && i<oldSize; i++){
-                                        this->treeData[i] = transfer[i];
-					this->treeDataTypes[i] = transferTwo[i];
-                                }
-				
-                                delete[] transfer;
-				delete[] transferTwo;
-                        }
-                }
-		bool validateTreeData(void){
-			if(this->treeData_s <= 0){
-                                this->setError(600, "validateTreeData(void) - treeData_s <= 0. Treating as null.");
-                                return false;
-                        }
-                        if(this->treeData == NULL){
-                                this->setError(601, "validateTreeData(void) - treeData is null.");
-                                return false;
-                        }
-			return true;
 		}
 			
 		void destroyCodingTable(void){
@@ -224,18 +83,6 @@ class HuffmanCoding{
                                 delete[] transfer;
                         }
                 }
-		bool validateFrequencies(void){
-			if(this->frequencies_s <= 0){
-                                this->setError(3402, "validateFrequencies(void) - frequencies_s <= 0. Treating as null.");
-                                return false;
-                        }
-                        if(this->frequencies == NULL){
-                                this->setError(3403, "validateFrequencies(void) - frequencies is null.");
-                                return false;
-                        }
-			return true;
-		}
-
 		void destroyOut(void){
 			if(this->out != NULL)
 				delete[] this->out;
@@ -245,11 +92,11 @@ class HuffmanCoding{
 		
 		bool createTreeLetters(char *data, size_t dataSize){
 			if(data == NULL){
-				this->setError(200, "createTreeLetters(char *data, size_t dataSize) - data is null.");
+				this->setError(0x900, "createTreeLetters(char *data, size_t dataSize) - data is null.");
 				return false;
 			}
 			if(dataSize <= 0){
-				this->setError(201, "createTreeLetters(char *data, size_t dataSize) - dataSize is <= 0, treating data as null");
+				this->setError(0x901, "createTreeLetters(char *data, size_t dataSize) - dataSize is <= 0, treating data as null");
 				return false;
 			}
 			this->destroyTreeLetters();
@@ -273,23 +120,22 @@ class HuffmanCoding{
 
 		bool createFrequency(char *data, size_t dataSize){
 			if(this->treeLetters == NULL){
-				this->setError(300, "createFrequency(char *data, size_t dataSize) - treeLetters is null.");
+				this->setError(0x910, "createFrequency(char *data, size_t dataSize) - treeLetters is null.");
 				return false;
 			}
 			if(this->treeLetters_s <= 0){
-				this->setError(301, "createFrequency(char *data, size_t dataSize) - treeLetters_s is <= 0, treating treeLetters as null.");
+				this->setError(0x911, "createFrequency(char *data, size_t dataSize) - treeLetters_s is <= 0, treating treeLetters as null.");
 				return false;
 			}
 			if(data == NULL){
-				this->setError(302, "createFrequency(char *data, size_t dataSize) - data is null.");
+				this->setError(0x912, "createFrequency(char *data, size_t dataSize) - data is null.");
 				return false;
 			}
 			if(dataSize <= 0){
-				this->setError(303, "createFrequency(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+				this->setError(0x913, "createFrequency(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
 				return false;
 			}
 			this->destroyFrequencies();
-			this->frequencyMax=0;
 			for(int i=0; i<this->treeLetters_s; i++){
 				char targetChar = this->treeLetters[i];
 				int freq = 0;
@@ -300,26 +146,28 @@ class HuffmanCoding{
 				this->resizeFrequencies(this->frequencies_s + 1);
 				this->frequencies[this->frequencies_s - 1] = freq;
 			}
-			for(int i=0; i<this->frequencies_s; i++)
-				this->frequencyMax += this->frequencies[i];
 			return true;
 		}
 
 		bool sortFreqencies(void){
-			if(!this->validateFrequencies()){
-				this->setError(400, "sortFreqencies(void) - failed to validate frequencies.");
+			if(this->treeLetters_s <= 0){
+				this->setError(0x923, "sortFreqencies(void) - treeLetters_s is 0, treating as null.");
 				return false;
 			}
-			if(this->treeLetters_s <= 0){
-				this->setError(401, "sortFreqencies(void) - treeLetters_s is 0, treating as null.");
+			if(this->frequencies_s <= 0){
+				this->setError(0x924, "sortFreqencies(void) - frequencies_s <= 0, treating as null.");
 				return false;
 			}
 			if(this->treeLetters_s != this->frequencies_s){
-				this->setError(402, "sortFreqencies(void) - Table Corruption, treeLetters_s != frequencies_s.");
+				this->setError(0x920, "sortFreqencies(void) - Table Corruption, treeLetters_s != frequencies_s.");
 				return false;
 			}
 			if(this->treeLetters == NULL){
-				this->setError(403, "sortFreqencies(void) - treeLetters is null.");
+				this->setError(0x921, "sortFreqencies(void) - treeLetters is null.");
+				return false;
+			}
+			if(this->frequencies == NULL){
+				this->setError(0x922, "sortFreqencies(void) - frequencies is null.");
 				return false;
 			}
 
@@ -395,1070 +243,504 @@ class HuffmanCoding{
 			return true;
 		}
 
-		// TODO: Fix for when target == 0.
-		bool findRelativeLayers(int target, int *nodeCache, size_t nodeCache_s, size_t *out_topSize, size_t *out_bottomSize, int *out_segmentStart){
-			if(nodeCache == NULL){
-				this->setError(520, "findRelativeLayers(int target, int *nodeCache, size_t nodeCache_s, int *out_topSize, int *out_bottomSize, int *out_segmentStart) - nodeCache is null.");
-				return false;
-			}
-			if(nodeCache_s <= 0){
-				this->setError(521, "findRelativeLayers(int target, int *nodeCache, size_t nodeCache_s, int *out_topSize, int *out_bottomSize, int *out_segmentStart) - nodeCache_s <= 0. treating as null.");
-				return false;
-			}
-			if(!this->validateFrequencies()){
-				this->setError(522, "findRelativeLayers(int target, int *nodeCache, size_t nodeCache_s, int *out_topSize, int *out_bottomSize, int *out_segmentStart) - failed to validate frequencie.");
-				return false;
-			}
-			if(target >= nodeCache_s){
-				this->setError(523, "findRelativeLayers(int target, int *nodeCache, size_t nodeCache_s, int *out_topSize, int *out_bottomSize, int *out_segmentStart) - target >= nodeCache_s, treating as out of bounds.");
-				return false;
-			}
+		// returns true if target is NOT an inner node, and returns the indecies of the two values that created
+		// the target value, organized relative to their encoding value (1 or 0)
+		// TODO: Fix boolean. Index 9 wrongly marked as a top node.
+		bool isTopNode(/*int targetVal, */int targetIndex, /*int targetLayerIndex, int *layerSizes, size_t layerSizes_s,*/ int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex){
+			int topLayerIndex=0;
+			int bottomLayerIndex=0;
+			int layerStartDescriptor = 0;
+                        size_t topSize = 0;//layerSizes[targetLayerIndex];
+                        size_t bottomSize = -1; // layerSizes[targetLayerIndex-1];
+			bool processing = false;
 
-			out_topSize[0] = 0;
-			out_bottomSize[0] = 0;
-			out_segmentStart[0] = -1;
-			int layerStart = 0;
-			int layerSize=0;
-			bool found=false;
-			for(int i=0, tracer=-1; i<nodeCache_s; i++){
-				if(i == target)
-					found = true;
-				if(tracer == -1){
-					tracer = nodeCache[i];
-					layerSize=1;
-					layerStart = i;
-					continue;
+			// Determine the size and location of top and bottom layers.
+			for(int i=nodeCache_s-1, test=-1; i>=0; i--){
+				if(i==nodeCache_s-1)
+					test = nodeCache[i];
+				topSize++;
+				if(processing){
+					if(test == -1){
+						printf("TEST BREAK A\n");
+						break;
+					}
+					if(test > nodeCache[i]){
+						topSize--;
+						layerStartDescriptor = i+1;
+						break;
+					}
+				}else{
+					if(test == -1){
+						printf("TEST BREAK B\n");
+					}
+					if(i==0){
+						layerStartDescriptor = 0;
+					}
+					if(test > nodeCache[i]){
+						bottomSize = topSize-1;
+						topSize = 1;
+						bottomLayerIndex = topLayerIndex;
+						topLayerIndex++;
+					}
 				}
-
-
-				if(tracer >= nodeCache[i]){
-					layerSize++;
-					tracer = nodeCache[i];
-					continue;
+				if(i == targetIndex){
+					processing = true;
 				}
+				test = nodeCache[i];
+			}
+
+			int topIterEnd = layerStartDescriptor+topSize;
+                        int *top = new int[topSize];
+			
+			int topStart = layerStartDescriptor;
+			for(int i=layerStartDescriptor, idx=0; i<topIterEnd && idx<topSize; i++, idx++){
+				top[idx] = nodeCache[i];
+			}
+
+
+                        int *bottom = NULL;
+			if(bottomSize == -1){
+				// we requested a value from the bottom layer. determine if it's a 1 or a 0,
+				// then set the zero and one index values respectively.
+				if(targetIndex == layerStartDescriptor && (topSize%2) == 1 && targetIndex+this->frequencies_s == nodeCache_s){
+					zeroIndex[0] = layerStartDescriptor;
+					oneIndex[0] = targetIndex-(topSize/2);
+					return true;
+				}
+				for(int i=topIterEnd-1, prev=-1; i>=layerStartDescriptor; i--){
+					if(i == topIterEnd-1 && targetIndex == i){
+						oneIndex[0] = i;
+						zeroIndex[0] = i-1;
+						return true;
+					}else if(i == topIterEnd-1){
+						prev = i;
+						continue;
+					}
+					if(targetIndex == i || targetIndex == prev){
+						oneIndex[0] = prev;
+						zeroIndex[0] = i;
+						return true;
+					}
+					i--;
+					prev = i;
+				}
+				this->setError(12345, "isTopNode() - Failed to process provided layer 0 value.");
+				oneIndex[0] = -1;
+				zeroIndex[0] = -1;
+				return false;
+			}
+
+			// A bottom layer exists, contine for more advanced processing.
+			int bottomIterEnd = layerStartDescriptor+topSize+bottomSize;
+			bottom = new int[bottomSize];
+			for(int i=topIterEnd, idx=0; i<bottomIterEnd; i++, idx++){
+                               	bottom[idx] = nodeCache[i];
+                       	}
+			
+			int bottomStart = topIterEnd;
+			int targetVal = nodeCache[targetIndex];
+			processing = false;
+			bool falseify = false;
+			int finalize=-1;
+			for(int i=layerStartDescriptor; i<topIterEnd; i++){
+				int grabbed = nodeCache[i];
+				for(int j=bottomStart; j>=bottomStart; j++){
+					int zero = nodeCache[j];
+					if(!(j+1<bottomIterEnd)){
+						printf("Unhandled error. - bottom check out of bounds %d+1 < %d\n", j, bottomIterEnd);
+						i=topIterEnd;
+						break;
+					}
+					int one = nodeCache[j+1];
+					int sum = zero + one;
+					if(sum == grabbed){ // top node / leaf.
+						// node is valid; but is it related to our target node?
+						bottomStart = j + 2;
+						if(i == targetIndex){
+							if(finalize != -1){
+								if((finalize == j) || (finalize == j+1)){
+									return false;
+								}else{
+									return true;
+								}
+							}
+							zeroIndex[0] = j;
+							oneIndex[0] = j+1;
+							return falseify == true ? false : true;
+						}
+						processing = false;
+						break;
+					}
+					
+					if(!(i+1<nodeCache_s)){
+						processing = false;
+						printf("Unhandled error - top check out of bounds.");
+						break;
+					}
+					one = nodeCache[i+1];
+					sum = zero+one;
+					if(sum == grabbed){ // bottom node / interier node
+						// node is valid; but is it related to our target node?
+						bottomStart = j + 1;
+						if(i == targetIndex){
+							if(finalize != -1){
+                                                                if((finalize == j) || (finalize == i+1)){
+                                                                        return false;
+                                                                }else{
+                                                                        return true;
+                                                                }
+                                                        }
+							zeroIndex[0] = j;
+							oneIndex[0] = i+1;
+							if(targetIndex == topStart){
+								return true;
+							}else{
+								finalize = targetIndex;
+								targetIndex--;
+								bottomStart = topIterEnd;
+								i = layerStartDescriptor-1;
+								break;
+							}
+						}
+						processing = false;
+						if(i+1 == targetIndex){
+							falseify = true;
+						}
+						break;
+					}
 				
-				if(found) break;
-				layerStart = i;
-				layerSize=1;
-				tracer = nodeCache[i];
-			}
-
-			out_segmentStart[0] = layerStart;
-			out_topSize[0] = layerSize;
-
-			layerStart = layerStart+layerSize;
-			found=false;
-			for(int i=layerStart, tracer=-1; i<nodeCache_s; i++){
-				if(tracer == -1){
-                                        tracer = nodeCache[i];
-                                        layerSize=1;
-                                        layerStart = i;
-                                        continue;
-                                }
-
-                                if(tracer >= nodeCache[i]){
-                                        layerSize++;
-                                        tracer = nodeCache[i];
-                                        continue;
-                                }
-
-				break;
-			}
-			out_bottomSize[0] = layerSize;
-
-			return true;
-		}
-
-		bool processBaseNodeValues(int cacheTarget, int cacheLayerStart, size_t cacheLayerSize, size_t cacheSize, int *out_zero, int *out_one){
-			if(!this->validateFrequencies()){
-				this->setError(1999, "processBaseNodeValues(int targetIndex, int layerStart, size_t layerSize, int *out_zero, int *out_one) - failed to validate frequencies.");
-				return false;
-			}
-			if(cacheTarget < cacheSize-this->frequencies_s){
-				printf("DEBUG : %d < %d\n", cacheTarget, cacheLayerStart);
-				this->setError(2000, "processBaseNodeValues(int targetIndex, int layerStart, size_t layerSize, int *out_zero, int *out_one) - targetIndex not in base layer.");
-				return false;
-			} 
-			if(cacheLayerSize != this->frequencies_s){
-				this->setError(2001, "processBaseNodeValues(int cacheTarget, int cacheLayerStart, size_t layerSize, size_t cacheSize, int *out_zero, int *out_one) - layerSize misaligned with frequencies_s.");
-				return false;
-			}			
-
-			int cacheToRootConvert = cacheSize - (cacheSize-cacheLayerSize);
-			int convertedTarget = cacheTarget - cacheToRootConvert;
-
-			bool oddLayer = (cacheLayerSize%2) == 1;
-			bool oddTarget = (convertedTarget%2) == 1;
-
-			if(cacheTarget == cacheLayerStart && oddLayer){
-				out_zero[0] = cacheTarget;
-				out_one[0] = -1;
-			}else if(oddLayer){
-				out_zero[0] = oddTarget ? cacheTarget : -1;
-				out_one[0] = oddTarget ? -1 : cacheTarget;
-			}else{
-				out_zero[0] = oddTarget ? -1 : cacheTarget;
-				out_one[0] = oddTarget ? cacheTarget : -1;
-			}
-			return true;
-		}
-		// TODO: Go through the entire layer to determine if the target is a top or bottom node.
-		// Using the starting index and size of the layer, which target should be part of, 
-		// find the start of the previous layer, and determine if the target value is a bottom or top node.
-		bool nodeValueIsValid(int target, int start, int size, int *nodeCache, size_t nodeCache_s){
-			// ensure target is within start and size bounds.
-			if(!(target <= start) && !(target > start-size)){
-				this->setError(4456, "nodeValueIsValid() - target is out of row bounds.");
-				return false;
-			}
-			// ensure node cache is valid.
-			if(nodeCache == NULL || nodeCache_s <= 0){
-				this->setError(45444, "nodeValueIsValid() - nodeCache is invalid.");
-				return false;
-			}
-			// check if there's a layer beneath. No layer, return true, all top nodes.
-			if(target >= (nodeCache_s - this->frequencies_s)){
-				return true;
-			}
-			// calculate lower layer start and size.
-			if(start < 0 || start >= nodeCache_s){
-				this->setError(46778, "nodeValueIsValid() - start out of bounds.");
-				return false;
-			}
-			int lowerLayerSize=0;
-			for(int i=start, tracer = nodeCache[start]; i<nodeCache_s; i++){
-				if(nodeCache[i] > tracer){
+					// we gotta maintain the I index; but shift the J starting index by 1.
+					// if we don't get a match on this bottom row, then we have bad data.
+					//printf("Nothing found yet, bump j start, keep i.\n");
+						i--; // we only want to do this once.
+					processing = true;
+					bottomStart++;
 					break;
 				}
-				lowerLayerSize++;
-				tracer = nodeCache[i];
-			}	
-			int lowerLayerStart=start+lowerLayerSize;
-			// generate sums until target
-			bool found=false;
-			for(int i=lowerLayerStart, j=start, tracer=-1,sum=-1; (i>=0 && i>start) && (j >= 0 && j>(start-size)); i--){
-				if(tracer==-1){
-					tracer = nodeCache[i];
-					continue;
-				}
-				if(sum == -1){
-					if(found){
-						return true;
-					}
-					sum = tracer + nodeCache[i];
-					if(j == sum) found = true;
-					j--;
-					tracer = -1;
-					continue;
-				}
-			}
-			// once target found, if end of buffer, return true, its a top node.
-			// once target found, store variables, calcuate next sum.
-			// if the next sum is created using the prior sum, return false, it's a bottom node.
-			// else return true, it's a top node.	
-			return found;
-		}
-
-		[[deprecated("isTopNode() is deprecated and will be deleted.")]]
-		bool isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex){
-			if(nodeCache == NULL){
-				this->setError(500, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - nodeCache is null.");
-				return false;
-			}
-			if(nodeCache_s <= 0){
-				this->setError(501, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - nodeCache_s <= 0. Treating as null.");
-				return false;
-			}
-			if(targetIndex < 0 || targetIndex >= nodeCache_s){
-				this->setError(502, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - target index out of bounds.");
-				return false;
 			}
 
-			zeroIndex[0] = -1;
-			oneIndex[0] = -1;
-			
-			// Identify relative layer offsets and sizes.
-			int layerStart = 0;
-                        size_t topSize = 0;
-                        size_t bottomSize = -1;
-			// Returns bottomSize -1 if the target index is in the base layer/the leaf layer.
-			if(!this->findRelativeLayers(targetIndex, nodeCache, nodeCache_s, &topSize, &bottomSize, &layerStart)){
-				this->setError(502, "isTopNode(int targetIndex, int *nodeCache, size_t nodeCache_s, int *zeroIndex, int *oneIndex) - failed to find relative layers.");	
-				return false;
-			}
-			if(bottomSize == -1){
-				return this->processBaseNodeValues(targetIndex, layerStart+topSize-1, topSize, nodeCache_s, zeroIndex, oneIndex);
-			}
-		
-			
-			// This gets processed backwords (root to leaf)
-			printf("targetIndex : %d\n", targetIndex);
-			printf("\trelative values: top, bottom, start : %ld, %ld, %d\n", topSize, bottomSize, layerStart);
-			
-			int bottomStart = layerStart+topSize+bottomSize-1;
-			int bottomEnd = layerStart+topSize;
-			int topStart = layerStart+topSize-1;
-			bool checking=false;
-			for(int i=bottomStart, j=topStart, tracer=-1, tracerIdx=0, sum=-1; i>=bottomEnd && j>=layerStart; i--){
-				if(!this->nodeValueIsValid(i, bottomStart, bottomSize, nodeCache, nodeCache_s)){
-					printf("\tSkipping I[%d]! It's a bottom node\n", i);
-					continue;
-				}else{
-					printf("\tI[%d] is top node.\n", i);
-				}
-				if(tracer == -1){
-					tracer = nodeCache[i];
-					tracerIdx=i;
-					continue;
-				}
-				if(sum == -1){
-					if(j == targetIndex){ // check value too.
-						zeroIndex[0] = i;
-						oneIndex[0] = tracerIdx;
-						checking = true;
-					}
-					sum = tracer + nodeCache[i];
-					tracer = -1;
-					j--;
-					continue;
-				}
-				if(checking){
-					printf("\tzero : [%d]%d | one [%d]%d | expected sum [%d]%d calculated sum %d\n", zeroIndex[0], nodeCache[zeroIndex[0]], oneIndex[0], nodeCache[oneIndex[0]], targetIndex, nodeCache[targetIndex], nodeCache[zeroIndex[0]]+nodeCache[oneIndex[0]]);
-					if(nodeCache[targetIndex] != nodeCache[zeroIndex[0]]+nodeCache[oneIndex[0]]){
-						this->setError(33432, "isTopNode() - [A] expected value is not the same as calculated value.");
-						return false;
-					}
-					if(sum < nodeCache[i]){
-						return false; 
-					}else{
-						return true;
-					}
-				}else{
-					if(sum == nodeCache[i]){
-						sum = nodeCache[i] + tracer;
-						if(j == targetIndex){
-							zeroIndex[0] = i;
-							oneIndex[0] = tracerIdx;
-							checking = true;
-						}
-						j--;
-						tracer = -1;
-						continue;
-					}
-					if(sum < nodeCache[i]){
-						sum = tracer + sum;
-						if(j == targetIndex){
-							zeroIndex[0] = tracerIdx;
-							oneIndex[0] = j+1;
-							checking = true;
-						}
-						j--;
-						tracer = nodeCache[i];
-						tracerIdx = i;
-						continue;
-					}
-				
-					if(sum > nodeCache[i]){
-						sum = tracer + nodeCache[i];
-						if(j == targetIndex){
-							zeroIndex[0] = i;
-							oneIndex[0] = tracerIdx;
-							checking = true;
-						}
-						j--;
-						tracer = -1;
-						continue;
-					}
-				}
-			}
-
-			if(zeroIndex[0] == -1 && oneIndex[0] == -1){
-				this->setError(33335, "isTopNode() - failed to identify node source values.");
-				return false;
-			}
-			printf("\tzero : [%d]%d | one [%d]%d | expected sum [%d]%d calculated sum %d\n", zeroIndex[0], nodeCache[zeroIndex[0]], oneIndex[0], nodeCache[oneIndex[0]], targetIndex, nodeCache[targetIndex], nodeCache[zeroIndex[0]]+nodeCache[oneIndex[0]]);
-			if(nodeCache[targetIndex] != nodeCache[zeroIndex[0]]+nodeCache[oneIndex[0]]){
-				this->setError(33455, "isTopNode() - [B] expected value is not the same as calculated value.");
-				return false;
-			}
-
+                        delete[] bottom;
+                        delete[] top;
 			return true;
 		}
 
-		bool seedLayers(void){
-			if(!this->validateFrequencies()){
-				this->setError(4301, "seedLayers(void) - failed to validate frequenncies.");
-				return false;
-			}
-			if(this->treeData != NULL){
-				this->setError(13224, "tree data already seeded.");
-				return false;
-			}
-			this->resizeTreeData(this->frequencies_s);
-			for(int i=0; i<this->treeData_s; i++){
-				this->treeData[i] = this->frequencies[i];
-				this->treeDataTypes[i] = 1; // base layer all top nodes.
-			}
 
-			size_t workBuffer_s = this->treeData_s;
-			int *workBuffer = new int[workBuffer_s];
-			int *workTypeBuffer = new int[workBuffer_s];
-			size_t workBuffer_fill=0;
 
-			bool oddMode = (this->frequencies_s%2) == 0 ? false : true;
-			for(int i=treeData_s-1, tracer=-1, sum=-1; workBuffer_fill < workBuffer_s && i>=0; i--){
-				if(oddMode && i==0){
-						if(sum == -1){
-							sum = this->treeData[i] + tracer;
-							workTypeBuffer[workBuffer_fill] = 1;
-							workTypeBuffer[workBuffer_fill-1] = 1;
-						}else{
-							sum = this->treeData[i] + sum;
-							workTypeBuffer[workBuffer_fill] = 1;
-							workTypeBuffer[workBuffer_fill-1] = 0;
-						}
-						workBuffer[workBuffer_fill] = sum;
-						workBuffer_fill++;
-						break;
-				}
-			
-				if(tracer == -1){
-					tracer = this->treeData[i];
-					continue;
-				}
-				sum = tracer + this->treeData[i];
-				workBuffer[workBuffer_fill] = sum;
-				workTypeBuffer[workBuffer_fill] = 1;
-				workBuffer_fill++;
-				tracer = -1;
-
-			}
-			workTypeBuffer[workBuffer_fill-1] = 1; // last layer value always a top node.
-
-			// push original data to end of array
-			size_t originalSize = this->treeData_s;
-			this->resizeTreeData(originalSize+workBuffer_fill);
-			for(int i=this->treeData_s-1, track=0;  track<originalSize && i>=0; i--, track++){
-				if((i-workBuffer_fill) < 0){break;}
-				this->treeData[i] = this->treeData[i-workBuffer_fill];
-				this->treeDataTypes[i] = this->treeDataTypes[i-workBuffer_fill];
-			}
-
-			// populate front of array with new data
-			for(int i=0; i<workBuffer_fill && (workBuffer_fill-1-i) >= 0; i++){
-				this->treeData[i] = workBuffer[workBuffer_fill-1-i];
-				this->treeDataTypes[i] = workTypeBuffer[workBuffer_fill-1-i];
-			}
-			
-			delete[] workBuffer;
-			delete[] workTypeBuffer;
-			return true;
-
-		}
-
-		[[deprecated("getTopLayerStart() is depricated.")]]
-		int getTopLayerStart(void){
-			if(!this->validateTreeData()){
-				this->setError(1212, "getTopLayerStart() - invalid treeData.");
-				return -1;
-			}
-			for(int i=0, track=-1; i<this->treeData_s; i++){
-				if(track == -1)
-					track = this->treeData[i];
-				if(treeData[i] > track)
-					return i-1;
-				track = this->treeData[i];
-			}
-			this->setError(1313, "getTopLayerStart(void) - no top layer found.");
-			return -1;
-		}
-
+	
 		bool growLayer(void){
-			if(!this->validateFrequencies()){
-				this->setError(601, "growLayer(void) - invalid frequencies.");
+			if(this->treeData_s <= 0){
 				return false;
 			}
 			if(this->treeData == NULL){
-				if(!this->seedLayers()){
-					this->setError(602, "growLoayer(void) - failed to seed layers.");
+				return false;
+			}
+			if(this->treeData[this->treeData_s-1] == -1){
+				if(this->frequencies_s <= 0){
 					return false;
 				}
-				return true;
-			}
-			
-			size_t workBuffer_fill=0;
-			size_t workBuffer_s = this->frequencies_s;
-			int *workBuffer = new int[workBuffer_s];
-			int *workTypeBuffer = new int[workBuffer_s];
-			
-			size_t layerCount = this->countLayers();
-			int *layerIndecies = new int[layerCount];
-			this->getLayerIndecies(layerIndecies, layerCount);
-			int topLayerStart = layerIndecies[0];
-			size_t topLayerSize = topLayerStart+1;
-			
-
-			bool oddMode = (topLayerSize % 2) == 1 ? true : false; 
-			for(int i=topLayerStart, tracer=-1, sum=-1; i>=0; i--){
-				if(this->treeDataTypes[i] == 0){ // it's a bottom node, don't use it.
-					oddMode = oddMode ? false : true;
-					continue;
+				if(this->frequencies == NULL){
+					return false;
 				}
-				if(oddMode){
-					if(i==0){
-						if(sum == -1){
-							sum = this->treeData[i] + tracer;
-						}else{
-							sum = this->treeData[i] + sum;
-						}
-                                	        workBuffer[workBuffer_fill] = sum;
-                                	        workTypeBuffer[workBuffer_fill] = 1;
-                                	        workTypeBuffer[workBuffer_fill-1] = 0;
-                                	        workBuffer_fill++;
-                                	        tracer = this->treeData[i];
-                                	        continue;
-
-					}
-					if(tracer == -1){
-						tracer = this->treeData[i];
+				// seeding layer
+				int baseLayerStart = this->treeData_s-1;
+				for(int i=baseLayerStart, j=this->frequencies_s-1; i>=this->treeData_s-this->frequencies_s && j>=0; i--, j--)
+                                	this->treeData[i] = this->frequencies[j];
+				int sumLayerStart = baseLayerStart-this->frequencies_s;
+				for(int i=baseLayerStart, j=sumLayerStart, track=-1; i>sumLayerStart && j>=0; i--){
+					if(track == -1){
+						track = this->treeData[i];
 						continue;
 					}
-					if(sum == -1){
-                                	        sum = tracer + this->treeData[i];
-                                	        workBuffer[workBuffer_fill] = sum;
-                                	        workTypeBuffer[workBuffer_fill] = 0;
-                                	        workBuffer_fill++;
-                               		        tracer = -1;
-                                	        continue;
-                                	}
-
-                                	if(tracer == this->treeData[i] || sum >= treeData[i]){
-                                	        sum = this->treeData[i] + tracer;
-                                	        workBuffer[workBuffer_fill] = sum;
-                                	        workTypeBuffer[workBuffer_fill] = 0;
-                                	        workTypeBuffer[workBuffer_fill-1] = 1;
-                                	        workBuffer_fill++;
-                                	        tracer = -1;
-                                	        continue;
-                                	}
-                                	if(sum < this->treeData[i]){
-                                	        sum = tracer + sum;
-                                	        workBuffer[workBuffer_fill] = sum;
-                                	        workTypeBuffer[workBuffer_fill] = 0;
-                                	        workTypeBuffer[workBuffer_fill-1] = 0;
-                                	        workBuffer_fill++;
-                                	        tracer = treeData[i];
-						oddMode = oddMode ? false : true;
-                                	        continue;
-                                	}
-					continue;
+					this->treeData[j] = this->treeData[i] + track;
+					
+					j--;
+					i--;
+					if(i==sumLayerStart+1 && (this->frequencies_s%2) == 1){
+						treeData[j] = treeData[i] + treeData[j+1];
+						break;
+					}
+					track = treeData[i];
 				}
-
-				// Even mode
-				if(tracer == -1){
-					tracer = this->treeData[i];
-					continue;
-				}
-				if(i==0){
-					sum = this->treeData[i] + tracer;
-                                        workBuffer[workBuffer_fill] = sum;
-                                        workTypeBuffer[workBuffer_fill] = 1;
-                                        workTypeBuffer[workBuffer_fill-1] = 1;
-                                        workBuffer_fill++;
-                                        tracer = -1;
-					continue;
-				}
-				if(sum == -1){
-                                        sum = tracer + this->treeData[i];
-                                        workBuffer[workBuffer_fill] = sum;
-                                        workTypeBuffer[workBuffer_fill] = 0;
-                                        workBuffer_fill++;
-                                        tracer = -1;
-                                        continue;
-                                }
-
-                                if(tracer == this->treeData[i] || sum >= treeData[i]){
-                                        sum = this->treeData[i] + tracer;
-                                        workBuffer[workBuffer_fill] = sum;
-                                        workTypeBuffer[workBuffer_fill] = 0;
-                                        workTypeBuffer[workBuffer_fill-1] = 1;
-                                        workBuffer_fill++;
-                                        tracer = -1;
-                                        continue;
-                                }
-                                if(sum < this->treeData[i]){
-                                        sum = tracer + sum;
-                                        workBuffer[workBuffer_fill] = sum;
-                                        workTypeBuffer[workBuffer_fill] = 0;
-                                        workTypeBuffer[workBuffer_fill-1] = 0;
-                                        workBuffer_fill++;
-                                        tracer = treeData[i];
-					oddMode = oddMode ? false : true;
-					if(oddMode && (i-1) == 0) oddMode = false;
-                                        continue;
-                                }
-			}
-			workTypeBuffer[workBuffer_fill-1] = 1;
-						
-			// push original data to end of array
-			size_t originalSize = this->treeData_s;
-			this->resizeTreeData(originalSize+workBuffer_fill);
-			for(int i=this->treeData_s-1, track=0;  track<originalSize && i>=0; i--, track++){
-				if((i-workBuffer_fill) < 0){break;}
-				this->treeData[i] = this->treeData[i-workBuffer_fill];
-				this->treeDataTypes[i] = this->treeDataTypes[i-workBuffer_fill];
+				
+				return true;
 			}
 
-			// populate front of array with new data
-			for(int i=0; i<workBuffer_fill && (workBuffer_fill-1-i) >= 0; i++){
-				this->treeData[i] = workBuffer[workBuffer_fill-1-i];
-				this->treeDataTypes[i] = workTypeBuffer[workBuffer_fill-1-i];
+			int topLayerStart=-1;
+			int topLayerEnd=-1;
+			int bottomLayerStart=0;
+			int bottomLayerEnd=0;
+			for(int i=this->treeData_s-1; i>=0; i--){
+				if(this->treeData[i] == -1){
+					topLayerStart = i;
+					break;
+				}
 			}
+			if(topLayerStart == -1){
+				// no more room to grow
+				return false;
+			}
+			topLayerEnd = topLayerStart;
+			bottomLayerEnd = topLayerStart+1;
+			for(int i=bottomLayerEnd, track=-1; i<this->treeData_s; i++){
+				if(i==topLayerStart+1)
+					track = this->treeData[i];
+				if(track<this->treeData[i]){
+					bottomLayerStart = i-1;
+					break;
+				}
+				track = this->treeData[i];
+			}
+			if(bottomLayerStart == -1)
+				bottomLayerStart = this->treeData_s-1;
 
-
-			delete[] workBuffer;
-			delete[] workTypeBuffer;
+			for(int i=bottomLayerStart, sum=-1, next=-1, nextOffset=0; i>=bottomLayerEnd && topLayerEnd >= 0; i--){
+				int z=0, o=0;
+				if(!this->isTopNode(i, this->treeData, this->treeData_s, &z, &o))
+					continue;
+				if(next == -1){
+					nextOffset=1;
+					for(int j=i; i>=bottomLayerEnd; j++){
+						next = i-nextOffset >= 0 && i-nextOffset >= bottomLayerEnd ? this->treeData[i-nextOffset] : -1;
+						if(next == -1) break;
+						int a=0, b=0;
+						if(!this->isTopNode(i-nextOffset, this->treeData, this->treeData_s, &a, &b)){
+							nextOffset++;
+							next = -1;
+						}else{
+							break;
+						}
+					}
+				}
+				if(sum == -1 && this->treeData[topLayerEnd] == -1){
+					sum = this->treeData[i] + next;
+					this->treeData[topLayerEnd] = sum;
+					topLayerEnd--;
+					next = -1;
+					i-=nextOffset;
+					continue;
+				}
+				
+				if(sum <= next || next == -1){
+					this->treeData[topLayerEnd] = this->treeData[i] + sum;
+					sum = this->treeData[topLayerEnd];
+					topLayerEnd--;
+					next = -1;
+					continue;	
+				}else{
+					int a=0, b=0;
+					if(!this->isTopNode(i, this->treeData, this->treeData_s, &a, &b)){
+						next=-1;
+						continue;
+					}
+					this->treeData[topLayerEnd] = this->treeData[i] + next;
+					sum = this->treeData[topLayerEnd];
+					topLayerEnd--;
+					i-=nextOffset;
+					next = -1;
+					continue;
+				}
+			}
 			return true;
 		}
 	
 		bool plantTree(void){
-			if(!this->validateFrequencies()){
-				this->setError(700, "plantTree(void) - invalid frequencies.");
-				return false;
-			}
 			this->destroyTreeData();
-			
-			// seed the tree, and begin coding table.
-			int startSize = this->treeData_s;
-			this->treeDataLayerCount=0;
-			// TODO: put an error time out. This shouldn't loop more than frequencies_s times.
-			while(1){
-				if(this->treeData != NULL){
-					if(this->treeData[0] >= this->frequencyMax) break;
-				}
-				if(!this->growLayer()){
-					this->setError(702, "plantTree(void) - Failed to grow tree layer.");
-					return false;
-				}
-				this->treeDataLayerCount++;
-			}
-			if(this->treeData[0] != this->frequencyMax){
-				this->setError(3333, "plantTree(void) - Failed to grow tree, tree is corrupt.");
-				return false;
-			}
-
-			return true;
-		}
-
-		bool getSubIndecies(int targetIndex, int *layerIndecies, size_t layerCount, int *zeroIndex, int *oneIndex){
-			if(!this->validateTreeData()){
-				this->setError(44442, "getSubIndecies() - invalid tree data.");
-				return false;
-			}
-			if(!this->validateFrequencies()){
-				this->setError(3542, "getSubIndecies() - invalid frequencies.");
-				return false;
-			}
-			if(targetIndex < 0 || targetIndex >= this->treeData_s){
-				std::string message = "getSubIndecies() - targetIndex is out of bounds. target:"+std::to_string(targetIndex)+" | treeSize:"+std::to_string(this->treeData_s);
-				this->setError(44452, message.c_str());
-				return false;
-			}
-			if(layerCount <= 0 || layerIndecies == NULL){
-				this->setError(3234, "getSubIndecies() - layerIndecies is invalid or null.");
-				return false;
-			}
-
-			if(targetIndex >= this->treeData_s-this->frequencies_s && targetIndex<this->treeData_s){
-				int convertedTarget = targetIndex - (this->treeData_s-this->frequencies_s);
-				if(convertedTarget < 0){
-					this->setError(6546, "getSubIndecies() - failed to convert target index into useable value.");
-					return false;
-				}
-				if((this->frequencies_s%2) == 1){
-					if(convertedTarget == 0){
-						zeroIndex[0] = targetIndex;
-						oneIndex[0] = -1;
-						return true;
-					}
-					zeroIndex[0] = (convertedTarget % 2) == 0 ? -1 : targetIndex;
-					oneIndex[0] = (convertedTarget % 2) == 0 ? targetIndex : -1;
-					return true;
-				}
-				zeroIndex[0] = (convertedTarget % 2) == 0 ? targetIndex : -1;
-				oneIndex[0] = (convertedTarget % 2) == 0 ? -1 : targetIndex;
-				return true;
-			}
-			
-			int targetLayer = 0;
-			for(int i=layerCount-1; i>=0; i--){
-				if(i == 0){
-					targetLayer = 0;
-					break;
-				}
-				if((targetIndex<=layerIndecies[i]) && (targetIndex>layerIndecies[i-1])){
-					targetLayer = i;
-					break;
-				}
-			}
-			size_t targetLayerSize = targetLayer <= 0 ? layerIndecies[0] : layerIndecies[targetLayer] - layerIndecies[targetLayer-1];
-
-			int sourceLayer = targetLayer+1;
-			if(sourceLayer >= layerCount){
-				this->setError(42343, "getSubIndecies() - source layer is out of bounds.");
-				return false;
-			}
-			
-			for(int i=layerIndecies[sourceLayer],j=layerIndecies[targetLayer], sum=-1, tracer=-1; i>layerIndecies[targetLayer] && j>=0; i--){
-				if(targetIndex == j){
-					if(this->treeDataTypes[i] == 0) continue;
-					if(((layerIndecies[targetLayer] - layerIndecies[sourceLayer]) % 2) == 1 && i==0){
-						zeroIndex[0] = i;
-						oneIndex[0] = j;
-					}else if(tracer == -1){
-						oneIndex[0] = i;
-						zeroIndex[0] = i-1;
-					}else if(sum == -1){
-						zeroIndex[0] = i;
-						oneIndex[0] = i+1;
-					}else if(sum < this->treeData[i]){
-						zeroIndex[0] = i+1;
-						oneIndex[0] = j;
-					}else{
-						zeroIndex[0] = i;
-						oneIndex[0] = i+1;
-					}
-					
-					return true;
-				}
-				if(this->treeDataTypes[i] == 0) continue;
-
-				if(tracer == -1){
-					tracer = this->treeData[i];
-					continue;
-				}
-				if(sum == -1){
-					sum = this->treeData[i] + tracer;
-					if(sum != this->treeData[j]){
-						this->setError(7564, "getSubIndecies() - First sum failure.");
-						return false;
-					}
-					j--;
-					tracer=-1;
-					continue;
-				}
-				if(sum < this->treeData[i]){
-					sum = sum + tracer;
-					if(sum != this->treeData[j]){
-                                                this->setError(7567, "getSubIndecies() - First sum failure.");
-                                                return false;
-                                        }
-					tracer = this->treeData[i];
-					j--;
-					continue;
-				}
-
-				sum = this->treeData[i] + tracer;
-				if(sum != this->treeData[j]){
-                        		this->setError(7567, "getSubIndecies() - First sum failure.");
-                        		return false;
-                        	}
-				tracer = -1;
-				j--;
-			}
-
-			if(targetLayer == 0){ // edge case.
-				int valA = this->treeData[layerIndecies[0]+1]; // bottom layer end
-				int valB = 0;
-				for(int i=layerIndecies[0]+2; i<this->treeData_s; i++){
-					if(this->treeDataTypes[i] == 1){
-						valB = this->treeData[i];
-						break;
-					}
-				} 
-				int testSum = valA + valB;
-				int trueSourceStart = layerIndecies[0];
-				int trueTopStart = 0;
-				for(int i=0; i<=layerIndecies[0]; i++){
-					if(this->treeData[i] == testSum){
-						trueTopStart = i-1;
-					}
-				}
-				
-				for(int i=trueSourceStart,j=trueTopStart, sum=-1, tracer=-1; i>trueTopStart && j>=0; i--){
-				if(targetIndex == j){
-					if(this->treeDataTypes[i] == 0) continue;
-					if(((trueTopStart - trueSourceStart) % 2) == 1 && i==0){
-						zeroIndex[0] = i;
-						oneIndex[0] = j;
-					}else if(tracer == -1){
-						oneIndex[0] = i;
-						zeroIndex[0] = i-1;
-					}else if(sum == -1){
-						zeroIndex[0] = i;
-						oneIndex[0] = i+1;
-					}else if(sum < this->treeData[i]){
-						zeroIndex[0] = i+1;
-						oneIndex[0] = j;
-					}else{
-						zeroIndex[0] = i;
-						oneIndex[0] = i+1;
-					}
-					
-					return true;
-				}
-				if(this->treeDataTypes[i] == 0) continue;
-
-				if(tracer == -1){
-					tracer = this->treeData[i];
-					continue;
-				}
-				if(sum == -1){
-					sum = this->treeData[i] + tracer;
-					if(sum != this->treeData[j]){
-						this->setError(17564, "getSubIndecies() - First sum failure.");
-						return false;
-					}
-					j--;
-					tracer=-1;
-					continue;
-				}
-				if(sum < this->treeData[i]){
-					sum = sum + tracer;
-					if(sum != this->treeData[j]){
-                                                this->setError(17567, "getSubIndecies() - First sum failure.");
-                                                return false;
-                                        }
-					tracer = this->treeData[i];
-					j--;
-					continue;
-				}
-
-				sum = this->treeData[i] + tracer;
-				if(sum != this->treeData[j]){
-                        		this->setError(17567, "getSubIndecies() - First sum failure.");
-                        		return false;
-                        	}
-				tracer = -1;
-				j--;
-			}
-
-			}
-			std::string msg = "getSubIndecies(target:"+std::to_string(targetIndex)+") - dbg : sourceLayer:"+std::to_string(sourceLayer)+" | targetLayer:"+std::to_string(targetLayer);
-			this->setError(4444, msg.c_str());
-			return false;
-		}
-
-		bool generateCodeTable(void){
-			if(!this->validateTreeData()){
-				this->setError(44456, "generateCodeTable() - failed to validate tree data.");
-				return false;
-			}
-			if(!this->validateFrequencies()){
-				this->setError(665434, "generateCodeTable() - failed to validate frequencies.");
-				return false;
-			}
-			// TODO: Validate tree letters
-
-			// Calculate Layer Count, and top layer start index.
-			size_t layerCount = this->countLayers();
-                        int *layerIndecies = new int[layerCount];
-                        this->getLayerIndecies(layerIndecies, layerCount);
-
-			// allocate the coding table.
 			this->destroyCodingTable();
+			this->treeData_s = this->frequencies_s+this->frequencies_s-1;
+                        this->treeData = new int[this->treeData_s];
 			this->codeTable_s = this->frequencies_s*2;
 			this->codeTable = new int[this->codeTable_s];
+			for(int i=0; i<this->treeData_s; i++)
+				this->treeData[i] = -1;
 			for(int i=0; i<this->codeTable_s; i++){
 				this->codeTable[i] = 0;
 			}
-			off_t tableSize_o = 0;
-			off_t tableCode_o = this->frequencies_s;
-			int converter = this->treeData_s - this->frequencies_s;
-			int zero=-1;
-			int one=-1;
-			int queueFill=0;
-			// generate code table.
-			for(int i=this->treeData_s-1; i>=0; i--){
-				this->getSubIndecies(i, layerIndecies, layerCount, &zero, &one);
-				if(this->failed() || (one == -1 && zero == -1)){
-                                	this->setError(3434, "generateCodeTable() - failed to get sub indecies.");
-                                	return false;
-                                }
-				if(zero != -1){
-					queueFill = this->pushWorkQueue(zero, queueFill);
-					while(queueFill > 0){
-						int queueData = this->popWorkQueue();
-						if(this->failed()){
-							this->setError(7786, "generateCodeTable() - failed to pop work queue.");
-							return false;
+			
+			// seed the tree, and begin coding table.
+			while(this->treeData[0] == -1)
+				this->growLayer();
+
+			int zero=-1, one=-1;
+			int baseLayerEnd = this->treeData_s - this->frequencies_s;
+			int continueationIndex = baseLayerEnd-1;
+
+			// Complete code table generation.
+			for(int i=continueationIndex; i>=0; i--){
+				bool nodeType = this->isTopNode(i, this->treeData, this->treeData_s, &zero, &one);
+				// every final result under index zero, needs to have a 0 added.
+				bool processing=true;
+				size_t queueSize=this->treeData_s+1;
+				int converter = this->treeData_s-this->frequencies_s;
+				int *queue = new int[queueSize];
+				int qIndex=0;
+				for(int a=0; a<queueSize; a++)
+					queue[a] = -1;
+				queue[0] = zero;
+				while(queue[0] != -1){
+					int z=0, o=0;
+					int target = queue[0];
+					queue[0] = -1;
+					if(target > baseLayerEnd){
+						target = target-converter;
+						this->codeTable[target]++;
+                                                this->codeTable[target+this->frequencies_s] = (this->codeTable[target+this->frequencies_s] >> 1);
+						for(int j=0; j<queueSize-1; j++){
+							queue[j] = queue[j+1];
 						}
-						queueFill--;
-						int o=-1, z=-1;
-						this->getSubIndecies(queueData, layerIndecies, layerCount, &o, &z);
-						if(this->failed() || (o==-1 && z==-1)){
-							this->setError(4433, "generateCodeTable() - zero's subindecies failed to generate.");
-							return false;
+						qIndex--;
+						continue;
+					}
+					this->isTopNode(target, this->treeData, this->treeData_s, &z, &o);
+					if(z >= baseLayerEnd && o > baseLayerEnd){
+						// Shift queue, reduce size by 1.
+						for(int j=0; j<queueSize-1; j++){
+							queue[j] = queue[j+1];
 						}
-						if(o!=-1 && o >= this->treeData_s-this->frequencies_s){
-							o = o - converter;
-							this->codeTable[o+tableSize_o]++;
-							this->codeTable[o+tableCode_o] = this->codeTable[o+tableCode_o] >> 1;
-						}else if(o >= 0 && o <this->treeData_s && o != queueData){
-							queueFill = this->pushWorkQueue(o, queueFill);
-						}
-					
-						if(z!=-1 && z >= this->treeData_s-this->frequencies_s){
-							z = z - converter;
-							this->codeTable[z+tableSize_o]++;
-							this->codeTable[z+tableCode_o] = this->codeTable[z+tableCode_o] >> 1;
-						}else if(z >= 0 && z <this->treeData_s && z != queueData){
-							queueFill = this->pushWorkQueue(z, queueFill);
+						qIndex--;
+
+						// convert treeData index to code table index, 
+						z = z - converter;
+						o = o - converter;
+						if(z < 0 || z >= this->codeTable_s || z+this->frequencies_s >= this->codeTable_s){
+                                                        printf("INVALID INDEX !! CASE 0 A | z: %d and %ld vs %ld\n", z, z+this->frequencies_s, this->codeTable_s);
+                                                        break;
+                                                }
+						if(o < 0 || o >= this->codeTable_s || o+this->frequencies_s >= this->codeTable_s){
+                                                        printf("INVALID INDEX !! CASE 0 B\n");
+                                                        break;
+                                                }
+						// add 0 to both z and o code table index.
+						this->codeTable[z]++;
+						this->codeTable[z+this->frequencies_s] = (this->codeTable[z+this->frequencies_s] >> 1);
+						this->codeTable[o]++;
+						this->codeTable[o+this->frequencies_s] = (this->codeTable[o+this->frequencies_s] >> 1);
+
+					}else if(z >= baseLayerEnd && !(o > baseLayerEnd)){
+						// add o to queue, shift towards 0
+						if(qIndex+1 < queueSize && o != target && o != one){
+							queue[qIndex+1] = o;
+							for(int j=0; j<queueSize-1; j++){
+                                                        	queue[j] = queue[j+1];
+                                                        }
 						}
 
+						// convert treeData index to code table index, 
+						z = z - converter;
+						// add a 0 to index z in the code table.
+						if(z < 0 || z >= this->codeTable_s || z+this->frequencies_s >= this->codeTable_s){
+							printf("INVALID INDEX !! CASE 1\n");
+							break;
+						}
+						this->codeTable[z]++;
+					}else{
+						// neither is at base layer, add both to queu
+						if(qIndex+2 < queueSize){
+							if(z != target && o != target){
+								queue[qIndex+1] = z;
+								queue[qIndex+2] = o;
+								qIndex+=1;
+							}else if(z == target){
+								queue[qIndex+1] = o;
+							}else{
+								queue[qIndex+1] = z;
+							}
+							for(int j=0; j<queueSize-1; j++){
+								queue[j] = queue[j+1];
+							}
+						}
 					}
 				}
-				if(one != -1){
-					queueFill = this->pushWorkQueue(one, queueFill);
-					while(queueFill > 0){
-						int queueData = this->popWorkQueue();
-						if(this->failed()){
-							this->setError(7386, "generateCodeTable() - failed to pop work queue.");
-							return false;
+
+				// every final result under index one, needs to have a 1 added.
+				for(int a=0; a<queueSize; a++)
+					queue[a] = -1;
+				queue[0] = one;
+				qIndex=0;
+				while(queue[0] != -1){
+					int z=0, o=0;
+					int target = queue[0];
+					this->isTopNode(target, this->treeData, this->treeData_s, &z, &o);
+					queue[0] = -1;
+					if(target > baseLayerEnd){
+                                                target = target-converter;
+                                                this->codeTable[target]++;
+                                                this->codeTable[target+this->frequencies_s] = (1<<7) + (this->codeTable[target+this->frequencies_s] >> 1);
+                                                for(int j=0; j<queueSize-1; j++){
+                                                        queue[j] = queue[j+1];
+                                                }
+                                                qIndex--;
+                                                continue;
+                                        }
+					if(z >= baseLayerEnd && o > baseLayerEnd){
+						// Shift queue, reduce size by 1.
+						for(int j=0; j<queueSize-1; j++){
+							queue[j] = queue[j+1];
 						}
-						queueFill--;
-						int o=-1, z=-1;
-						this->getSubIndecies(queueData, layerIndecies, layerCount, &o, &z);
-						if(this->failed() || (o==-1 && z==-1)){
-							this->setError(3433, "generateCodeTable() - zero's subindecies failed to generate.");
-							return false;
-						}
-						if(o!=-1 && o >= this->treeData_s-this->frequencies_s){
-							o = o - converter;
-							this->codeTable[o+tableSize_o]++;
-							this->codeTable[o+tableCode_o] = (1<<7)+this->codeTable[o+tableCode_o] >> 1;
-						}else if(o >= 0 && o <this->treeData_s && o != queueData){
-							queueFill = this->pushWorkQueue(o, queueFill);
-						}
-					
-						if(z!=-1 && z >= this->treeData_s-this->frequencies_s){
-							z = z - converter;
-							this->codeTable[z+tableSize_o]++;
-							this->codeTable[z+tableCode_o] = (1<<7)+this->codeTable[z+tableCode_o] >> 1;
-						}else if(z >= 0 && z <this->treeData_s && z != queueData){
-							queueFill = this->pushWorkQueue(z, queueFill);
+						qIndex--;
+
+						// convert treeData index to code table index, 
+						z = z - converter;
+						o = o - converter;
+						if(z < 0 || z >= this->codeTable_s || z+this->frequencies_s >= this->codeTable_s){
+                                                        printf("INVALID INDEX !! CASE 0 A | z: %d and %ld vs %ld\n", z, z+this->frequencies_s, this->codeTable_s);
+                                                        break;
+                                                }
+						if(o < 0 || o >= this->codeTable_s || o+this->frequencies_s >= this->codeTable_s){
+                                                        printf("INVALID INDEX !! CASE 0 B\n");
+                                                        break;
+                                                }
+						// add 0 to both z and o code table index.
+						this->codeTable[z]++;
+						this->codeTable[z+this->frequencies_s] = (this->codeTable[z+this->frequencies_s] >> 1) + (1<<7);
+						this->codeTable[o]++;
+						this->codeTable[o+this->frequencies_s] = (this->codeTable[o+this->frequencies_s] >> 1) + (1<<7);
+
+					}else if(z >= baseLayerEnd && !(o > baseLayerEnd)){
+						// add o to queue, shift towards 0
+						if(qIndex+1 < queueSize && o != target && one != o){
+							queue[qIndex+1] = o;
+							for(int j=0; j<queueSize-1; j++){
+                                                        	queue[j] = queue[j+1];
+                                                        }
 						}
 
+						// convert treeData index to code table index, 
+						z = z - converter;
+						// add a 0 to index z in the code table.
+						if(z < 0 || z >= this->codeTable_s || z+this->frequencies_s >= this->codeTable_s){
+							printf("INVALID INDEX !! CASE 1\n");
+							break;
+						}
+						this->codeTable[z]++;
+						this->codeTable[z+this->frequencies_s] = (this->codeTable[z+this->frequencies_s] >> 1) + (1<<7);
+					}else{
+						// neither is at base layer, add both to queu
+						if(qIndex+2 < queueSize){
+							if(z != target && o != target){
+								queue[qIndex+1] = z;
+								queue[qIndex+2] = o;
+								qIndex+=1;
+							}else if(z == target){
+								queue[qIndex+1] = o;
+							}else{
+								queue[qIndex+1] = z;
+							}
+							for(int j=0; j<queueSize-1; j++){
+								queue[j] = queue[j+1];
+							}
+						}
 					}
 				}
 
+
+				if(queue != NULL)
+					delete[] queue;
 			}
-/*
-			for(int l=layerCount-1; l>=0; l--){
-				size_t layerSize = l == 0 ? layerIndecies[l] : layerIndecies[l] - layerIndecies[l-1];
-				printf("[dbg] processing layer %d/%d of size %ld\n", l, layerIndecies[l], layerSize);
-				for(int i=layerIndecies[l]; i>layerIndecies[l]-layerSize; i--){
-					bool err = this->getSubIndecies(i, layerIndecies, layerCount, &zero, &one);
-					int convertedOne = one - converter;
-					int convertedZero = zero - converter;
-					if(this->failed() || (one == -1 && zero == -1)){
-						this->setError(3434, "generateCodeTable() - failed to get sub indecies.");
-						return false;
-					}
-					if((zero == -1 || one == -1)){
-						if(convertedOne >= 0 && convertedOne < this->frequencies_s){
-                                                	this->codeTable[convertedOne+tableSize_o]++;
-                                                	this->codeTable[convertedOne+tableCode_o] = (1<<7) + (this->codeTable[convertedOne+tableCode_o] >> 1);
-							continue;
-						}
-						if(convertedZero >= 0 && convertedZero < this->frequencies_s){
-							this->codeTable[convertedZero+tableSize_o]++;
-							this->codeTable[convertedZero+tableCode_o] = (0<<7) + (this->codeTable[convertedOne+tableCode_o] >> 1);
-							continue;
-						}
-						this->setError(54355, "generateCodeTable() - failed to generate base layer encode bit.");
-						return false;
-					}
-
-					printf("[dbg] for index %d of %ld found %d, %d\n", i, layerIndecies[l]-layerSize, zero, one);
-					// hanld zero
-					queueFill = this->pushWorkQueue(zero, queueFill);
-					if(this->failed()){
-						this->setError(2334, "generateCodeTable() - failed  to push data to work queue.");
-						return false;
-					}
-					printf("Work queue: ");
-					for(int a=0; a<queueFill; a++)
-						printf("%d ", this->workQueue[a]);
-					printf("\n");
-					while(queueFill > 0){
-						int element = this->popWorkQueue();
-						printf("popped %d from queue\n", element);
-						if(element == -1){
-							break;
-						}
-						int z=0, o=0;
-						queueFill--;
-						err = this->getSubIndecies(element, layerIndecies, layerCount, &z, &o);
-						if(this->failed()){
-                                       		        this->setError(3432, "generateCodeTable() - failed to get sub indecies.");
-                                       		        return false;
-                                       		}
-
-						printf("%d produced zero:%d | one:%d\n", element, z, o);
-
-						if(z != -1 && o != -1){
-							int convertedZ = z - converter;
-							int convertedO = o - converter;
-							printf("ConvertedZ : %d | converted O : %d\n", convertedZ, convertedO);
-							if(convertedZ >= 0 && convertedZ < this->frequencies_s){
-								printf("adding 0, A\n");
-								this->codeTable[convertedZ+tableSize_o]++;
-                                                                this->codeTable[convertedZ+tableCode_o] = (0<<7) + (this->codeTable[convertedZ+tableCode_o] >> 1);
-							}else if(element != z){
-								printf("Pushing %d to queue.\n", z);
-								queueFill = this->pushWorkQueue(z, queueFill);
-								if(this->failed()){
-									this->setError(2357, "generateCodeTable() - failed  to push data to work queue.");
-									return false;
-								}
-							}
-					 		if(convertedO >= 0 && convertedO < this->frequencies_s){
-								printf("adding 0, B\n");
-								this->codeTable[convertedO+tableSize_o]++;
-                                                                this->codeTable[convertedO+tableCode_o] = (0<<7) + (this->codeTable[convertedO+tableCode_o] >> 1);
-							}else if(element != o){
-								queueFill = this->pushWorkQueue(o, queueFill);
-								printf("Pushing %d to queue.\n", o);
-								if(this->failed()){
-									this->setError(2356, "generateCodeTable() - failed  to push data to work queue.");
-									return false;
-								}
-							}
-							continue;
-						}
-						if(z != -1){
-							int converted = z - converter;
-							if(converted >= 0 && converted < this->frequencies_s){
-								// add zero to the converted index value.
-								printf("adding 0, C\n");
-								this->codeTable[converted+tableSize_o]++;
-								this->codeTable[converted+tableCode_o] = (0<<7) + (this->codeTable[converted+tableCode_o] >> 1);
-							}else{
-								printf("Pushing %d to queue.\n", z);
-								queueFill = this->pushWorkQueue(z, queueFill);
-								if(this->failed()){
-									this->setError(2355, "generateCodeTable() - failed  to push data to work queue.");
-									return false;
-								}
-							}
-						}
-						if(o != -1){
-							int converted = o - converter;
-							if(converted >= 0 && converted < this->frequencies_s){
-								printf("adding 0, D\n");
-								this->codeTable[converted+tableSize_o]++;
-								this->codeTable[converted+tableCode_o] = (0<<7) + (this->codeTable[converted+tableCode_o] >> 1); 
-							}else{
-								queueFill = this->pushWorkQueue(o, queueFill);
-								printf("Pushing %d to queue.\n", o);
-								if(this->failed()){
-									this->setError(2354, "generateCodeTable() - failed  to push data to work queue.");
-									return false;
-								}
-							}
-						}
-					}
-
-					// handle one
-					queueFill = 0;	
-					queueFill = this->pushWorkQueue(one, queueFill);
-					if(this->failed()){
-						this->setError(12351, "generateCodeTable() - failed  to push data to work queue.");
-						return false;
-					}
-					while(queueFill > 0){
-						int element = this->popWorkQueue();
-						if(element == -1){
-							break;
-						}
-						int z=0, o=0;
-						queueFill--;
-						err = this->getSubIndecies(element, layerIndecies, layerCount, &z, &o);
-						if(this->failed()){
-                                        	        this->setError(3432, "generateCodeTable() - failed to get sub indecies.");
-                                        	        return false;
-                                        	}
-
-						if(z != -1 && o != -1){
-							int convertedZ = z - converter;
-							int convertedO = o - converter;
-							if(convertedZ >= 0 && convertedZ < this->frequencies_s){
-								this->codeTable[convertedZ+tableSize_o]++;
-                                                                       this->codeTable[convertedZ+tableCode_o] = (1<<7) + (this->codeTable[convertedZ+tableCode_o] >> 1);
-							}else if(element != z){
-								queueFill = this->pushWorkQueue(z, queueFill);
-							}
-					 		if(convertedO >= 0 && convertedO < this->frequencies_s){
-								this->codeTable[convertedO+tableSize_o]++;
-                                                                       this->codeTable[convertedO+tableCode_o] = (1<<7) + (this->codeTable[convertedO+tableCode_o] >> 1);
-							}else if(element != o){
-								queueFill = this->pushWorkQueue(o, queueFill);
-								if(this->failed()){
-									this->setError(12352, "generateCodeTable() - failed  to push data to work queue.");
-									return false;
-								}
-							}
-							continue;
-						}
-						if(z != -1){
-							int converted = z - converter;
-							if(converted >= 0 && converted < this->frequencies_s){
-								// add zero to the converted index value.
-								this->codeTable[converted+tableSize_o]++;
-								this->codeTable[converted+tableCode_o] = (1<<7) + (this->codeTable[converted+tableCode_o] >> 1);
-							}else{
-								queueFill = this->pushWorkQueue(z, queueFill);
-								if(this->failed()){
-									this->setError(12353, "generateCodeTable() - failed  to push data to work queue.");
-									return false;
-								}
-							}
-						}
-						if(o != -1){
-							int converted = o - converter;
-							if(converted >= 0 && converted < this->frequencies_s){
-								this->codeTable[converted+tableSize_o]++;
-								this->codeTable[converted+tableCode_o] = (1<<7) + (this->codeTable[converted+tableCode_o] >> 1); 
-							}else{
-								queueFill = this->pushWorkQueue(o, queueFill);
-								if(this->failed()){
-									this->setError(12354, "generateCodeTable() - failed  to push data to work queue.");
-									return false;
-								}
-							}
-						}
-
-					
-					}
-				}
-			}*/
+			
 			return true;
 		}
 
 		std::string getCodeBinary(int idx){
-			if(this->codeTable == NULL){
-				this->setError(800, "getCodeBinary(int idx) - codeTable is null.");
-				return "";
-			}
-			if(idx < 0 || idx >= this->codeTable_s){
-				this->setError(801, "getCodeBinary(int idx) - idx is out of bounds.");
-				return "";
-			}
-			if(this->frequencies_s+idx < 0 || this->frequencies_s+idx >= this->codeTable_s){
-				this->setError(802, "getCodeBinary(int idx) - frequencies_s+idx is out of bounds.");
-				return "";
-			}
 			std::string ret = "";
 			int codeSize = this->codeTable[idx];
 			int code = this->codeTable[this->frequencies_s+idx];
@@ -1472,10 +754,6 @@ class HuffmanCoding{
 		int codeToTableIndex(std::string code){
 			for(int i=0; i<this->frequencies_s; i++){
 				std::string comp = this->getCodeBinary(i);
-				if(this->failed()){
-					this->setError(900, "codeToTableIndex(std::string code) - failed to get binary code.");
-					return -1;
-				}
 				if(comp == code){
 					return i;
 				}
@@ -1497,22 +775,6 @@ class HuffmanCoding{
 		 * Int is stored big endian
 		 * */
 		bool packHeader(void){
-			if(this->frequencies == NULL){
-				this->setError(1000, "packHeader(void) - frequencies is null.");
-				return false;
-			}
-			if(this->frequencies_s <= 0){
-				this->setError(1001, "packHeader(void) - frequencies_s <= 0. Treating as null.");
-				return false;
-			}
-			if(this->treeLetters == NULL){
-                                this->setError(1002, "packHeader(void) - treeLetters is null.");
-                                return false;
-                        }
-                        if(this->treeLetters_s <= 0){
-                                this->setError(1003, "packHeader(void) - treeLetters_s <= 0. Treating as null.");
-                                return false;
-                        }
 			size_t headerSize = (this->frequencies_s*sizeof(int)) + this->treeLetters_s + 1;
 			char byteOne_count = this->treeLetters_s;
 			
@@ -1524,25 +786,13 @@ class HuffmanCoding{
 				freq_c = (this->frequencies[j] >> 8*1) & 0xff;
 				freq_d = this->frequencies[j] & 0xff;
 				this->out[i] = freq_a; i++;
-				if(!(i<this->out_s)){
-					this->setError(1004, "packHeader(void) - i out of bounds.");
-					return false;
-				}
+				if(!(i<this->out_s)) return false;
 				this->out[i] = freq_b; i++;
-				if(!(i<this->out_s)){
-					this->setError(1005, "packHeader(void) - i out of bounds.");
-					return false;
-				}
+				if(!(i<this->out_s)) return false;
 				this->out[i] = freq_c; i++;
-				if(!(i<this->out_s)){
-					this->setError(1006, "packHeader(void) - i out of bounds.");
-					return false;
-				}
+				if(!(i<this->out_s)) return false;
 				this->out[i] = freq_d; i++;
-				if(!(i<this->out_s)){
-					this->setError(1007, "packHeader(void) - i out of bounds.");
-					return false;
-				}
+				if(!(i<this->out_s)) return false;
 				this->out[i] = letter;
 				j++;
 			}	
@@ -1551,11 +801,11 @@ class HuffmanCoding{
 		
 		bool unpackHeader(char *data, size_t dataSize){
 			if(data == NULL){
-				this->setError(1100, "unpackHeader(char *data, size_t dataSize) - data is null.");
+				this->setError(444, "unpackHeader() - data is null.");
 				return false;
 			}
 			if(dataSize <= 0){
-				this->setError(1101, "unpackHeader(char *data, size_t dataSize) - dataSize <= 0, treating as null.");
+				this->setError(4545, "unpackHeader() - dataSize <= 0, treating as null.");
 				return false;
 			}
 
@@ -1572,25 +822,13 @@ class HuffmanCoding{
 				int freq=0;
 				char letter=0x00;
 				freq += data[i] << (8*3); i++;
-				if(!(i<dataSize)){
-					this->setError(1102, "unpackHeader(char *data, size_t dataSize) - i out of bounds.");
-					return false;
-				}
+				if(!(i<dataSize)) return false;
 				freq += data[i] << (8*2); i++;
-				if(!(i<dataSize)){
-					this->setError(1103, "unpackHeader(char *data, size_t dataSize) - i out of bounds.");
-					return false;
-				}
+				if(!(i<dataSize)) return false;
 				freq += data[i] << (8*1); i++;
-				if(!(i<dataSize)){
-					this->setError(1104, "unpackHeader(char *data, size_t dataSize) - i out of bounds.");
-					return false;
-				}
+				if(!(i<dataSize)) return false;
 				freq += data[i]; i++;
-				if(!(i<dataSize)){
-					this->setError(1105, "unpackHeader(char *data, size_t dataSize) - i out of bounds.");
-					return false;
-				}
+				if(!(i<dataSize)) return false;
 				letter = data[i];
 				
 				this->frequencies[j] = freq;
@@ -1602,7 +840,7 @@ class HuffmanCoding{
 
 		bool encode(char *data, size_t dataSize){
 			if(!this->plantTree()){
-				this->setError(0x1200, "encode() - failed to plant tree.");
+				this->setError(0x502, "encode() - failed to plant tree.");
 				return false;
 			}
 			printf("[DBG] Tree Planted!\n");
@@ -1626,7 +864,7 @@ class HuffmanCoding{
 			for(int i=0; i<this->out_s; i++) this->out[i] = 0x00;
 
 			if(!this->packHeader()){
-				this->setError(1201, "encode() - failed to pack header.");
+				this->setError(1234, "encode() - failed to pack header.");
 				return false;
 			}
 
@@ -1688,41 +926,6 @@ class HuffmanCoding{
 			this->error_msg += "["+std::to_string(c)+"] " + m+"\n";
 		}
 
-		int countLayers(void){
-			int ret = 1;
-			if(!this->validateTreeData()){
-				this->setError(111, "countLayers() - invalid tree data.");
-				return -1;
-			}
-			
-			for(int i=0, track=this->treeData[0]; i<this->treeData_s; i++){
-				if(track < this->treeData[i])
-					ret++;
-				track = this->treeData[i];
-			}
-			return ret;
-		}
-		
-		bool getLayerIndecies(int *out, size_t out_s){
-			if(!this->validateTreeData()){
-				this->setError(4444, "getLayerIndecies() - invalid tree data.");
-				return false;
-			}
-			int finalJ=0;
-			for(int i=0, j=0, track=this->treeData[0]; j<out_s && i<this->treeData_s; i++){
-				if(track < this->treeData[i]){
-					out[j] = i-1;
-					j++;
-					finalJ = j;
-				}
-				track = this->treeData[i];
-			}
-			if(finalJ == out_s-1){
-				out[finalJ] = this->treeData_s-1;
-			}
-			return true;
-		}
-
 	public:
 		char *out;
 		size_t out_s;
@@ -1749,10 +952,7 @@ class HuffmanCoding{
 			this->frequencies_s = 0;
 			this->tablesSorted = false;
 			this->treeData=NULL;
-			this->treeDataTypes = NULL;
 			this->treeData_s = 0;
-			this->workQueue_s = 0;
-			this->workQueue = NULL;
 			this->clearError();
 		}
 		~HuffmanCoding(){
@@ -1761,74 +961,6 @@ class HuffmanCoding{
 			this->destroyFrequencies();
 			this->destroyOut();
 			this->destroyTreeData();
-			this->destroyWorkQueue();
-		}
-
-		void printTreeLetters(void){
-			printf("Tree Letters : ");
-			if(this->treeLetters == NULL || this->treeLetters_s <=0){
-				printf("NULL\n");
-				return;
-			}
-			for(int i=0; i<treeLetters_s; i++){
-				printf("[%d]%c ", i, this->treeLetters[i]);
-			}printf("\n");
-		}
-
-		void printFrequencies(void){
-			printf("Frequencies (mex:%d): ", this->frequencyMax);
-			if(this->frequencies == NULL || this->frequencies_s <= 0){
-				printf("NULL\n");
-				return;
-			}
-			for(int i=0; i<this->frequencies_s; i++){
-				printf("[%d]%d ", i, this->frequencies[i]);
-			}printf("\n");
-		}
-
-		void printCodeTable(void){
-			printf("Code Table : \n\tindex | bit count |  code | char\n");
-			if(this->frequencies == NULL || this->frequencies_s <= 0 || this->codeTable == NULL || this->codeTable_s <= 0 || this->treeLetters == NULL || this->treeLetters_s <=0){
-                                printf("NULL\n");
-                                return;
-                        }
-			for(int i=0; i<this->frequencies_s; i++){
-				printf("\t%d    | %d        | %s     | %c\n", i, this->codeTable[i], this->getCodeBinary(i).c_str(), this->treeLetters[i]);
-			}printf("\n");
-		}
-
-		void printTree(void){
-			if(this->treeData == NULL || this->treeData_s <= 0){
-				printf("NULL\n");
-				return;
-			}
-			
-			size_t layerCount = this->countLayers();
-			int *layerIndecies = new int[layerCount];
-			if(!getLayerIndecies(layerIndecies, layerCount)){
-				printf("Failed to print tree.\n");
-				return;
-			}
-			
-			printf("\nTree Layers Count : %ld\n", layerCount);	
-			printf("Tree Layer 0|%d:", layerIndecies[0]);
-			for(int i=0, j=0, pretty=0; i<this->treeData_s && j<layerCount; i++){
-				if((pretty%7) == 0){
-					printf("\n");
-				}
-				if(i==layerIndecies[j]){
-					printf("[%d|%s]%d\t", i, this->treeDataTypes[i] == 0 ? "\033[0;31mbottom\033[0m" : "\033[0;32mtop\033[0m", this->treeData[i]);
-					printf("\n\n");
-					j++;
-					pretty = 0;
-					if(j<layerCount)
-						printf("Tree Layer %d|%d:\n", j, layerIndecies[j]);
-					continue;
-				} 
-				
-				printf("[%d|%s]%d\t", i, this->treeDataTypes[i] == 0 ? "\033[0;31mbottom\033[0m" : "\033[0;32mtop\033[0m", this->treeData[i]);
-				pretty++;
-			}
 		}
 
 		bool compress(char *data, size_t dataSize){
@@ -1839,44 +971,41 @@ class HuffmanCoding{
 			this->destroyOut();
 			this->tablesSorted = false;
 			if(data == NULL){
-				this->setError(0, "compress(char *data, size_t dataSize) - data is null.");
+				this->setError(0x000, "compress(char *data, size_t dataSize) - data is null.");
 				return false;
 			}
 			if(dataSize <= 0){
-				this->setError(1, "compress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+				this->setError(0x001, "compress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
 				return false;
 			}
 
 			if(!this->createTreeLetters(data, dataSize)){
-				this->setError(2, "compress(char *data, size_t dataSize) - Failed to create tree letters.");
+				this->setError(0x002, "compress(char *data, size_t dataSize) - Failed to create tree letters.");
 				return false;
 			}
 
 			if(!this->createFrequency(data, dataSize)){
-				this->setError(3, "compress(char *data, size_t dataSize) - Failed to create frequency table");
+				this->setError(0x003, "compress(char *data, size_t dataSize) - Failed to create frequency table");
 				return false;
 			}
 
 			if(!this->sortFreqencies()){
-				this->setError(4, "compress(char *data, size_t dataSize) - sortFreqencies failed.");
+				this->setError(0x004, "compress(char *data, size_t dataSize) - sortFreqencies failed.");
 				return false;
 			}
-
-			if(!this->plantTree()){
-                                this->setError(545, "compress() - failed to plant tree.");
-                                return false;
-                        }
-
-			if(!this->generateCodeTable()){
-				this->setError(5555, "compress() - failed to generate code table.");
-				return false;
+			#if HUFFMAN_DEBUGGING == 1
+			int freqMax = 0;
+			printf("[DBG] Sorted Frequencies : \n\t");
+			for(int i=0; i<this->frequencies_s; i++){
+				printf("'%c'(%d) ", this->treeLetters[i], this->frequencies[i]);
+				freqMax += this->frequencies[i];
 			}
-
-			printf("[DBG} : ");
-			this->printCodeTable();
+			printf("\n");
+			printf("[DBG] Expected Max : %d\n", freqMax);
+			#endif
 
 			if(!this->encode(data, dataSize)){
-				this->setError(5, "compress(char *data, size_t dataSize) - Failed to encode data.");
+				this->setError(0x004, "compress(char *data, size_t dataSize) - Failed to encode data.");
 				return false;
 			}
 			
@@ -1890,15 +1019,15 @@ class HuffmanCoding{
 			this->destroyFrequencies();
 			this->destroyOut();
 			if(data == NULL){
-                                this->setError(100, "decompress(char *data, size_t dataSize) - data is null.");
+                                this->setError(0x000, "decompress(char *data, size_t dataSize) - data is null.");
                                 return false;
                         }
                         if(dataSize <= 0){
-                                this->setError(101, "decompress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+                                this->setError(0x001, "decompress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
                                 return false;
                         }
 			if(!this->unpackHeader(data, dataSize)){
-				this->setError(102, "decompress(char *data, size_t dataSize) - faiiled to unpack header.");
+				this->setError(12345, "decompress() - faiiled to unpack header.");
 				return false;
 			}
 
@@ -1914,7 +1043,7 @@ class HuffmanCoding{
                         #endif
 
 			if(!this->plantTree()){
-                                this->setError(103, "decompress(char *data, size_t dataSize) - failed to plant tree.");
+                                this->setError(0x502, "decompress() - failed to plant tree.");
                                 return false;
                         }
                         printf("[DBG] Tree Planted!\n");
@@ -1929,7 +1058,7 @@ class HuffmanCoding{
                         printf("---------------\n");
 		
 			if(!this->decode(data, dataSize)){
-				this->setError(104, "decompress(char *data, size_t dataSize) - failed to decode the data.");
+				this->setError(4445, "decompress() - failed to decode the data.");
 				return false;
 			}
 			return true;
