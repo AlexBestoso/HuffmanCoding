@@ -1011,6 +1011,7 @@ class HuffmanCoding{
 			
 			for(int i=layerIndecies[sourceLayer],j=layerIndecies[targetLayer], sum=-1, tracer=-1; i>layerIndecies[targetLayer] && j>=0; i--){
 				if(targetIndex == j){
+					if(this->treeDataTypes[i] == 0) continue;
 					if(((layerIndecies[targetLayer] - layerIndecies[sourceLayer]) % 2) == 1 && i==0){
 						zeroIndex[0] = i;
 						oneIndex[0] = j;
@@ -1066,26 +1067,82 @@ class HuffmanCoding{
 				j--;
 			}
 
-			if(layerCount != this->treeDataLayerCount && targetLayer == 0){
-				for(int i=0, j=layerIndecies[0]+1; i<layerIndecies[0] && j<=layerIndecies[1]; i++){
-					if(i == targetIndex){
-						if(this->treeData[i] == this->treeData[i+1]+this->treeData[j]){
-							zeroIndex[0] = j;
-							oneIndex[0] = i+1;
-						}else if(this->treeData[i] == this->treeData[j] + this->treeData[j+1]){
-							zeroIndex[0] = j;
-							oneIndex[0] = j+1;
-						}
-					
+			if(targetLayer == 0){ // edge case.
+				int valA = this->treeData[layerIndecies[0]+1]; // bottom layer end
+				int valB = 0;
+				for(int i=layerIndecies[0]+2; i<this->treeData_s; i++){
+					if(this->treeDataTypes[i] == 1){
+						valB = this->treeData[i];
+						break;
 					}
-					if(this->treeData[i] == this->treeData[i+1]+this->treeData[j]){
-						j++;
-					}else if(this->treeData[i] == this->treeData[j] + this->treeData[j+1]){
-						j+=2;
+				} 
+				int testSum = valA + valB;
+				int trueSourceStart = layerIndecies[0];
+				int trueTopStart = 0;
+				for(int i=0; i<=layerIndecies[0]; i++){
+					if(this->treeData[i] == testSum){
+						trueTopStart = i-1;
 					}
 				}
-				// we're likely at the root layer, we need to compute backwards using only the target layer.
-				// so from 0 to targetLayerSize.
+				
+				for(int i=trueSourceStart,j=trueTopStart, sum=-1, tracer=-1; i>trueTopStart && j>=0; i--){
+				if(targetIndex == j){
+					if(this->treeDataTypes[i] == 0) continue;
+					if(((trueTopStart - trueSourceStart) % 2) == 1 && i==0){
+						zeroIndex[0] = i;
+						oneIndex[0] = j;
+					}else if(tracer == -1){
+						oneIndex[0] = i;
+						zeroIndex[0] = i-1;
+					}else if(sum == -1){
+						zeroIndex[0] = i;
+						oneIndex[0] = i+1;
+					}else if(sum < this->treeData[i]){
+						zeroIndex[0] = i+1;
+						oneIndex[0] = j;
+					}else{
+						zeroIndex[0] = i;
+						oneIndex[0] = i+1;
+					}
+					
+					return true;
+				}
+				if(this->treeDataTypes[i] == 0) continue;
+
+				if(tracer == -1){
+					tracer = this->treeData[i];
+					continue;
+				}
+				if(sum == -1){
+					sum = this->treeData[i] + tracer;
+					if(sum != this->treeData[j]){
+						this->setError(17564, "getSubIndecies() - First sum failure.");
+						return false;
+					}
+					j--;
+					tracer=-1;
+					continue;
+				}
+				if(sum < this->treeData[i]){
+					sum = sum + tracer;
+					if(sum != this->treeData[j]){
+                                                this->setError(17567, "getSubIndecies() - First sum failure.");
+                                                return false;
+                                        }
+					tracer = this->treeData[i];
+					j--;
+					continue;
+				}
+
+				sum = this->treeData[i] + tracer;
+				if(sum != this->treeData[j]){
+                        		this->setError(17567, "getSubIndecies() - First sum failure.");
+                        		return false;
+                        	}
+				tracer = -1;
+				j--;
+			}
+
 			}
 			std::string msg = "getSubIndecies(target:"+std::to_string(targetIndex)+") - dbg : sourceLayer:"+std::to_string(sourceLayer)+" | targetLayer:"+std::to_string(targetLayer);
 			this->setError(4444, msg.c_str());
