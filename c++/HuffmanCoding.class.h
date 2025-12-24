@@ -1404,12 +1404,12 @@
 				int layerStart = this->treeLayerIndecies[i];
 				int layerEnd = layerStart-this->treeLayerSizes[i];
 				printf("DEBUG LAYER %d, start:%d, end:%d\n", i, layerStart, layerEnd);
-				for(int j=layerStart; j>layerEnd; j--){
+				for(int j=1+layerEnd; j<layerStart+1; j++){
 					if(!this->getSubIndecies(j, &zero, &one)){
 						this->setError(444, "debug() - failed to get sub indecies.");
 						return false;
 					}
-					printf("%d) %d is of 0:%d[%d], 1:%d[%d]\n", j, this->treeData[j], zero > -1 ? this->treeData[zero] : 0x00, zero, one > -1 ? this->treeData[one] : 0x00, one);
+					printf("%d) %d is of 0:%d[%d], 1:%d[%d] - %s", j, this->treeData[j], zero > -1 ? this->treeData[zero] : 0x00, zero, one > -1 ? this->treeData[one] : 0x00, one, this->treeDataTypes[j] == 1 ? "\033[0;42mtop\033[0m\n" : "\033[0;41mbottom\033[0m\n");
 				}
 			}
 			printf("leaving function.\n");
