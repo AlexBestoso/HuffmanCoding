@@ -760,6 +760,7 @@
 			int one=-1;
 			int queueFill=0;
 			// generate code table.
+			/*
 			for(int i=this->treeData_s-1; i>=0; i--){
 				this->getSubIndecies(i, &zero, &one);
 				if(this->failed() || (one == -1 && zero == -1)){
@@ -833,7 +834,7 @@
 					}
 				}
 
-			}
+			}*/
 			return true;
 		}
 
