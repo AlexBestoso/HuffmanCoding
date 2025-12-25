@@ -594,16 +594,11 @@
 
 				this->workBuffer_fill=0;
 
-				bool oddMode = (topLayerSize % 2) == 1 ? true : false; 
-				printf("starting off, layer %ld of size %ld isOdd(%d)\n", layerCount, topLayerSize, oddMode);
 				for(int i=topLayerStart, tracer=-1, sum=-1; i>=0; i--){
 					if(this->frequencyMax <= this->treeData[i]) break;
 					if(this->treeDataTypes[i] == 0){ // it's a bottom node, don't use it.
-						printf("\tSkipped[%d] Values, tree:%d, tracer:%d, sum:%d\n", i, this->treeData[i], tracer, sum);
-						oddMode = oddMode ? false : true;
 						continue;
 					}
-					printf("Bananan %d\n", i);
 					if(tracer == -1){
 						if(i == 0){
 							if(sum == -1){
@@ -685,7 +680,6 @@
 					printf("Nothing to fill.\n");
 					return false;
 				}
-				printf("flow checl %ld vs %ld\n", workBuffer_fill-1, workBuffer_s);
 				workTypeBuffer[workBuffer_fill-1] = 1;
 
 				this->resizeTreeLayers(this->treeDataLayerCount+1);
@@ -705,7 +699,6 @@
 					this->treeData[i] = workBuffer[workBuffer_fill-1-i];
 					this->treeDataTypes[i] = workTypeBuffer[workBuffer_fill-1-i];
 				}
-
 
 				return true;
 			}
@@ -1099,8 +1092,149 @@
 				this->setError(44452, message.c_str());
 				return false;
 			}
-			// validate layers
+			// TODO: validate layers
 
+			int targetLayer = -1;
+			for(int i=0; i<this->treeDataLayerCount; i++){
+				int start = this->treeLayerIndecies[i];
+				int end = this->treeLayerIndecies[i]-this->treeLayerSizes[i]+1;
+				if(targetIndex <= start && targetIndex >= end){
+					targetLayer = i;
+					break;
+				}
+			}
+			if(targetLayer == -1){
+				this->setError(5555, "getSubIndecies() - failed to get target layer.");
+				return false;
+			}
+			if(targetLayer == 0){
+				int pos = (this->frequencies_s%2) == 0 ? (1+targetIndex)%2 : (targetIndex == this->treeLayerIndecies[targetLayer]-this->treeLayerSizes[targetLayer]-1 ? 0 : (targetIndex)%2);
+				if(pos == 0){
+					zeroIndex[0] = targetIndex;
+					oneIndex[0] = -1;
+				}else{
+					zeroIndex[0] = -1;
+					oneIndex[0] = targetIndex;
+				}
+				return true;
+			}
+
+			int targetLayerStart = this->treeLayerIndecies[targetLayer];
+			int targetLayerEnd = targetLayerStart-this->treeLayerSizes[targetLayer];
+			int sourceLayer = targetLayer-1;
+			int sourceLayerStart = this->treeLayerIndecies[sourceLayer];
+			int sourceLayerEnd = sourceLayerStart - this->treeLayerSizes[sourceLayer];
+
+			for(int i=sourceLayerStart, t=targetLayerStart, tracer=-1, sum=-1; i>sourceLayerEnd && t>targetLayerEnd; i--){
+				if(this->treeDataTypes[i] == 0){ // it's a bottom node, don't use it.
+                                	continue;
+                                }
+				if(tracer == -1){
+					if(i == sourceLayerEnd+1){
+						if(sum == -1){
+							this->setError(777, "getSubIndecies() - this error should never happen, Ha!");
+							return false;
+						}
+						sum = this->treeData[i] + sum;
+						if(t == targetIndex){
+							zeroIndex[0] = i;
+							oneIndex[0] = t+1;
+							return true;
+						}
+						t--;
+						break;
+					}
+					tracer = this->treeData[i];
+					continue;
+				}
+				if(sum == -1){
+					sum = this->treeData[i] + tracer;
+					if(t == targetIndex){
+						zeroIndex[0] = i;
+						oneIndex[0] = i+1;
+						return true;
+					}
+					t--;
+					tracer = -1;
+					continue;
+				}
+				if(this->treeData[i] == sum){
+					if(i==sourceLayerEnd+1){
+						sum = tracer + sum;
+						if(t==targetIndex){
+							zeroIndex[0] = i+1;
+							oneIndex[0] = t+1;
+							return true;
+						}
+						t--;
+						if(!(t>targetLayerEnd)){
+							this->setError(453, "getSubIndecies() - tree misaligned.");
+							return false;
+						}
+						sum = this->treeData[i] + sum;
+						if(t == targetIndex){
+							zeroIndex[0] = i;
+							oneIndex[0] = t+1;
+							return true;
+						}
+						break;
+					}
+					sum = tracer + sum;
+					if(t==targetIndex){
+						zeroIndex[0] = i+1;
+						oneIndex[0] = t+1;
+						return true;
+					}
+					t--;
+					tracer = this->treeData[i];
+					continue;
+				}
+				if(this->treeData[i] < sum){
+					sum = this->treeData[i] + tracer;
+					if(t==targetIndex){
+						zeroIndex[0] = i;
+						oneIndex[0] = i+1;
+						return true;
+					}
+					t--;
+					tracer = -1;
+					continue;
+				}
+				if(this->treeData[i] > sum){
+					if(i==sourceLayerEnd+1){
+						sum = tracer + sum;
+						if(t == targetIndex){
+							zeroIndex[0] = i+1;
+							oneIndex[0] = t+1;
+							return true;
+						}
+						t--;
+						if(!(t>targetLayerEnd)){
+							this->setError(4533, "getSubIndecies() - miss a ligned tree.");
+							return false;
+						}
+                                                sum = this->treeData[i] + sum;
+						if(t == targetIndex){
+							zeroIndex[0] = i;
+							oneIndex[0] = t+1;
+							return true;
+						}
+						t--;
+						break;
+					}
+					sum = tracer + sum;
+					if(t == targetIndex){
+						zeroIndex[0] = i+1;
+						oneIndex[0] = t+1;
+						return true;
+					}
+					t--;
+					tracer = this->treeData[i];
+					continue;
+				}
+			}
+
+			/*
 			// target is at the bottom layer. This prevents out of bounds in source layer detection.
 			if(targetIndex > this->treeLayerIndecies[0]-this->treeLayerSizes[0]  && targetIndex<=this->treeLayerIndecies[0]){
 				int convertedTarget = targetIndex - (this->treeData_s-this->frequencies_s);
@@ -1220,7 +1354,7 @@
                         	}
 				tracer = -1;
 				j--;
-			}
+			}*/
 			std::string msg = "getSubIndecies(target:"+std::to_string(targetIndex)+") - dbg : sourceLayer:"+std::to_string(sourceLayer)+" | targetLayer:"+std::to_string(targetLayer);
 			this->setError(4444, msg.c_str());
 			return false;
