@@ -1125,7 +1125,7 @@
 			int sourceLayerStart = this->treeLayerIndecies[sourceLayer];
 			int sourceLayerEnd = sourceLayerStart - this->treeLayerSizes[sourceLayer];
 
-			for(int i=sourceLayerStart, t=targetLayerStart, tracer=-1, sum=-1; i>sourceLayerEnd && t>targetLayerEnd; i--){
+			for(int i=sourceLayerStart, t=targetLayerStart, tracerIdx=0,tracer=-1, sum=-1; i>sourceLayerEnd && t>targetLayerEnd; i--){
 				if(this->treeDataTypes[i] == 0){ // it's a bottom node, don't use it.
                                 	continue;
                                 }
@@ -1145,24 +1145,26 @@
 						break;
 					}
 					tracer = this->treeData[i];
+					tracerIdx=i;
 					continue;
 				}
 				if(sum == -1){
 					sum = this->treeData[i] + tracer;
 					if(t == targetIndex){
 						zeroIndex[0] = i;
-						oneIndex[0] = i+1;
+						oneIndex[0] = tracerIdx;
 						return true;
 					}
 					t--;
 					tracer = -1;
+					tracerIdx=-1;
 					continue;
 				}
 				if(this->treeData[i] == sum){
 					if(i==sourceLayerEnd+1){
 						sum = tracer + sum;
 						if(t==targetIndex){
-							zeroIndex[0] = i+1;
+							zeroIndex[0] = tracerIdx;
 							oneIndex[0] = t+1;
 							return true;
 						}
@@ -1181,30 +1183,32 @@
 					}
 					sum = tracer + sum;
 					if(t==targetIndex){
-						zeroIndex[0] = i+1;
+						zeroIndex[0] = tracerIdx;
 						oneIndex[0] = t+1;
 						return true;
 					}
 					t--;
 					tracer = this->treeData[i];
+					tracerIdx=i;
 					continue;
 				}
 				if(this->treeData[i] < sum){
 					sum = this->treeData[i] + tracer;
 					if(t==targetIndex){
 						zeroIndex[0] = i;
-						oneIndex[0] = i+1;
+						oneIndex[0] = tracerIdx;
 						return true;
 					}
 					t--;
 					tracer = -1;
+					tracerIdx=-1;
 					continue;
 				}
 				if(this->treeData[i] > sum){
 					if(i==sourceLayerEnd+1){
 						sum = tracer + sum;
 						if(t == targetIndex){
-							zeroIndex[0] = i+1;
+							zeroIndex[0] = tracerIdx;
 							oneIndex[0] = t+1;
 							return true;
 						}
@@ -1224,137 +1228,17 @@
 					}
 					sum = tracer + sum;
 					if(t == targetIndex){
-						zeroIndex[0] = i+1;
+						zeroIndex[0] = tracerIdx;
 						oneIndex[0] = t+1;
 						return true;
 					}
 					t--;
 					tracer = this->treeData[i];
+					tracerIdx=i;
 					continue;
 				}
 			}
 
-			/*
-			// target is at the bottom layer. This prevents out of bounds in source layer detection.
-			if(targetIndex > this->treeLayerIndecies[0]-this->treeLayerSizes[0]  && targetIndex<=this->treeLayerIndecies[0]){
-				int convertedTarget = targetIndex - (this->treeData_s-this->frequencies_s);
-				if(convertedTarget < 0){
-					this->setError(6546, "getSubIndecies() - failed to convert target index into useable value.");
-					return false;
-				}
-				if((this->frequencies_s%2) == 1){
-					if(convertedTarget == 0){
-						zeroIndex[0] = targetIndex;
-						oneIndex[0] = -1;
-						return true;
-					}
-					zeroIndex[0] = (convertedTarget % 2) == 0 ? -1 : targetIndex;
-					oneIndex[0] = (convertedTarget % 2) == 0 ? targetIndex : -1;
-					return true;
-				}
-				zeroIndex[0] = (convertedTarget % 2) == 0 ? targetIndex : -1;
-				oneIndex[0] = (convertedTarget % 2) == 0 ? -1 : targetIndex;
-				return true;
-			}
-				
-			// determine which layer the target index is inside of.
-			int targetLayer = -1;
-			for(int i=this->treeDataLayerCount-1; i>=0; i--){
-				int layerStart = this->treeLayerIndecies[i];
-				int layerEnd = layerStart - this->treeLayerSizes[i];
-				if(targetIndex > layerEnd && targetIndex <= layerStart){
-					targetLayer = i;
-					break;
-				}
-			}
-			if(targetLayer <= -1){
-				this->setError(4456, "getSubIndecies() - failed to indentify which layer target index is in.");
-				return false;
-			}
-			size_t targetLayerSize = this->treeLayerSizes[targetLayer];
-
-			int sourceLayer = targetLayer-1;
-			if(sourceLayer < 0){
-				this->setError(42343, "getSubIndecies() - source layer is out of bounds.");
-				return false;
-			}
-
-			int targetLayerStart = this->treeLayerIndecies[targetLayer];
-			int targetLayerEnd = targetLayerStart - this->treeLayerSizes[targetLayer];
-			int sourceLayerStart = this->treeLayerIndecies[sourceLayer];
-			int sourceLayerEnd = sourceLayerStart - this->treeLayerSizes[sourceLayer];
-				
-			for(int i=sourceLayerStart, j=targetLayerStart, sum=-1, tracer=-1; i>sourceLayerEnd && j>targetLayerEnd; i--){
-				if(i < 0 || j < 0) break;
-
-				if(targetIndex == j){
-					if(this->treeDataTypes[i] == 0) continue;
-					if(((this->treeLayerIndecies[targetLayer] - this->treeLayerIndecies[sourceLayer]) % 2) == 1 && i==0){
-						zeroIndex[0] = i;
-						oneIndex[0] = j;
-					}else if(tracer == -1){
-						if(this->treeData[i] + this->treeData[i-1] == this->treeData[j]){
-							if(i-1 <= sourceLayerEnd){
-								oneIndex[0] = i-1;
-								zeroIndex[0] = i;
-							}else{
-								oneIndex[0] = i;
-								zeroIndex[0] = i-1;
-							}
-						}else{
-							oneIndex[0] = j+1;
-							zeroIndex[0] = i;
-						}
-					}else if(sum == -1){
-						zeroIndex[0] = i;
-						oneIndex[0] = i+1;
-					}else if(sum < this->treeData[i]){
-						zeroIndex[0] = i+1;
-						oneIndex[0] = j;
-					}else{
-						zeroIndex[0] = i;
-						oneIndex[0] = i+1;
-					}
-						
-					return true;
-				}
-				if(this->treeDataTypes[i] == 0) continue;
-
-				if(tracer == -1){
-					tracer = this->treeData[i];
-					continue;
-				}
-				if(sum == -1){
-					sum = this->treeData[i] + tracer;
-					if(sum != this->treeData[j]){
-						this->setError(7564, "getSubIndecies() - First sum failure.");
-						return false;
-					}
-					j--;
-					tracer=-1;
-					continue;
-				}
-				if(sum < this->treeData[i]){
-					int dbg = sum;
-					sum = sum + tracer;
-					if(sum != this->treeData[j]){
-						std::string errMsg = "getSubIndecies(tracer : "+std::to_string(tracer)+" | i :"+std::to_string(i)+" | j : "+std::to_string(j)+") - sum != treeData[j] | "+std::to_string(sum)+" != "+std::to_string(this->treeData[j])+" | original sum : "+std::to_string(dbg);
-						this->setError(7567, errMsg);
-						return false;
-					}
-					tracer = this->treeData[i];
-					j--;
-					continue;
-				}
-
-				sum = this->treeData[i] + tracer;
-				if(sum != this->treeData[j]){
-					this->setError(75687, "getSubIndecies() - First sum failure.");
-                        		return false;
-                        	}
-				tracer = -1;
-				j--;
-			}*/
 			std::string msg = "getSubIndecies(target:"+std::to_string(targetIndex)+") - dbg : sourceLayer:"+std::to_string(sourceLayer)+" | targetLayer:"+std::to_string(targetLayer);
 			this->setError(4444, msg.c_str());
 			return false;
@@ -1525,8 +1409,8 @@
                                 return false;
                         }
 			
-			this->debug();
-			return false;
+		//	this->debug();
+		//	return false;
 			if(!this->generateCodeTable()){
 				this->setError(5555, "compress() - failed to generate code table.");
 				return false;
