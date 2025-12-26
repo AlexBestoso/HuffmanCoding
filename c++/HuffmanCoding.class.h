@@ -730,8 +730,34 @@
 
 				return true;
 			}
+		
+		bool isBaseIndex(int target){
+			if(!this->validateTreeData()){
+				this->setError(4444, "isBaseIndex() - invalid tree data.");
+				return false;
+			}
+			// TODO: validate tree layers.
+			if(target <= this->treeLayerIndecies[0] && target > (this->treeLayerIndecies[0]-this->treeLayerSizes[0])){
+				return true;
+			}
+			return false;
+		}
 
-
+		bool addBitToCodeTable(int targetIndex, int bit){
+			if(!this->validateFrequencies()){
+				this->setError(45345, "addBitToCodeTable() - failed to validate frequencies.");
+				return false;
+			}
+			// TODO validate code table.
+			if(targetIndex < 0 || targetIndex >= this->codeTable_s){
+				this->setError(45454, "addBitToCodeTable() - targetIndex is out of bounds.");
+				return false;
+			}
+			this->codeTable[targetIndex]++;
+			int codeIdx = targetIndex+this->frequencies_s;
+			this->codeTable[codeIdx] = (this->codeTable[codeIdx] << 1) + (1&bit);
+			return true;
+		}
 		bool generateCodeTable(void){
 			if(!this->validateTreeData()){
 				this->setError(44456, "generateCodeTable() - failed to validate tree data.");
@@ -742,6 +768,7 @@
 				return false;
 			}
 			// TODO: Validate tree letters
+			// TODO: validate tree layers
 
 			// Calculate Layer Count, and top layer start index.
 			size_t layerCount = this->treeDataLayerCount;
@@ -759,82 +786,61 @@
 			int zero=-1;
 			int one=-1;
 			int queueFill=0;
-			// generate code table.
-			/*
-			for(int i=this->treeData_s-1; i>=0; i--){
-				this->getSubIndecies(i, &zero, &one);
-				if(this->failed() || (one == -1 && zero == -1)){
-                                	this->setError(3434, "generateCodeTable() - failed to get sub indecies.");
-                                	return false;
-                                }
-				if(zero != -1){
-					queueFill = this->pushWorkQueue(zero, queueFill);
+			int start = this->treeLayerIndecies[1];
+			int bitArray[2] = {0};
+			for(int i=start; i>=0; i--){
+				if(this->isBaseIndex(i)){
+					this->setError(3234, "generateCodeTable() - huffman tree missaligned.");
+					return false; // we start one layer away from the leafs
+				}
+				if(!this->getSubIndecies(i, &zero, &one) && this->failed()){
+					this->setError(666, "generateCodeTable() - failed to get inital sub indecies.");
+					return false;
+				}
+				bitArray[0] = zero;
+				bitArray[1] = one;
+				for(int bit=0; bit<2; bit++){
+					if(this->isBaseIndex(bitArray[bit])){
+						int newIndex = bitArray[bit] - converter; // convert to 0 to frequencie_s
+						if(!this->addBitToCodeTable(newIndex, bit)){
+							this->setError(45423, "generateCodeTable() - failed to add bit to code table.");
+							return false;
+						}
+						continue;
+					}
+					queueFill = 0;
+					queueFill = this->pushWorkQueue(bitArray[bit], queueFill);
 					while(queueFill > 0){
-						int queueData = this->popWorkQueue();
-						if(this->failed()){
-							this->setError(7786, "generateCodeTable() - failed to pop work queue.");
-							return false;
-						}
+						int target = this->popWorkQueue();
 						queueFill--;
-						int o=-1, z=-1;
-						this->getSubIndecies(queueData, &o, &z);
-						if(this->failed() || (o==-1 && z==-1)){
-							this->setError(4433, "generateCodeTable() - zero's subindecies failed to generate.");
+
+						if(!this->getSubIndecies(target, &zero, &one) && this->failed()){
+							this->setError(3333, "generateCodeTable() - failed to get sub node to add bit to.");
 							return false;
-						}
-						if(o!=-1 && o >= this->treeData_s-this->frequencies_s){
-							o = o - converter;
-							this->codeTable[o+tableSize_o]++;
-							this->codeTable[o+tableCode_o] = this->codeTable[o+tableCode_o] >> 1;
-						}else if(o >= 0 && o <this->treeData_s && o != queueData){
-							queueFill = this->pushWorkQueue(o, queueFill);
-						}
-					
-						if(z!=-1 && z >= this->treeData_s-this->frequencies_s){
-							z = z - converter;
-							this->codeTable[z+tableSize_o]++;
-							this->codeTable[z+tableCode_o] = this->codeTable[z+tableCode_o] >> 1;
-						}else if(z >= 0 && z <this->treeData_s && z != queueData){
-							queueFill = this->pushWorkQueue(z, queueFill);
 						}
 
+						if(this->isBaseIndex(zero)){
+							int newIndex = zero - converter; // convert to 0 to frequencie_s
+							if(!this->addBitToCodeTable(newIndex, bit)){
+								this->setError(445, "generateCodeTable() - failed to add bit to zero index.");
+								return false;
+							}
+						}else{
+							queueFill = this->pushWorkQueue(zero, queueFill);
+						}
+
+						if(this->isBaseIndex(one)){
+							int newIndex = one - converter; // convert to 0 to frequencie_s
+							if(!this->addBitToCodeTable(newIndex, bit)){
+								this->setError(435, "generateCodeTable() - failed to add bit to one index.");
+								return false;
+							}
+						}else{
+							queueFill = this->pushWorkQueue(one, queueFill);
+						}
 					}
 				}
-				if(one != -1){
-					queueFill = this->pushWorkQueue(one, queueFill);
-					while(queueFill > 0){
-						int queueData = this->popWorkQueue();
-						if(this->failed()){
-							this->setError(7386, "generateCodeTable() - failed to pop work queue.");
-							return false;
-						}
-						queueFill--;
-						int o=-1, z=-1;
-						this->getSubIndecies(queueData, &o, &z);
-						if(this->failed() || (o==-1 && z==-1)){
-							this->setError(3433, "generateCodeTable() - zero's subindecies failed to generate.");
-							return false;
-						}
-						if(o!=-1 && o >= this->treeData_s-this->frequencies_s){
-							o = o - converter;
-							this->codeTable[o+tableSize_o]++;
-							this->codeTable[o+tableCode_o] = (1<<7)+this->codeTable[o+tableCode_o] >> 1;
-						}else if(o >= 0 && o <this->treeData_s && o != queueData){
-							queueFill = this->pushWorkQueue(o, queueFill);
-						}
-					
-						if(z!=-1 && z >= this->treeData_s-this->frequencies_s){
-							z = z - converter;
-							this->codeTable[z+tableSize_o]++;
-							this->codeTable[z+tableCode_o] = (1<<7)+this->codeTable[z+tableCode_o] >> 1;
-						}else if(z >= 0 && z <this->treeData_s && z != queueData){
-							queueFill = this->pushWorkQueue(z, queueFill);
-						}
-
-					}
-				}
-
-			}*/
+			}
 			return true;
 		}
 
