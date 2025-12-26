@@ -47,7 +47,7 @@ int main(int argc, char *argv[]){
 		exit(EXIT_FAILURE);
 	}
 	printf("successful!\n");
-		hc.printTree();
+	//hc.printTreeOrigins();
 	
 	delete[] ogMsg;
 	exit(EXIT_SUCCESS);
