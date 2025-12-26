@@ -15,6 +15,9 @@ while [ 1==1 ]; do
 		segFaults=$(($segFaults+1)) 
 	elif [ "$err" == "134" ]; then
 		doubleFrees=$(($doubleFrees+1))
+	elif [ "$err" != "0" ]; then
+		echo -en "Unexpected error code $err."
+		break;
 	fi 
 	sleep 1
 done
