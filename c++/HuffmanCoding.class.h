@@ -1317,13 +1317,23 @@
 		}
 
 		void printCodeTable(void){
-			printf("Code Table : \n\tindex | bit count |  code | char\n");
+			printf("\nCode Table : \n\tduplicate | index | bit count |  code | char\n");
 			if(this->frequencies == NULL || this->frequencies_s <= 0 || this->codeTable == NULL || this->codeTable_s <= 0 || this->treeLetters == NULL || this->treeLetters_s <=0){
                                 printf("NULL\n");
                                 return;
                         }
 			for(int i=0; i<this->frequencies_s; i++){
-				printf("\t%d    | %d        | %s     | %c\n", i, this->codeTable[i], this->getCodeBinary(i).c_str(), this->treeLetters[i]);
+				int entryCount = this->codeTable[i];
+				std::string entryString = this->getCodeBinary(i);
+				char entryLetter = this->treeLetters[i];
+				std::string duplicate = "\033[0;32m  valid\033[0m";
+				for(int j=0; j<this->frequencies_s; j++){
+					if(j==i) continue;
+					if(entryCount == this->codeTable[j] && entryString == this->getCodeBinary(j)){
+						duplicate = "\033[0;31minvalid\033[0m";
+					}
+				}
+				printf("%s - %d    | %d        | %s     | %c\n", duplicate.c_str(), i, entryCount, entryString.c_str(), entryLetter);
 			}printf("\n");
 		}
 

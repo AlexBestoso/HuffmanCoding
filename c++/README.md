@@ -1,10 +1,8 @@
 # Huffman Coding - c++
 
 Development Notes : 
+I've created a new print function that prints out the tree's source node indecies and values.
 
-Attack plan: 
+I've also modified the print code table function so that it validates the entries.
 
-- Create debug function for testing getSubIndecies to ensure all one and zero values work as expected.
-	1) generate the tree
-	2) go through each layer 1 by 1 to check the getSubIndecies results
-	3) using the same frequency data, generate a tree by hand to verify sub indecies.
+Duplicates are marked invalid. All invalid entries need to be addressed.
