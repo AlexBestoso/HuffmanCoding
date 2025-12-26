@@ -780,8 +780,6 @@
 			for(int i=0; i<this->codeTable_s; i++){
 				this->codeTable[i] = 0;
 			}
-			off_t tableSize_o = 0;
-			off_t tableCode_o = this->frequencies_s;
 			int converter = this->treeData_s - this->frequencies_s;
 			int zero=-1;
 			int one=-1;
@@ -1327,6 +1325,30 @@
 			for(int i=0; i<this->frequencies_s; i++){
 				printf("\t%d    | %d        | %s     | %c\n", i, this->codeTable[i], this->getCodeBinary(i).c_str(), this->treeLetters[i]);
 			}printf("\n");
+		}
+
+		void printTreeOrigins(void){
+			printf("\n\tTree Origins\n");
+			if(!this->validateTreeData()){
+				printf("NULL\n");
+				return;
+			}
+			for(int t=this->treeDataLayerCount-1, i=0; t>=0; t--){
+				printf("\n\tLayer %d\n", t);
+				for(int j=0; j<this->treeLayerSizes[t]; j++){
+					int zero=-1, one=-1;
+					if(this->getSubIndecies(i, &zero, &one)){
+						int tz = zero == -1 ? -1 : this->treeData[zero];
+						int to = one == -1 ? -1 : this->treeData[one];
+						printf("%s \033[0;33mTree Idx:[%d]%d\t\033[0;35mZero:[%d]%d\t\033[0;36mOne:[%d]%d\033[0m\n", (this->treeData[i] == tz+to || (tz == -1 || to == -1)) ? "\033[0;32mvalid\033[0m" : "\033[0;31minvalid\033[0m", i, this->treeData[i], zero, tz, one, to);
+					}else{
+						int tz = zero == -1 ? -1 : this->treeData[zero];
+						int to = one == -1 ? -1 : this->treeData[one];
+						printf("%s \033[0;33mTree Idx:[%d]%d\t\033[0;35mZero:[%d]%d\t\033[0;36mOne:[%d]%d\033[0m\n", (this->treeData[i] == tz+to || (tz == -1 || to == -1)) ? "\033[0;32mvalid\033[0m" : "\033[0;31minvalid\033[0m", i, this->treeData[i], zero, tz, one, to);
+					}
+					i++;
+				}
+			}
 		}
 
 		void printTree(void){
