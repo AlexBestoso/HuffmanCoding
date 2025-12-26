@@ -14,12 +14,12 @@ int main(int argc, char *argv[]){
 	size_t ogMsgSize = 0;
 	std::srand(time(0));
 
-	printf("[*] Generating random byte frequencies...");
+	printf("[*] Generating random byte frequencies...\n");
 	for(int i=0; i<256; i++){
 		counts[i] = rand() % (60-1+1)+1;
 		ogMsgSize += counts[i];
 	}
-	printf("%ld bytes.\n[*] Original Msg : \n\033[0;32m", ogMsgSize);
+	printf("[*] Original Msg (size : %ld) : \n\033[0;32m", ogMsgSize);
 	if(dbg != "debug") printf("\tRun %s debug to view generated message.", argv[0]);
 	char *ogMsg = new char[ogMsgSize];
 	for(int i=0, midx=0; i<256 && midx < ogMsgSize; i++){
@@ -47,8 +47,39 @@ int main(int argc, char *argv[]){
 		exit(EXIT_FAILURE);
 	}
 	printf("successful!\n");
-	//hc.printTreeOrigins();
 	
+	size_t compressedData_s = hc.out_s;
+	char *compressedData = new char[compressedData_s];
+	printf("[*] Generated Output (size : %ld):\n", hc.out_s);
+	if(dbg != "debug") printf("\t\033[0;32mRun %s debug to view generated message.\033[0m", argv[0]);
+	for(int i=0; i<hc.out_s; i++){
+		compressedData[i] = hc.out[i];
+		
+		if(dbg == "debug"){
+			if((i%16) == 0) printf("\n");
+			printf("%x ", hc.out[i]&0xff);
+		}
+	}
+	printf("\n");
+
+	printf("[*] Attempting decompression...");
+	if(!hc.decompress(compressedData, compressedData_s)){
+		printf("Failed %s\n", hc.getErrorMessage().c_str());
+		printf("\033[5mDATA DUMP\033[0;31m\n");
+                hc.printTreeLetters();
+                printf("\n\033[0;32m");
+                hc.printFrequencies();
+                printf("\n\033[0;33m");
+                hc.printCodeTable();
+                printf("\n\033[1;34m");
+                hc.printTree();
+                delete[] ogMsg;
+		delete[] compressedData;
+                printf("\033[0m");
+                exit(EXIT_FAILURE);
+	}
+	printf("success!\n");
 	delete[] ogMsg;
+	delete[] compressedData;
 	exit(EXIT_SUCCESS);
 }

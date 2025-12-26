@@ -19,6 +19,6 @@ while [ 1==1 ]; do
 		echo -en "Unexpected error code $err."
 		break;
 	fi 
-	sleep 1
+	sleep 1	
 done
 

@@ -997,12 +997,6 @@
 		}
 
 		bool encode(char *data, size_t dataSize){
-			if(!this->plantTree()){
-				this->setError(0x1200, "encode() - failed to plant tree.");
-				return false;
-			}
-			printf("[DBG] Tree Planted!\n");
-			
 			this->destroyOut();
 			this->out_s = 0;
 			int bodySize = 0;
@@ -1030,7 +1024,7 @@
 			this->out[headerSize] = outRemainder;
 			for(int i=0, o=headerSize+1; i<dataSize && o<this->out_s; i++){
 				int codeIndex = this->charToTableIndex(data[i]);
-				std::string binary = getCodeBinary(codeIndex);
+				std::string binary = this->getCodeBinary(codeIndex);
 				for(int j=0; j<binary.length() && o<this->out_s; j++){
 					int bit = binary[j] == '0' ? 0 : 1;
 					this->out[o] += bit << (7-bitLoop);
@@ -1435,12 +1429,6 @@
 			
 			if(!this->generateCodeTable()){
 				this->setError(5555, "compress() - failed to generate code table.");
-				return false;
-			}
-
-			printf("[DBG} : \n");
-			if(this->printCodeTable() == false){
-				this->setError(4321, "compress() - printCodeTable detected an invalid code table!\n");
 				return false;
 			}
 
