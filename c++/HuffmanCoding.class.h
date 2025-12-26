@@ -786,7 +786,7 @@
 			int queueFill=0;
 			int start = this->treeLayerIndecies[1];
 			int bitArray[2] = {0};
-			for(int i=start; i>=0; i--){
+			for(int i=0; i<=start; i++){
 				if(this->isBaseIndex(i)){
 					this->setError(3234, "generateCodeTable() - huffman tree missaligned.");
 					return false; // we start one layer away from the leafs
@@ -858,8 +858,8 @@
 			std::string ret = "";
 			int codeSize = this->codeTable[idx];
 			int code = this->codeTable[this->frequencies_s+idx];
-			for(int i=0; i<codeSize; i++){
-				int bit = (code >> (7-i)) & 1;
+			for(int i=codeSize-1;i>=0; i--){
+				int bit = 1 & (code>>i);
 				ret += std::to_string(bit);
 			}
 			return ret;
@@ -1316,25 +1316,29 @@
 			}printf("\n");
 		}
 
-		void printCodeTable(void){
-			printf("\nCode Table : \n\tduplicate | index | bit count |  code | char\n");
+		bool printCodeTable(void){
+			printf("\nCode Table : \nduplicate\tindex(translated)\tbit count\tcode\tchar\tfrequency\n");
 			if(this->frequencies == NULL || this->frequencies_s <= 0 || this->codeTable == NULL || this->codeTable_s <= 0 || this->treeLetters == NULL || this->treeLetters_s <=0){
                                 printf("NULL\n");
-                                return;
+                                return false;
                         }
+			bool ret = true;
 			for(int i=0; i<this->frequencies_s; i++){
 				int entryCount = this->codeTable[i];
 				std::string entryString = this->getCodeBinary(i);
 				char entryLetter = this->treeLetters[i];
+				int entryFrequency = this->frequencies[i];
 				std::string duplicate = "\033[0;32m  valid\033[0m";
 				for(int j=0; j<this->frequencies_s; j++){
 					if(j==i) continue;
 					if(entryCount == this->codeTable[j] && entryString == this->getCodeBinary(j)){
 						duplicate = "\033[0;31minvalid\033[0m";
+						ret = false;
 					}
 				}
-				printf("%s - %d    | %d        | %s     | %c\n", duplicate.c_str(), i, entryCount, entryString.c_str(), entryLetter);
+				printf("%s - %d(%ld)\t%d\t%s\t%c\t%d\n", duplicate.c_str(), i, i+(this->treeData_s-this->frequencies_s), entryCount, entryString.c_str(), entryLetter, entryFrequency);
 			}printf("\n");
+			return ret;
 		}
 
 		void printTreeOrigins(void){
@@ -1347,14 +1351,15 @@
 				printf("\n\tLayer %d\n", t);
 				for(int j=0; j<this->treeLayerSizes[t]; j++){
 					int zero=-1, one=-1;
+					std::string topNode = this->treeDataTypes[i] == 1 ? "\033[30;43mtop node\033[0m" : "\033[30;47mbottom node\033[0m";
 					if(this->getSubIndecies(i, &zero, &one)){
 						int tz = zero == -1 ? -1 : this->treeData[zero];
 						int to = one == -1 ? -1 : this->treeData[one];
-						printf("%s \033[0;33mTree Idx:[%d]%d\t\033[0;35mZero:[%d]%d\t\033[0;36mOne:[%d]%d\033[0m\n", (this->treeData[i] == tz+to || (tz == -1 || to == -1)) ? "\033[0;32mvalid\033[0m" : "\033[0;31minvalid\033[0m", i, this->treeData[i], zero, tz, one, to);
+						printf("%s \033[0;33mTree Idx:[%d]%d\t\033[0;35mZero:[%d]%d\t\033[0;36mOne:[%d]%d\033[0m\t%s\n", (this->treeData[i] == tz+to || (tz == -1 || to == -1)) ? "\033[0;32mvalid\033[0m" : "\033[0;31minvalid\033[0m", i, this->treeData[i], zero, tz, one, to, topNode.c_str());
 					}else{
 						int tz = zero == -1 ? -1 : this->treeData[zero];
 						int to = one == -1 ? -1 : this->treeData[one];
-						printf("%s \033[0;33mTree Idx:[%d]%d\t\033[0;35mZero:[%d]%d\t\033[0;36mOne:[%d]%d\033[0m\n", (this->treeData[i] == tz+to || (tz == -1 || to == -1)) ? "\033[0;32mvalid\033[0m" : "\033[0;31minvalid\033[0m", i, this->treeData[i], zero, tz, one, to);
+						printf("%s \033[0;33mTree Idx:[%d]%d\t\033[0;35mZero:[%d]%d\t\033[0;36mOne:[%d]%d\033[0m\t%s\n", (this->treeData[i] == tz+to || (tz == -1 || to == -1)) ? "\033[0;32mvalid\033[0m" : "\033[0;31minvalid\033[0m", i, this->treeData[i], zero, tz, one, to, topNode.c_str());
 					}
 					i++;
 				}
@@ -1390,26 +1395,6 @@
 				pretty=0;
 				printf("\n");
 			}
-		}
-
-		bool debug(){
-			printf("\nDebugging!\n");
-			int zero=-1;
-			int one=-1;
-			for(int i=this->treeDataLayerCount-1; i>=0; i--){
-				int layerStart = this->treeLayerIndecies[i];
-				int layerEnd = layerStart-this->treeLayerSizes[i];
-				printf("DEBUG LAYER %d, start:%d, end:%d\n", i, layerStart, layerEnd);
-				for(int j=1+layerEnd; j<layerStart+1; j++){
-					if(!this->getSubIndecies(j, &zero, &one)){
-						this->setError(444, "debug() - failed to get sub indecies.");
-						return false;
-					}
-					printf("%d) %d is of 0:%d[%d], 1:%d[%d] - %s", j, this->treeData[j], zero > -1 ? this->treeData[zero] : 0x00, zero, one > -1 ? this->treeData[one] : 0x00, one, this->treeDataTypes[j] == 1 ? "\033[0;42mtop\033[0m\n" : "\033[0;41mbottom\033[0m\n");
-				}
-			}
-			printf("leaving function.\n");
-			return false;
 		}
 
 		bool compress(char *data, size_t dataSize){
@@ -1448,15 +1433,16 @@
                                 return false;
                         }
 			
-		//	this->debug();
-		//	return false;
 			if(!this->generateCodeTable()){
 				this->setError(5555, "compress() - failed to generate code table.");
 				return false;
 			}
 
-			printf("[DBG} : ");
-			this->printCodeTable();
+			printf("[DBG} : \n");
+			if(this->printCodeTable() == false){
+				this->setError(4321, "compress() - printCodeTable detected an invalid code table!\n");
+				return false;
+			}
 
 			if(!this->encode(data, dataSize)){
 				this->setError(5, "compress(char *data, size_t dataSize) - Failed to encode data.");
