@@ -79,7 +79,38 @@ int main(int argc, char *argv[]){
                 exit(EXIT_FAILURE);
 	}
 	printf("success!\n");
+
+	printf("[*] Generated Output (size : %ld):\n", hc.out_s);
+	if(dbg != "debug") printf("\t\033[0;32mRun %s debug to view generated message.\033[0m", argv[0]);
+	for(int i=0; i<hc.out_s; i++){
+		compressedData[i] = hc.out[i];
+		
+		if(dbg == "debug"){
+			if((i%16) == 0) printf("\n");
+			printf("%x ", hc.out[i]&0xff);
+		}
+	}
+	printf("\n");
+
+	if(ogMsgSize != hc.out_s){
+		printf("[FAILED] Invalid message. Decompressed message is not the same size as the original!\n");
+		delete[] ogMsg;
+        	delete[] compressedData;
+		exit(EXIT_FAILURE);
+	}
+	
+	for(int i=0; i<ogMsgSize; i++){
+		if(ogMsg[i] != hc.out[i]){
+			printf("[FAILED] Invalid message on index %d. Original message is not the same as the decompressed message.\n", i);
+			delete[] ogMsg;
+        		delete[] compressedData;
+			exit(EXIT_FAILURE);
+		}
+	}
+
 	delete[] ogMsg;
 	delete[] compressedData;
+
+	printf("[SUCCESS] Message passed compression AND decompression.");
 	exit(EXIT_SUCCESS);
 }

@@ -893,12 +893,8 @@
 		 * Int is stored big endian
 		 * */
 		bool packHeader(void){
-			if(this->frequencies == NULL){
-				this->setError(1000, "packHeader(void) - frequencies is null.");
-				return false;
-			}
-			if(this->frequencies_s <= 0){
-				this->setError(1001, "packHeader(void) - frequencies_s <= 0. Treating as null.");
+			if(!this->validateFrequencies()){
+				this->setError(1000, "packHeader(void) - failed to validate frequencies.");
 				return false;
 			}
 			if(this->treeLetters == NULL){
@@ -910,9 +906,9 @@
                                 return false;
                         }
 			size_t headerSize = (this->frequencies_s*sizeof(int)) + this->treeLetters_s + 1;
-			char byteOne_count = this->treeLetters_s;
+			int byteOne_count = this->frequencies_s-1;
 			
-			this->out[0] = byteOne_count;
+			this->out[0] = (char)byteOne_count;
 			for(int i=1, j=0; i<headerSize && i<this->out_s && j<this->treeLetters_s && j<this->frequencies_s; i++){
 				char freq_a=0,freq_b=0,freq_c=0,freq_d=0, letter=this->treeLetters[j];
 				freq_a = (this->frequencies[j] >> 8*3) & 0xff;
@@ -957,11 +953,12 @@
 
 			this->destroyTreeLetters();
 			this->destroyFrequencies();
-			char letterCount = data[0];
-			this->frequencies_s = (size_t)letterCount;
+			size_t letterCount = ((size_t)data[0])&0xff;
+			this->frequencies_s = letterCount+1;
 			this->treeLetters_s = this->frequencies_s;
 			this->frequencies = new int[this->frequencies_s];
 			this->treeLetters = new char[this->treeLetters_s];
+			this->frequencyMax=0;
 			
 			int headerSize = 1 + (this->frequencies_s*sizeof(int)) + this->treeLetters_s;
 			for(int i=1, j=0; i<headerSize && i<dataSize && j<this->frequencies_s && j<this->treeLetters_s; i++){
@@ -991,6 +988,7 @@
 				
 				this->frequencies[j] = freq;
 				this->treeLetters[j] = letter;
+				this->frequencyMax += freq;
 				j++;
 			}
 			return true;
@@ -1443,9 +1441,12 @@
 
 		bool decompress(char *data, size_t dataSize){
 			this->clearError();
-			this->destroyTreeLetters();
-			this->destroyFrequencies();
-			this->destroyOut();
+			this->clearError();
+                        this->destroyCodingTable();
+                        this->destroyTreeLetters();
+                        this->destroyFrequencies();
+                        this->destroyOut();
+                        this->tablesSorted = false;
 			if(data == NULL){
                                 this->setError(100, "decompress(char *data, size_t dataSize) - data is null.");
                                 return false;
@@ -1454,37 +1455,21 @@
                                 this->setError(101, "decompress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
                                 return false;
                         }
+
 			if(!this->unpackHeader(data, dataSize)){
 				this->setError(102, "decompress(char *data, size_t dataSize) - faiiled to unpack header.");
 				return false;
 			}
 
-			#if HUFFMAN_DEBUGGING == 1
-                        int freqMax = 0;
-                        printf("[DBG] Imported Frequencies : \n\t");
-                        for(int i=0; i<this->frequencies_s; i++){
-                                printf("'%c'(%d) ", this->treeLetters[i], this->frequencies[i]);
-                                freqMax += this->frequencies[i];
-                        }
-                        printf("\n");
-                        printf("[DBG] Expected Max : %d\n", freqMax);
-                        #endif
-
 			if(!this->plantTree()){
                                 this->setError(103, "decompress(char *data, size_t dataSize) - failed to plant tree.");
                                 return false;
                         }
-                        printf("[DBG] Tree Planted!\n");
-			printf("Tree : ");
-                        for(int i=0; i<this->treeData_s; i++)
-                                printf("[%d]%d ", i, this->treeData[i]);
-                        printf("\n");
-                        printf("-----CODE TABLE----\nIDX | BIT COUNT | ENCODED VAL | ORIGINAL VAL |\n");
-                        for(int i=0; i<this->frequencies_s; i++){
-                                printf("%d  |    %d    |    %s    |       %c    |\n", i, this->codeTable[i], this->getCodeBinary(i).c_str(), this->treeLetters[i]);
-                        }
-                        printf("---------------\n");
-		
+
+			if(!this->generateCodeTable()){
+				this->setError(1304, "decompress() - failed to generate code table.");
+				return false;
+			}
 			if(!this->decode(data, dataSize)){
 				this->setError(104, "decompress(char *data, size_t dataSize) - failed to decode the data.");
 				return false;
