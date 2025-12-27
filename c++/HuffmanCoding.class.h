@@ -25,11 +25,30 @@
                         size_t workBuffer_s;
                         int *workBuffer;
                         int *workTypeBuffer;
+
+			char *header;
+			size_t header_s;
+
+			char *body;
+			size_t body_s;
 			
 			bool tablesSorted;
 
 			int error;
 			std::string error_msg;
+
+			void destroyHeader(void){
+				if(this->header != NULL){
+					delete[] this->header;
+				}
+				this->header_s = 0;
+			}
+			void destroyBody(void){
+				if(this->body != NULL){
+					delete[] this->body;
+				}
+				this->body_s = 0;
+			}
 
 			void destroyWorkBuffer(void){
 				if(workBuffer != NULL){
@@ -446,80 +465,6 @@
 				delete[] sortList2;
 				delete[] sortList;
 				delete[] indexList;
-				return true;
-			}
-
-			// TODO: Fix for when target == 0.
-			bool findRelativeLayers(int target, int *nodeCache, size_t nodeCache_s, size_t *out_topSize, size_t *out_bottomSize, int *out_segmentStart){
-				if(nodeCache == NULL){
-					this->setError(520, "findRelativeLayers(int target, int *nodeCache, size_t nodeCache_s, int *out_topSize, int *out_bottomSize, int *out_segmentStart) - nodeCache is null.");
-					return false;
-				}
-				if(nodeCache_s <= 0){
-					this->setError(521, "findRelativeLayers(int target, int *nodeCache, size_t nodeCache_s, int *out_topSize, int *out_bottomSize, int *out_segmentStart) - nodeCache_s <= 0. treating as null.");
-					return false;
-				}
-				if(!this->validateFrequencies()){
-					this->setError(522, "findRelativeLayers(int target, int *nodeCache, size_t nodeCache_s, int *out_topSize, int *out_bottomSize, int *out_segmentStart) - failed to validate frequencie.");
-					return false;
-				}
-				if(target >= nodeCache_s){
-					this->setError(523, "findRelativeLayers(int target, int *nodeCache, size_t nodeCache_s, int *out_topSize, int *out_bottomSize, int *out_segmentStart) - target >= nodeCache_s, treating as out of bounds.");
-					return false;
-				}
-
-				out_topSize[0] = 0;
-				out_bottomSize[0] = 0;
-				out_segmentStart[0] = -1;
-				int layerStart = 0;
-				int layerSize=0;
-				bool found=false;
-				for(int i=0, tracer=-1; i<nodeCache_s; i++){
-					if(i == target)
-						found = true;
-					if(tracer == -1){
-						tracer = nodeCache[i];
-						layerSize=1;
-						layerStart = i;
-						continue;
-					}
-
-
-					if(tracer >= nodeCache[i]){
-						layerSize++;
-						tracer = nodeCache[i];
-						continue;
-					}
-					
-					if(found) break;
-					layerStart = i;
-					layerSize=1;
-					tracer = nodeCache[i];
-				}
-
-				out_segmentStart[0] = layerStart;
-				out_topSize[0] = layerSize;
-
-				layerStart = layerStart+layerSize;
-				found=false;
-				for(int i=layerStart, tracer=-1; i<nodeCache_s; i++){
-					if(tracer == -1){
-						tracer = nodeCache[i];
-						layerSize=1;
-						layerStart = i;
-						continue;
-					}
-
-					if(tracer >= nodeCache[i]){
-						layerSize++;
-						tracer = nodeCache[i];
-						continue;
-					}
-
-					break;
-				}
-				out_bottomSize[0] = layerSize;
-
 				return true;
 			}
 
@@ -1278,6 +1223,11 @@
 			this->treeLayerIndecies = NULL;
                         this->treeLayerSizes = NULL;
                         this->treeDataLayerCount = 0;
+			this->header = NULL;
+                        this->header_s = 0;
+                        this->body = NULL;
+                        this->body_s = 0;
+
 			this->clearError();
 		}
 		~HuffmanCoding(){
@@ -1288,6 +1238,8 @@
 			this->destroyTreeData();
 			this->destroyWorkQueue();
 			this->destroyTreeLayers();
+			this->destroyBody();
+			this->destroyHeader();
 		}
 
 		void printTreeLetters(void){
