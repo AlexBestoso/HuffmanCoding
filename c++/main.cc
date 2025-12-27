@@ -93,6 +93,14 @@ int main(int argc, char *argv[]){
 	printf("\n");
 
 	if(ogMsgSize != hc.out_s){
+		printf("\n\033[5mDATA DUMP\033[0;31m\n");
+                hc.printTreeLetters();
+                printf("\n\033[0;32m");
+                hc.printFrequencies();
+                printf("\n\033[0;33m");
+                hc.printCodeTable();
+                printf("\n\033[1;34m");
+                hc.printTree();
 		printf("[FAILED] Invalid message. Decompressed message is not the same size as the original!\n");
 		delete[] ogMsg;
         	delete[] compressedData;

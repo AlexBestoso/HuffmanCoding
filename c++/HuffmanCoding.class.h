@@ -908,6 +908,8 @@
 			size_t headerSize = (this->frequencies_s*sizeof(int)) + this->treeLetters_s + 1;
 			int byteOne_count = this->frequencies_s-1;
 			
+			printf("packing : \n");
+			this->printTreeOrigins();
 			this->out[0] = (char)byteOne_count;
 			for(int i=1, j=0; i<headerSize && i<this->out_s && j<this->treeLetters_s && j<this->frequencies_s; i++){
 				char freq_a=0,freq_b=0,freq_c=0,freq_d=0, letter=this->treeLetters[j];
@@ -991,6 +993,8 @@
 				this->frequencyMax += freq;
 				j++;
 			}
+			printf("Unpacking :\n");
+			this->printTreeOrigins();
 			return true;
 		}
 
