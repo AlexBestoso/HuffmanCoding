@@ -2,6 +2,8 @@
 
 Development Notes : 
 
+Today we're focused on the unpack header, and are unpacking the container size.
+
 there is a condtion where we get a decompression failure.
 
 We need to modify the compression header structure.
