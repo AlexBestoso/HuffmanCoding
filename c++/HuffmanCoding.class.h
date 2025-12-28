@@ -571,24 +571,24 @@
 					}
 					if(this->treeData[i] == sum){
 						if(i==0){
-							sum = tracer + sum;
+							sum = tracer + this->treeData[i];
 							workBuffer[workBuffer_fill] = sum;
-                                                	workTypeBuffer[workBuffer_fill] = 0;
-                                                	workTypeBuffer[workBuffer_fill-1] = 0;
+                                                	workTypeBuffer[workBuffer_fill] = 1;
+                                                	workTypeBuffer[workBuffer_fill-1] = 1;
                                                 	workBuffer_fill++;
 
-							sum = this->treeData[i] + sum;
-							workBuffer[workBuffer_fill] = sum;
-                                                        workTypeBuffer[workBuffer_fill] = 1;
-                                                        workBuffer_fill++;
+							//sum = this->treeData[i] + sum;
+							//workBuffer[workBuffer_fill] = sum;
+                                                        //workTypeBuffer[workBuffer_fill] = 1;
+                                                        //workBuffer_fill++;
 							break;
 						}
-						sum = tracer + sum;
+						sum = tracer + this->treeData[i];
 						workBuffer[workBuffer_fill] = sum;
                                                 workTypeBuffer[workBuffer_fill] = 1;
-                                                workTypeBuffer[workBuffer_fill-1] = 0;
+                                                workTypeBuffer[workBuffer_fill-1] = 1;
                                                 workBuffer_fill++;
-						tracer = this->treeData[i];
+						tracer = -1;
 						continue;
 					}
 					if(this->treeData[i] < sum){
@@ -700,7 +700,7 @@
 			}
 			this->codeTable[targetIndex]++;
 			int codeIdx = targetIndex+this->frequencies_s;
-			this->codeTable[codeIdx] = (this->codeTable[codeIdx] << 1) + (1&bit);
+			this->codeTable[codeIdx] = (this->codeTable[codeIdx] << 1) + (bit&0x01);
 			return true;
 		}
 		bool generateCodeTable(void){
@@ -832,60 +832,153 @@
 			return -1;
 		}
 
-		/* Header Structure:
-		 *  1 byte number of tree letters, N.
-		 *  followed by N*(4 byte int, + 1 byte char)
+		/* Header Structure: we can use what we got to calculate padding in the body.
+		 *  9 bits to store freqiency count
+		 *  (
+			3 bits to store container size
+			1 to 4 bytes containing frequency variable.
+			1 byte for the char.
+		    )
 		 * Int is stored big endian
 		 * */
-		bool packHeader(void){
+		int packHeader(void){
 			if(!this->validateFrequencies()){
 				this->setError(1000, "packHeader(void) - failed to validate frequencies.");
-				return false;
+				return -1;
 			}
-			if(this->treeLetters == NULL){
-                                this->setError(1002, "packHeader(void) - treeLetters is null.");
-                                return false;
-                        }
-                        if(this->treeLetters_s <= 0){
-                                this->setError(1003, "packHeader(void) - treeLetters_s <= 0. Treating as null.");
-                                return false;
-                        }
-			size_t headerSize = (this->frequencies_s*sizeof(int)) + this->treeLetters_s + 1;
-			int byteOne_count = this->frequencies_s-1;
+			// TODO: validate letters.
+			if(this->frequencies_s != this->treeLetters_s){
+				this->setError(12323, "packHeader() - frequency and tree letter arrays are missaligned.");
+				return -1;
+			}
+
+			this->destroyHeader();
+
+			int headerBitCount=12;
+			for(int i=0; i<this->frequencies_s; i++){
+				//  byte for freqency container size + (number of bytes the size required to store) + byte for the literal letter
+				headerBitCount += 3 + (((this->frequencies[i]/0xff)+ 1)*8) + 8;
+			}
+			this->header_s = (headerBitCount % 8) != 0 ? (headerBitCount/8)+1 : headerBitCount/8; 
+			this->header = new char[this->header_s];
+
+			// pack entry count
+			// first 3 bits are reserved for padding.
+			this->header[0] = (char)(this->frequencies_s >> 3); // add upper 5 bits
+			this->header[1] = (char)((this->frequencies_s & 0x07) << 7); // add lower 3 bits
+	
+			int byteBitIndex = 3; // 11 % 8 == 3
+			int hi=1;
+			for(int i=0; i<this->frequencies_s && hi<this->header_s; i++){
+				int freq = this->frequencies[i];
+				char letter = this->treeLetters[i];
+				int containerSize = (((this->frequencies[i]/0xff)) + 1);
 			
-			printf("packing : \n");
-			this->printTreeOrigins();
-			this->out[0] = (char)byteOne_count;
-			for(int i=1, j=0; i<headerSize && i<this->out_s && j<this->treeLetters_s && j<this->frequencies_s; i++){
-				char freq_a=0,freq_b=0,freq_c=0,freq_d=0, letter=this->treeLetters[j];
-				freq_a = (this->frequencies[j] >> 8*3) & 0xff;
-				freq_b = (this->frequencies[j] >> 8*2) & 0xff;
-				freq_c = (this->frequencies[j] >> 8*1) & 0xff;
-				freq_d = this->frequencies[j] & 0xff;
-				this->out[i] = freq_a; i++;
-				if(!(i<this->out_s)){
-					this->setError(1004, "packHeader(void) - i out of bounds.");
-					return false;
+				// Pack container size.
+				for(int j=2; j>=0; j--){
+					this->header[hi] += ((containerSize >> (2-j)) & 0x01) << (7-byteBitIndex);
+					byteBitIndex = (byteBitIndex + 1) % 8;
+					if(byteBitIndex == 0){
+						hi++;
+						if(!(hi < this->header_s)){
+							this->setError(23453, "packHeader() - hi is out of bounds.");
+							return -1;
+						}
+						this->header[hi] = 0;
+					}
 				}
-				this->out[i] = freq_b; i++;
-				if(!(i<this->out_s)){
-					this->setError(1005, "packHeader(void) - i out of bounds.");
-					return false;
+								
+				// Pack frequency value
+				for(int j=containerSize-1; j>=0; j--){
+					int shifter = j*8;
+					int byte = (freq>>shifter)&0xff;
+					for(int a=0; a<8; a++){
+						this->header[hi] += ((byte >> (7-a)) & 0x01) << (7-byteBitIndex);
+						byteBitIndex = (byteBitIndex + 1) % 8;
+						if(byteBitIndex == 0){
+							hi++;
+							if(!(hi<this->header_s)){
+								this->setError(47775345, "packHeader() - hi is out of bounds.");
+								return -1;
+							}
+							this->header[hi] = 0;
+						}
+					}
 				}
-				this->out[i] = freq_c; i++;
-				if(!(i<this->out_s)){
-					this->setError(1006, "packHeader(void) - i out of bounds.");
-					return false;
+
+				// pack tree letter
+				for(int j=7; j>=0; j--){
+					this->header[hi] += ((letter >> (7-j)) & 0x01) << (7-byteBitIndex);
+					byteBitIndex = (byteBitIndex + 1) % 8;
+					if(byteBitIndex == 0){
+						hi++;
+						if(!(hi<this->header_s)){
+							this->setError(47537457, "packHeader() - hi is out of bounds.");
+							return -1;
+						}
+						this->header[hi] = 0;
+					}
+
 				}
-				this->out[i] = freq_d; i++;
-				if(!(i<this->out_s)){
-					this->setError(1007, "packHeader(void) - i out of bounds.");
-					return false;
+			}
+
+			return byteBitIndex;
+		}
+		
+		int getEncodeCharIndex(char target){
+			// validate tree letters.
+			for(int i=0; i<this->treeLetters_s; i++){
+				if(this->treeLetters[i] == target) return i;
+			}
+	
+			return -1;
+		}	
+	
+		int packBody(int startingBitIndex, char *data, size_t dataSize){
+			if(!this->validateFrequencies()){
+				this->setError(345, "packBody() - failed to validate frequencies.");
+				return -1;
+			}
+			// validate code table.
+			// validate header.
+
+			this->destroyBody();
+
+			// calculate body size
+			for(int i=0; i<this->frequencies_s; i++){
+				this->body_s += this->codeTable[i] * this->frequencies[i];
+			}
+			this->body_s = (this->body_s % 8) == 0 ? this->body_s/8 : (this->body_s/8)+1;
+			if(startingBitIndex > 0)
+				this->body_s++;
+
+			this->body = new char[this->body_s];
+			int bitIdx=startingBitIndex % 8;
+			int bi=0;
+			this->body[0] = 0;
+			for(int i=0; i<dataSize && bi<this->body_s; i++){
+				int tableIdx = this->getEncodeCharIndex(data[i]);
+				if(tableIdx == -1){
+					this->setError(453445, "packBody() - failed to get char index.");
+					return -1;
 				}
-				this->out[i] = letter;
-				j++;
-			}	
-			return true;
+				int bitCount = this->codeTable[tableIdx];
+				int encodedChar = this->codeTable[tableIdx+this->frequencies_s];
+				for(int j=0; j<bitCount; j++){
+					body[bi] += ((encodedChar >> ((bitCount-1)-j)) & 0x01) << (7-bitIdx);
+					bitIdx = (bitIdx + 1) % 8;
+					if(bitIdx == 0){
+						bi++;
+						if(!(bi<this->body_s)){
+							this->setError(435, "packBody() - bi is out of bounds.");
+							return -1;
+						}
+						this->body[bi] = 0;
+					}
+				}
+			}
+			this->body_s -= (this->body_s-bi);
+			return bitIdx;
 		}
 		
 		bool unpackHeader(char *data, size_t dataSize){
@@ -945,44 +1038,39 @@
 
 		bool encode(char *data, size_t dataSize){
 			this->destroyOut();
-			this->out_s = 0;
-			int bodySize = 0;
-			for(int i=0; i<this->frequencies_s; i++){
-				int freq = this->frequencies[i];
-				int bitCount = this->codeTable[i];
-				bodySize += bitCount * freq;
-			}
 
-
-			size_t headerSize = (this->frequencies_s*sizeof(int)) + this->treeLetters_s + 1; // the one continas the treeLetters_s
-			char outRemainder = (bodySize%8);
-			bodySize = outRemainder == 0 ? bodySize/8 : (bodySize/8) + 1;
-
-			this->out_s = headerSize + bodySize + 1; // the one contains the outRemainder
-			this->out = new char[this->out_s];
-			for(int i=0; i<this->out_s; i++) this->out[i] = 0x00;
-
-			if(!this->packHeader()){
+			int headerPadding = this->packHeader();
+			if(headerPadding <= -1){
 				this->setError(1201, "encode() - failed to pack header.");
 				return false;
 			}
 
-			int bitLoop=0;
-			this->out[headerSize] = outRemainder;
-			for(int i=0, o=headerSize+1; i<dataSize && o<this->out_s; i++){
-				int codeIndex = this->charToTableIndex(data[i]);
-				std::string binary = this->getCodeBinary(codeIndex);
-				for(int j=0; j<binary.length() && o<this->out_s; j++){
-					int bit = binary[j] == '0' ? 0 : 1;
-					this->out[o] += bit << (7-bitLoop);
-					bitLoop++;
-					if((bitLoop%8) == 0){
-						bitLoop=0;
-						o++;
-					}
-				}
+			int bodyPadding = this->packBody(headerPadding, data, dataSize);
+			if(bodyPadding <= -1){
+				this->setError(4324, "encode() - failed to pack body.");
+				return false;
+			}
+			
+			this->out_s = this->header_s + this->body_s;
+			this->out = new char[this->out_s];
+			// Join padding with header
+			for(int i=0; i<this->header_s; i++){
+				this->out[i] = i == 0 ? ((bodyPadding&0x7)<<5) + this->header[i] : this->header[i];
 			}
 
+			// Bind header tail to body head
+			if(headerPadding != 0)
+				this->out[this->header_s-1] += this->body[0]; 
+			else
+				this->out[this->header_s] = this->body[0];
+
+			// fetch rest of body.
+			for(int i=1, o=this->header_s; i<this->body_s && o<this->out_s; i++, o++){
+				this->out[o] = this->body[i];
+			}
+			
+
+			printf("\nHeader Size : %ld | Body Size : %ld\n", this->header_s, this->body_s);
 			return true;
 		}
 
@@ -1108,14 +1196,14 @@
 				}
 				if(this->treeData[i] == sum){
 					if(i==sourceLayerEnd+1){
-						sum = tracer + sum;
+						sum = tracer + this->treeData[i];
 						if(t==targetIndex){
-							zeroIndex[0] = tracerIdx;
-							oneIndex[0] = t+1;
+							zeroIndex[0] = i;
+							oneIndex[0] = tracerIdx;
 							return true;
 						}
 						t--;
-						if(!(t>targetLayerEnd)){
+						/*if(!(t>targetLayerEnd)){
 							this->setError(453, "getSubIndecies() - tree misaligned.");
 							return false;
 						}
@@ -1124,18 +1212,18 @@
 							zeroIndex[0] = i;
 							oneIndex[0] = t+1;
 							return true;
-						}
+						}*/
 						break;
 					}
-					sum = tracer + sum;
+					sum = tracer + this->treeData[i];
 					if(t==targetIndex){
-						zeroIndex[0] = tracerIdx;
-						oneIndex[0] = t+1;
+						zeroIndex[0] = i;
+						oneIndex[0] = tracerIdx;
 						return true;
 					}
 					t--;
-					tracer = this->treeData[i];
-					tracerIdx=i;
+					tracer = -1;
+					tracerIdx=-1;
 					continue;
 				}
 				if(this->treeData[i] < sum){
