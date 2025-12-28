@@ -833,8 +833,9 @@
 		}
 
 		/* Header Structure: we can use what we got to calculate padding in the body.
+		 *  3 bits to store final bit index
 		 *  9 bits to store freqiency count
-		 *  (
+		 *  entry(
 			3 bits to store container size
 			1 to 4 bytes containing frequency variable.
 			1 byte for the char.
@@ -859,34 +860,48 @@
 				//  byte for freqency container size + (number of bytes the size required to store) + byte for the literal letter
 				headerBitCount += 3 + (((this->frequencies[i]/0xff)+ 1)*8) + 8;
 			}
+			if(headerBitCount < 3+9+3+8+8){
+				this->setError(45345, "packHeader() - invalid header bit count.");
+				return false;
+			}
 			this->header_s = (headerBitCount % 8) != 0 ? (headerBitCount/8)+1 : headerBitCount/8; 
 			this->header = new char[this->header_s];
 
 			// pack entry count
-			// first 3 bits are reserved for padding.
-			this->header[0] = (char)(this->frequencies_s >> 3); // add upper 5 bits
-			this->header[1] = (char)((this->frequencies_s & 0x07) << 7); // add lower 3 bits
-	
-			int byteBitIndex = 3; // 11 % 8 == 3
+			int byteMax = 0x1ff;
+			int byteBitIndex = 3;// first 3 bits are reserved for padding.
+			int countOverflow = 1; // due to this value being 9 bit instead of 8 bit.
+
+			printf("Packing frequency count %ld\n",this->frequencies_s);
+			// pack the first 5 bits of the 9 bit, offset by padding. 
+			this->header[0] = (char)(this->frequencies_s >> (countOverflow+byteBitIndex));
+			// clear the used 5 bits, shift leftovers to the right.
+			this->header[1] = (char)(this->frequencies_s & (byteMax>>(countOverflow+byteBitIndex)));
+			this->header[1] = this->header[1]<<byteBitIndex;
+			byteBitIndex = (byteBitIndex + 9) % 8;
 			int hi=1;
 			for(int i=0; i<this->frequencies_s && hi<this->header_s; i++){
 				int freq = this->frequencies[i];
 				char letter = this->treeLetters[i];
 				int containerSize = (((this->frequencies[i]/0xff)) + 1);
 			
-				// Pack container size.
-				for(int j=2; j>=0; j--){
-					this->header[hi] += ((containerSize >> (2-j)) & 0x01) << (7-byteBitIndex);
-					byteBitIndex = (byteBitIndex + 1) % 8;
-					if(byteBitIndex == 0){
-						hi++;
-						if(!(hi < this->header_s)){
-							this->setError(23453, "packHeader() - hi is out of bounds.");
-							return -1;
-						}
-						this->header[hi] = 0;
+				// Pack container size, 3 bits.
+				printf("Packing container size %d\n", containerSize);
+				countOverflow = (byteBitIndex+3)-7;
+				countOverflow = countOverflow < 0 ? 0 : countOverflow;
+				this->header[hi] += (char)((containerSize>>countOverflow) << (7-(byteBitIndex-countOverflow)-2));
+				if(countOverflow != 0){
+					hi++;
+					if(!(hi<this->header_s)){
+						this->setError(454, "packHeader() - hi is out of bounds.");
+						return false;
 					}
+					//				    111
+					this->header[hi] = (containerSize & (0x7 >> (3-countOverflow))) << (7-(countOverflow-1));
 				}
+
+				byteBitIndex = (byteBitIndex + 3) % 8;
+				
 								
 				// Pack frequency value
 				for(int j=containerSize-1; j>=0; j--){
@@ -986,53 +1001,40 @@
 				this->setError(1100, "unpackHeader(char *data, size_t dataSize) - data is null.");
 				return false;
 			}
-			if(dataSize <= 0){
-				this->setError(1101, "unpackHeader(char *data, size_t dataSize) - dataSize <= 0, treating as null.");
+			if(dataSize <= 2){
+				this->setError(1101, "unpackHeader(char *data, size_t dataSize) - dataSize <= 2, which is invalid, treating as null.");
 				return false;
 			}
 
 			this->destroyTreeLetters();
 			this->destroyFrequencies();
-			size_t letterCount = ((size_t)data[0])&0xff;
-			this->frequencies_s = letterCount+1;
-			this->treeLetters_s = this->frequencies_s;
-			this->frequencies = new int[this->frequencies_s];
-			this->treeLetters = new char[this->treeLetters_s];
-			this->frequencyMax=0;
+			int padding = (int)((data[0] & 0xe0) >> 5);
+			printf("debug unpack : body end padding : %d\n", padding);
+			int bitIdx = 3;
+			int byteMax = 0x1ff;
+			int countOverflow = 1;
+			// clear up to bit idx, 
+			int entryCount = (((int)data[0]) & (byteMax>>(countOverflow+bitIdx))) << (countOverflow+bitIdx);
+			byteMax = 0xff;
+			entryCount += (((int)data[1]) & (byteMax<<countOverflow+bitIdx)) >> (countOverflow+bitIdx);
+			printf("%d total freqency entries.\n", entryCount);
+			byteIdx = (byteIdx + 9) % 8;
+
+			this->resizeTreeLetters(entryCount);
+			this->resizeFrequencies(entryCount);
 			
-			int headerSize = 1 + (this->frequencies_s*sizeof(int)) + this->treeLetters_s;
-			for(int i=1, j=0; i<headerSize && i<dataSize && j<this->frequencies_s && j<this->treeLetters_s; i++){
-				int freq=0;
-				char letter=0x00;
-				freq += data[i] << (8*3); i++;
-				if(!(i<dataSize)){
-					this->setError(1102, "unpackHeader(char *data, size_t dataSize) - i out of bounds.");
-					return false;
-				}
-				freq += data[i] << (8*2); i++;
-				if(!(i<dataSize)){
-					this->setError(1103, "unpackHeader(char *data, size_t dataSize) - i out of bounds.");
-					return false;
-				}
-				freq += data[i] << (8*1); i++;
-				if(!(i<dataSize)){
-					this->setError(1104, "unpackHeader(char *data, size_t dataSize) - i out of bounds.");
-					return false;
-				}
-				freq += data[i]; i++;
-				if(!(i<dataSize)){
-					this->setError(1105, "unpackHeader(char *data, size_t dataSize) - i out of bounds.");
-					return false;
-				}
-				letter = data[i];
-				
-				this->frequencies[j] = freq;
-				this->treeLetters[j] = letter;
-				this->frequencyMax += freq;
-				j++;
+			for(int i=1; i<dataSize; i++){
+				int entryContainerSize=0;
+				int entryFreq=0;
+				char entryChar=0x00;
+
+				// get entry container size
+				int overflow = (byteIdx+3) - 7;
+				overflow = overflow < 0 ? 0 : overflow;
+				entryContainerSize = ((int)data[i]) ;
+				exit(1);
 			}
-			printf("Unpacking :\n");
-			this->printTreeOrigins();
+			
 			return true;
 		}
 
@@ -1053,6 +1055,7 @@
 			
 			this->out_s = this->header_s + this->body_s;
 			this->out = new char[this->out_s];
+			printf("Packing bodyPadding %d\n", bodyPadding);
 			// Join padding with header
 			for(int i=0; i<this->header_s; i++){
 				this->out[i] = i == 0 ? ((bodyPadding&0x7)<<5) + this->header[i] : this->header[i];
