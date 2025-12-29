@@ -1031,22 +1031,26 @@
 				// get entry container size
 				int overflow = (bitIdx+3) - 8;
 				overflow = overflow < 0 ? 0 : overflow;
+				// clear out
 				int clearingMask = (0xff>>(bitIdx)) >> (8-(3+bitIdx-overflow)) << (8-(3+bitIdx-overflow));
-				// clear out : check 		Move in: must include overflow bits being 0ed out, which they should be bc we built it into the mask.
-				// Notes: We know; overflow is handled in mask, is we need to know bits in play, where they start, bitIdx, and where they end, bitidx+play. 
-				entryContainerSize = (((int)data[i]) & clearingMask) >> ();
+				entryContainerSize = (((int)data[i]) & clearingMask);
+				// move in
+				int sum =  bitIdx+2;
+				int shiftAmt = 7-sum;
+				int invShiftAmt = sum-7;
+				entryContainerSize = entryContainerSize >> shiftAmt & 0x7;
 				printf("Bit Index : %d\n", bitIdx);
-				printf("Target Byrte : %x\n", data[i]);
-				printf("Entry size byte count : %d\n", entryContainerSize);
+				printf("Target Byte A: %x\n", data[i]);
+				printf("Entry size byte count A: %d\n", entryContainerSize);
 				if(overflow != 0){
 					i++;
 					if(!(i<dataSize)){
 						this->setError(345, "unpackHeader() - i is out of bounds.");
 						return false;
 					}
-					entryContainerSize += ((int)data[i]) & ((0xff>>(8-overflow)));
-					printf("Target Byrte 2 : %x\n", data[i]);
-					printf("Entry size byte count 2: %d\n", entryContainerSize);
+					entryContainerSize += ((int)data[i]) >> (8-invShiftAmt) & 7;
+					printf("Target Byte B : %x\n", data[i]);
+					printf("Entry size byte count B: %d\n", entryContainerSize);
 				}
 				bitIdx = (bitIdx + 3) % 8;
 
