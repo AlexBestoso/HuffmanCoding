@@ -1028,11 +1028,14 @@
 				int entryFreq=0;
 				char entryChar=0x00;
 
-				// get entry container size
+				/*
+					get entry container size
+				*/
 				int overflow = (bitIdx+3) - 8;
 				overflow = overflow < 0 ? 0 : overflow;
 				// clear out
-				int clearingMask = (0xff>>(bitIdx)) >> (8-(3+bitIdx-overflow)) << (8-(3+bitIdx-overflow));
+				int maskShift = 3+bitIdx-overflow;
+				int clearingMask = (0xff>>(bitIdx)) >> (8-maskShift) << (8-maskShift);
 				entryContainerSize = (((int)data[i]) & clearingMask);
 				// move in
 				int sum =  bitIdx+2;
@@ -1054,7 +1057,10 @@
 				}
 				bitIdx = (bitIdx + 3) % 8;
 
-				
+				/*
+					get entry frequency value
+				*/
+				int freqBits = entryContainerSize*8;
 				
 				exit(1);
 			}
