@@ -879,6 +879,7 @@
 			this->header[1] = (char)(this->frequencies_s & (byteMax>>(countOverflow+byteBitIndex)));
 			this->header[1] = this->header[1]<<byteBitIndex;
 			byteBitIndex = (byteBitIndex + 9) % 8;
+
 			int hi=1;
 			for(int i=0; i<this->frequencies_s && hi<this->header_s; i++){
 				int freq = this->frequencies[i];
@@ -904,6 +905,7 @@
 				
 								
 				// Pack frequency value
+				printf("Packing frequency value : %d\n", freq);
 				for(int j=containerSize-1; j>=0; j--){
 					int shifter = j*8;
 					int byte = (freq>>shifter)&0xff;
