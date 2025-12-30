@@ -898,29 +898,30 @@
 						return false;
 					}
 					//				    111
-					this->header[hi] = (containerSize & (0x7 >> (3-countOverflow))) << (7-(countOverflow-1));
+					this->header[hi] = (char)((containerSize & (0x7 >> (3-countOverflow))) << (7-(countOverflow-1)));
 				}
 
 				byteBitIndex = (byteBitIndex + 3) % 8;
 				
 								
-				// Pack frequency value
+				// Pack frequency value, containerSize*8 bits
 				printf("Packing frequency value : %d\n", freq);
-				for(int j=containerSize-1; j>=0; j--){
-					int shifter = j*8;
-					int byte = (freq>>shifter)&0xff;
-					for(int a=0; a<8; a++){
-						this->header[hi] += ((byte >> (7-a)) & 0x01) << (7-byteBitIndex);
-						byteBitIndex = (byteBitIndex + 1) % 8;
-						if(byteBitIndex == 0){
-							hi++;
-							if(!(hi<this->header_s)){
-								this->setError(47775345, "packHeader() - hi is out of bounds.");
-								return -1;
-							}
-							this->header[hi] = 0;
+				for(int chunkIdx=containerSize-1; chunkIdx>=0 && hi < this->header_s; chunkIdx--){
+					// Get chunk from freq value.
+					int chunk = (freq >> (chunkIdx*8)) & 0xff;
+					// Calculate how many bits this overflows
+					countOverflow = (byteBitIndex+8)-8;
+					// add chunk portion to header.
+					this->header[hi] += (char)((chunk >> countOverflow) & 0xff);
+					if(countOverflow > 0){
+						hi++;
+						if(!(hi < this->header_s)){
+							this->setError(345, "packHeader() - hi is out of bounds.");
+							return false;
 						}
+						this->header[hi] = (char)( (chunk & (0xff >> (8-countOverflow))) << (7-(countOverflow-1)));
 					}
+					byteBitIndex = (byteBitIndex+8) % 8;
 				}
 
 				// pack tree letter
@@ -1062,7 +1063,25 @@
 				/*
 					get entry frequency value
 				*/
-				int freqBits = entryContainerSize*8;
+				printf("Bit Index : %d\n", bitIdx);
+				printf("Target Byte : %d\n", (int)data[i]);
+				entryFreq=0;
+				for(int chunkIdx=entryContainerSize-1; chunkIdx>=0; chunkIdx--){
+					// clear data of used bits
+					int chunk = (((int)data[i] & (0xff>>bitIdx)))<<bitIdx;
+					if(bitIdx != 0){ // overflow
+						i++;
+						if(!(i<dataSize)){
+							this->setError(654, "unpackHeader() - i is out of bounds.");
+							return false;
+						}
+						chunk += ((int)data[i] & 0xff) >> 8-bitIdx;
+					}
+					entryFreq += chunk << (chunkIdx*8);
+					bitIdx = (bitIdx + 8) % 8; 
+				}
+
+				printf("Extracted frequency : %d\n", entryFreq);
 				
 				exit(1);
 			}
