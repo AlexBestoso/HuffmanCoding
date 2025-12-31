@@ -1,5 +1,3 @@
-header start bit = 7
-containerSize = 1
-data[i] = 2
+the unpack header look needs to be changed to iterate frequency_s times, and break if hi >= dataSize.
 
-freq = ???
+Not doign this is the cause of my lack of synchronization.
