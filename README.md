@@ -1,6 +1,9 @@
 # HuffmanCoding - Work In Progress
 Huffman Coding implemented in C++ and JavaScript
 
-Next steps; 
-	- update the packHeader()'s frequency packing code to use less forlooping.
-	- integrate the inverse in the unpackHeader() function
+figure out what is corrupting the tree on decompression.
+
+Process for doing this:
+
+1) Clean up the debug print out code so that it's more clear what belongs where.
+2) review output and identify what causes the missalignment.

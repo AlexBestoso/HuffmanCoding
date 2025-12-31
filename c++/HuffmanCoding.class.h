@@ -985,7 +985,8 @@
 						this->header[hi] = (char)(((chunk & (0xff>>countFill)) & 0xff) << (binaryMax-countOverflow));
 						printf("\tBinary Header[%d] ", hi);
 						this->dbg_pb("| ", (int)(this->header[hi]&0xff), 8, countOverflow, -bitCount);
-					}else if(bitIdx == lvi){
+					}
+					else if(bitIdx == lvi){
                                         	// flawless lay, iterate hi.
                                         	hi++;
                                         	if(!(hi<this->header_s)){
@@ -1005,10 +1006,12 @@
                                 countOverflow = bitCount-countFill;
 				masterDifference = binaryMax-bitCount-bitIdx;
                                 if(masterDifference >= 0){
-                                	this->header[hi] += (letter << (masterDifference));
+					printf("dooble <<\n");
+                                	this->header[hi] += (((int)letter&0xff) << (masterDifference));
                                 }else{
                                 	masterDifference *= -1;
-                                	this->header[hi] += (letter >> (masterDifference));
+					printf("%d >> %d = %d\n", letter&0xff, masterDifference, ((letter&0xff) >> masterDifference));
+                                	this->header[hi] += (((int)letter&0xff) >> (masterDifference));
                                 }
 				printf("\tbitIdx : %d\tbitCount : %d\tcountFill : %d\tcountOverflow : %d\n", bitIdx, bitCount, countFill, countOverflow);
 				printf("\tBinary Header[%d] ", hi);
@@ -1149,6 +1152,7 @@
                                 countOverflow = bitCount-countFill;
 				int masterDifference = binaryMax-bitCount-bitIdx;
 				printf("bitIdx : %d\tbitCount : %d\tcountFill : %d\tcountOverflow : %d | dte : %d\n", bitIdx, bitCount, countFill, countOverflow, dte);
+					printf("Hi : %d | ", hi);
 				this->dbg_pb("Extracting the green : ", (int)(data[hi]&0xff), 8, bitIdx, bitCount);
 				if(masterDifference >= 0){
 					entryContainerSize = (((int)data[hi] & (0xff >> bitIdx)) >> (masterDifference)) & 0x7;
@@ -1162,7 +1166,8 @@
                                         	this->setError(654, "unpackHeader() - i is out of bounds.");
                                         	return false;
                                         }
-					entryContainerSize += ((int)data[hi] & 0xff) >> (binaryMax-countFill);
+					entryContainerSize += ((int)data[hi] & 0xff) >> (binaryMax-countOverflow);
+					printf("Hi : %d | ", hi);
 					this->dbg_pb("Binary Value : ", (int)(data[hi]&0xff), 8, countOverflow, -bitCount);
 					
 				}
@@ -1189,8 +1194,9 @@
                                 	}else{
                                 	        masterDifference*=-1;
                                 	        chunk = ((data[hi] & (0xff >> bitIdx)) << (masterDifference)) & 0xff;
-						printf("B chunk : %d | diff : %d | data : %d\n", chunk, masterDifference, data[i]);
+						printf("B chunk : %d | diff : %d | data : %d\n", chunk, masterDifference, data[hi]);
                                 	}
+					printf("Hi : %d | ", hi);
 					this->dbg_pb("extraction source : ", (int)(data[hi]&0xff), 8, bitIdx, bitCount);
 					if(bitIdx >= binaryMax-dte){ // overflow
 						hi++;
@@ -1198,8 +1204,9 @@
 							this->setError(654, "unpackHeader() - i is out of bounds.");
 							return false;
 						}
-						chunk += (data[hi] & 0xff) >> countFill;
+						chunk += (data[hi] & 0xff) >> (binaryMax-countOverflow);
 						printf("C chunk : %d\n", chunk);
+					printf("Hi : %d | ", hi);
 						this->dbg_pb("extraction source : ", (int)(data[hi]&0xff), 8, countOverflow, -bitCount);
 					}else{
 						hi++;
@@ -1234,6 +1241,7 @@
 					entryChar = ((data[hi] & (0xff >> bitIdx)) << (masterDifference)) & 0xff;
 					printf("B letter : %d | diff : %d | data : %d\n", entryChar, masterDifference, data[hi]);
 				}
+					printf("Hi : %d | ", hi);
 				this->dbg_pb("extraction source : ", (int)(data[hi]&0xff), 8, bitIdx, bitCount);
 				if(bitIdx >= binaryMax-dte){
 					hi++;
@@ -1241,7 +1249,8 @@
 						this->setError(756, "unpackHeader() - i is out of bounds");
 						return false;
 					}
-					entryChar += (data[hi] & 0xff) >> countFill;
+					entryChar += (data[hi] & 0xff) >> (binaryMax-countOverflow);
+					printf("Hi : %d | ", hi);
 					this->dbg_pb("extraction source : ", (int)(data[hi]&0xff), 8, bitIdx, -bitCount);
 				}else{
 					hi++;
@@ -1253,8 +1262,8 @@
 				bitIdx = (bitIdx+8) % 8;
 				printf("Bit Index : %d\n", bitIdx);
 				printf("Extracted the char %d\n\n", entryChar&0xff);
-				if(dbg == 10) exit(1);
-				dbg++;
+				//if(dbg == 10) exit(1);
+				//dbg++;
 			}
 			
 				printf("\033[0m");
