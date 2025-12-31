@@ -915,15 +915,22 @@
 			
 				printf("Starting loop : header[%d] 0x%x on index %d\n", hi, this->header[hi], bitIdx);
 				this->dbg_pb("binary header : ", (int)(this->header[hi]&0xff), 8, bitIdx, bitCount);
+				printf("\n");
+
 				// Pack container size, 3 bits.
 				printf("Packing container size 0x%x\n", containerSize);
 				bitCount = 3;
 				int lvi = binaryMax-bitCount; // last valid index.
 				int dte = 7-lvi; // distance to end, from last valid idx.
-				// binary max - bitcount gives us the literal index of the last valid index for this size
                         	countFill = bitIdx >= 8-dte ? (8-bitIdx):3;
                         	countOverflow = bitCount-countFill;
-				this->header[hi] += (char)((containerSize & 0x7)<<(binaryMax-bitCount-bitIdx));
+				int masterDifference = binaryMax-bitCount-bitIdx;
+				if(masterDifference >= 0){
+					this->header[hi] += (char)((containerSize & 0x7)<<masterDifference);
+				}else{
+					masterDifference *= -1;
+					this->header[hi] += (char)((containerSize & 0x7)>>masterDifference);
+				}
 				printf("\tbitIdx : %d\tbitCount : %d\tcountFill : %d\tcountOverflow : %d\n", bitIdx, bitCount, countFill, countOverflow);
 				printf("\tBinary Header[%d] ", hi);
 				this->dbg_pb("| ", (int)(this->header[hi]&0xff), 8, bitIdx, bitCount);
@@ -957,8 +964,15 @@
 					dte = 7-lvi; // distance to end, from last valid idx.
 					countFill = bitIdx >= 8-dte ? (8-bitIdx):8;
                         		countOverflow = bitCount-countFill;
-					printf("debug chunk : %d << (%d - %d - %d) = %d\n", chunk, binaryMax, bitCount, bitIdx, ((chunk) << (binaryMax - bitCount - bitIdx)));
-					this->header[hi] += ((chunk) << (binaryMax - bitCount - bitIdx));
+					masterDifference = binaryMax-bitCount-bitIdx;
+					if(masterDifference >= 0){
+						this->header[hi] += ((chunk) << (masterDifference));
+						printf("debug chunk : %d << %d = %d\n", chunk, masterDifference, ((chunk) << (masterDifference)));
+					}else{
+						masterDifference *= -1;
+						this->header[hi] += ((chunk) >> (masterDifference));
+						printf("debug chunk : %d >> %d = %d\n", chunk, masterDifference, ((chunk) >> (masterDifference)));
+					}
 					printf("\tbitIdx : %d\tbitCount : %d\tcountFill : %d\tcountOverflow : %d\n", bitIdx, bitCount, countFill, countOverflow);
 					printf("\tBinary Header[%d] ", hi);
 					this->dbg_pb("| ", (int)(this->header[hi]&0xff), 8, bitIdx, bitCount);
@@ -989,7 +1003,13 @@
                                 dte = 7-lvi; // distance to end, from last valid idx.
                                 countFill = bitIdx >= 8-dte ? (8-bitIdx):8;
                                 countOverflow = bitCount-countFill;
-				this->header[hi] += (char)((letter & 0xff) << (binaryMax - bitCount - bitIdx));
+				masterDifference = binaryMax-bitCount-bitIdx;
+                                if(masterDifference >= 0){
+                                	this->header[hi] += (letter << (masterDifference));
+                                }else{
+                                	masterDifference *= -1;
+                                	this->header[hi] += (letter >> (masterDifference));
+                                }
 				printf("\tbitIdx : %d\tbitCount : %d\tcountFill : %d\tcountOverflow : %d\n", bitIdx, bitCount, countFill, countOverflow);
 				printf("\tBinary Header[%d] ", hi);
 				this->dbg_pb("| ", (int)(this->header[hi]&0xff), 8, bitIdx, bitCount);
@@ -1013,6 +1033,7 @@
 				bitIdx = (bitIdx+8) % 8;
 			}
 
+			printf("Ending bit IDX : %d\n", bitIdx);
 			return bitIdx;
 		}
 		
