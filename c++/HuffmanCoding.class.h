@@ -1131,6 +1131,7 @@
 			printf("derived frequencies_s : %d\n", freqCount);
 
 			int dbg=9;	
+			// This loop is the problem. Need to loop frequency_s amount of times, and incrememnt hi speratately.
 			for(int i=hi; i<dataSize; i++){
 				int entryContainerSize=0;
 				int entryFreq=0;
@@ -1139,40 +1140,67 @@
 				/*
 					get entry container size
 				*/
-				printf("geting container size, index : %d, starting byte 0x%x\n", bitIdx, data[i]&0xff);
+				printf("Fetching container size...\n");
                         	binaryMax = 8;// only 8 bits are relevent max
 				bitCount = 3;
                                 int lvi = binaryMax-bitCount; // last valid index.
                                 int dte = 7-lvi; // distance to end, from last valid idx.
                                 countFill = bitIdx >= 8-dte ? (8-bitIdx):3;
                                 countOverflow = bitCount-countFill;
-				entryContainerSize = (((int)data[i]<<bitIdx) & 0xff) >> (lvi+countOverflow);
+				int masterDifference = binaryMax-bitCount-bitIdx;
+				printf("bitIdx : %d\tbitCount : %d\tcountFill : %d\tcountOverflow : %d | dte : %d\n", bitIdx, bitCount, countFill, countOverflow, dte);
+				this->dbg_pb("Extracting the green : ", (int)(data[i]&0xff), 8, bitIdx, bitCount);
+				if(masterDifference >= 0){
+					entryContainerSize = (((int)data[i] & (0xff >> bitIdx)) >> (masterDifference)) & 0x7;
+				}else{
+					masterDifference*=-1;
+					entryContainerSize = (((int)data[i] & (0xff >> bitIdx)) << (masterDifference)) & 0x7;
+				}
 				if(bitIdx >= binaryMax-dte){
 					i++;
 					if(!(i<dataSize)){
                                         	this->setError(654, "unpackHeader() - i is out of bounds.");
                                         	return false;
                                         }
-					entryContainerSize <<= countOverflow;
 					entryContainerSize += ((int)data[i] & 0xff) >> (binaryMax-countFill);
+					this->dbg_pb("Binary Value : ", (int)(data[i]&0xff), 8, countOverflow, -bitCount);
 					
 				}
+				bitIdx = (bitIdx + 3) % 8;
+				printf("Extracted Container Size : %d\n", entryContainerSize);
 				
 				/*
 					get entry frequency value
 				*/
-				printf("Bit Index : %d\n", bitIdx);
+				printf("Extracting freqency value...\n");
 				entryFreq=0;
+				bitCount = 8;
+                                lvi = binaryMax-bitCount; // last valid index.
+                                dte = 7-lvi; // distance to end, from last valid idx.
+                                countFill = bitIdx >= 8-dte ? (8-bitIdx):8;
+                                countOverflow = bitCount-countFill;
+				masterDifference = binaryMax-bitCount-bitIdx;
 				for(int chunkIdx=entryContainerSize-1; chunkIdx>=0; chunkIdx--){
-					// clear data of used bits
-					int chunk = (((int)data[i] & (0xff>>bitIdx)))<<bitIdx;
-					if(bitIdx != 0){ // overflow
+					int chunk = 0;//(int) data[i];
+					printf("bitIdx : %d\tbitCount : %d\tcountFill : %d\tcountOverflow : %d\n", bitIdx, bitCount, countFill, countOverflow);
+					if(masterDifference >= 0){
+                                	        chunk = ((data[i] & (0xff >> bitIdx)) >> (masterDifference)) & 0xff;
+						printf("A chunk : %d\n", chunk);
+                                	}else{
+                                	        masterDifference*=-1;
+                                	        chunk = ((data[i] & (0xff >> bitIdx)) << (masterDifference)) & 0xff;
+						printf("B chunk : %d | diff : %d | data : %d\n", chunk, masterDifference, data[i]);
+                                	}
+					this->dbg_pb("extraction source : ", (int)(data[i]&0xff), 8, bitIdx, bitCount);
+					if(bitIdx >= binaryMax-dte){ // overflow
 						i++;
 						if(!(i<dataSize)){
 							this->setError(654, "unpackHeader() - i is out of bounds.");
 							return false;
 						}
-						chunk += ((int)data[i] & 0xff) >> (8-bitIdx);
+						chunk += (data[i] & 0xff) >> countFill;
+						printf("C chunk : %d\n", chunk);
+						this->dbg_pb("extraction source : ", (int)(data[i]&0xff), 8, countOverflow, -bitCount);
 					}else{
 						i++;
 						if(!(i<dataSize)){
@@ -1182,6 +1210,7 @@
 					}
 					entryFreq += chunk << (chunkIdx*8);
 					bitIdx = (bitIdx + 8) % 8; 
+					printf("Bit Index : %d\n", bitIdx);
 				}
 				printf("Extracted frequency : %d\n", entryFreq);
 				
@@ -1189,14 +1218,31 @@
 				/*
 					Get entry char value
 				*/
-				entryChar = (data[i] & (0xff>>bitIdx)) <<  bitIdx;
-				if(bitIdx != 0){
+				entryChar = 0x00;;
+				bitCount = 8;
+                                lvi = binaryMax-bitCount; // last valid index.
+                                dte = 7-lvi; // distance to end, from last valid idx.
+                                countFill = bitIdx >= 8-dte ? (8-bitIdx):8;
+                                countOverflow = bitCount-countFill;
+                                masterDifference = binaryMax-bitCount-bitIdx;
+				printf("bitIdx : %d\tbitCount : %d\tcountFill : %d\tcountOverflow : %d\n", bitIdx, bitCount, countFill, countOverflow);
+				if(masterDifference >= 0){
+					entryChar = ((data[i] & (0xff >> bitIdx)) >> (masterDifference)) & 0xff;
+					printf("A letter : %d\n", entryChar);
+				}else{
+					masterDifference*=-1;
+					entryChar = ((data[i] & (0xff >> bitIdx)) << (masterDifference)) & 0xff;
+					printf("B letter : %d | diff : %d | data : %d\n", entryChar, masterDifference, data[i]);
+				}
+				this->dbg_pb("extraction source : ", (int)(data[i]&0xff), 8, bitIdx, bitCount);
+				if(bitIdx >= binaryMax-dte){
 					i++;
 					if(!(i<dataSize)){
 						this->setError(756, "unpackHeader() - i is out of bounds");
 						return false;
 					}
-					entryChar += (data[i] & 0xff) >> (8-bitIdx);
+					entryChar += (data[i] & 0xff) >> countFill;
+					this->dbg_pb("extraction source : ", (int)(data[i]&0xff), 8, bitIdx, -bitCount);
 				}else{
 					i++;
 					if(!(i<dataSize)){
@@ -1205,7 +1251,8 @@
 					}
 				}
 				bitIdx = (bitIdx+8) % 8;
-				printf("Extracted the char 0x%x\n\n", entryChar&0xff);
+				printf("Bit Index : %d\n", bitIdx);
+				printf("Extracted the char %d\n\n", entryChar&0xff);
 				if(dbg == 10) exit(1);
 				dbg++;
 			}
