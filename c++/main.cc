@@ -29,7 +29,9 @@ int main(int argc, char *argv[]){
 				printf("0x%x ", ogMsg[midx] & 0xff);
 			midx++;
 		}
-	}printf("\033[0m\n");
+	}
+	printf("\033[0m\n");
+		
 
 	printf("[*] Attempting Compression...");
 	if(!hc.compress(ogMsg, ogMsgSize)){
@@ -45,6 +47,15 @@ int main(int argc, char *argv[]){
 		delete[] ogMsg;
 		printf("\033[0m");
 		exit(EXIT_FAILURE);
+	}
+	if(dbg == "debug"){
+		printf("\033[0;34m");
+		hc.printTreeLetters();
+                printf("\n\033[0;32m");
+                hc.printFrequencies();
+                printf("\n\033[0;33m");
+                hc.printCodeTable();
+
 	}
 	printf("successful!\n");
 	
