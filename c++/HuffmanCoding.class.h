@@ -918,8 +918,8 @@
 					printf("\033[1;35m");
 				}else{
 					printf("[*]\t-Master Difference is negative-\n");
-					printf("[…]\t\tProcessing this->header[%d] += %d >> %d\n", hi, chunk, masterDifference);
 					masterDifference *= -1;
+					printf("[…]\t\tProcessing this->header[%d] += %d >> %d\n", hi, chunk, masterDifference);
 					dstBuffer[hi] += ((chunk) >> (masterDifference));
 					printf("[+]\t\tCreated value : %d : %s\n", dstBuffer[hi], this->dbg_getBin((int)(dstBuffer[hi]&0xff), 8, bitIdx, bitCount).c_str());
 					printf("\033[1;35m");
@@ -1092,10 +1092,13 @@
 			printf("[+]\tbitCount : %d\n", bitCount);
 			printf("[+]\tlvi(last valid index) : %d\n", lvi);
 			printf("[+]\ttde(distance to end) : %d\n", dte);
-			printf("[+]\tcountFill : %d\n", countFill);
-			printf("[+]\tcountOverflow : %d\n", countOverflow);
-			printf("[+]\tmasterDifference : %d\n", masterDifference);
 			for(int chunkIdx=expectedContainerSize-1; chunkIdx>=0; chunkIdx--){
+				countFill = (maxOverflowed || bitIdx >= binaryMax-dte) ? (binaryMax-bitIdx) : binaryMax;
+                                countOverflow = (bitCount-countFill) % binaryMax;
+                                masterDifference = binaryMax-bitCount-bitIdx;
+				printf("[+]\tcountFill : %d\n", countFill);
+				printf("[+]\tcountOverflow : %d\n", countOverflow);
+				printf("[+]\tmasterDifference : %d\n", masterDifference);
 				printf("[…]\tProcessing frequency chunk %d/%d\n", chunkIdx+1, 0);
 				int chunk = 0;//(int) data[i];
 				if(maxOverflowed){
@@ -1142,18 +1145,19 @@
 					chunk += (src[hi] & 0xff) >> (binaryMax-countOverflow);
 					printf("[+]\t\t\tExtracted Result : %d | From %s -> to %s\n", chunk, this->dbg_getBin((int)(src[hi]&0xff), 8, countOverflow, -bitCount).c_str(), this->dbg_getBin(chunk, 8, 8, -7).c_str());
 					printf("\033[0;36m");
-				}else{
-					printf("[*]\t\tFlawless lay, incrementing hi %d+1\n", hi);
+				}else if(bitIdx+bitCount >= binaryMax){
+					printf("We incrememnt into a new segment.\n");
 					hi++;
-					if(!(hi<srcSize)){
-						this->setError(654, "unpackHeader() - i is out of bounds.");
-						return false;
-					}
+                                        if(!(hi<srcSize)){
+                                              this->setError(654, "unpackHeader() - i is out of bounds.");
+                                              return false;
+                                        }
 				}
+
 				printf("[*]\tAdding chunk to entry freq via %d += %d << (%d*8)\n", ret, chunk, chunkIdx);
 				ret += chunk << (chunkIdx*binaryMax);
 				bitIdx = (bitIdx + bitCount) % binaryMax; 
-				printf("[*]\tIncrementing bit idx via (%d+8)%%8\n", bitIdx);
+				printf("[*]\tIncrementing bit idx via (%d+%d)%%%d\n", bitIdx, bitCount, binaryMax);
 				printf("[*]\tExtracted the Value : %d\n", ret);
 			}
 			
@@ -1177,15 +1181,17 @@
 			this->destroyTreeLetters();
 			this->destroyFrequencies();
                         int hi=0;
+                        int bitIdx = 0;// first 3 bits are reserved for padding.
 			printf("[*] Extracting padding from data[%d]:%d via (%d & 0xf0) >> 4\n", hi, (int)data[hi]&0xff, (int)data[hi]&0xff);
-			int padding = (int)((data[hi] & 0xf0) >> 4);
-			printf("[+]\tExtracted Result : %d | From %s -> to %s\n", padding, 
-				this->dbg_getBin((int)data[hi]&0xff, 8, 0, 4).c_str(), this->dbg_getBin(padding, 8, 8, -7).c_str()
+			int padding = unpackByte(data, dataSize, &hi, &bitIdx, 4, 0xf, 1);
+			printf("[+]\t\tEnd Padding : %d | From %s -> to %s\n", 
+				padding, 
+				this->dbg_getBin((int)data[hi]&0xff, 8, 0, 4).c_str(), 
+				this->dbg_getBin(padding, 8, 8, -7).c_str()
 			);
 			printf("\033[0;36m");
 
 			int byteMax = 0x1ff;
-                        int bitIdx = 4;// first 3 bits are reserved for padding.
                         int bitCount = 9; // binary fact
                         int binaryMax = 8;// only 8 bits are relevent max
                         int countFill = 8-bitIdx;// = 5
@@ -1202,14 +1208,14 @@
 
 			// clear up to bit idx, 
 			printf("[*] Extracting frequency_s from data[%d]:%d via (%d & (%d >> %d)) << %d\n", hi, (int)data[hi]&0xff, (int)data[hi]&0xff, byteMax, countOverflow, countOverflow);
-			int freqCount = (((int)data[hi]) & (byteMax>>countOverflow)) << (countOverflow);
-			printf("[+]\tExtracted Result : %d | From %s -> to %s\n", 
+			int freqCount = unpackByte(data, dataSize, &hi, &bitIdx, 9, 0x1ff, 2);
+			printf("[+] Extracted frequency_s : %d | From %s -> to %s\n", 
 				freqCount,
-				this->dbg_getBin((int)data[hi]&0xff, 8, bitIdx, bitCount).c_str(), 
+				this->dbg_getBin((int)data[hi-1]&0xff, 8, bitIdx, bitCount).c_str(), 
 				this->dbg_getBin(freqCount, 9, 8, -7).c_str()
 			);
 			printf("\033[0;36m");
-			printf("[+]\tIncrememnting hi. %d+1\n", hi);
+			/*printf("[+]\tIncrememnting hi. %d+1\n", hi);
 			hi++;
 			if(!(hi < dataSize)){
 				this->setError(2334, "unpackHeader() - hi overflows data.");
@@ -1225,7 +1231,7 @@
 			);
 			printf("\033[0;36m");
 			printf("[*]\tIncrememnting bitIDx (%d+9) %% 8\n", bitIdx);
-			bitIdx = (bitIdx + 9) % 8;
+			bitIdx = (bitIdx + 9) % 8;*/
 			printf("[*]\tAllocating tree letter and frequency buffers.\n");
 			this->resizeTreeLetters(freqCount);
 			this->resizeFrequencies(freqCount);
@@ -1243,6 +1249,9 @@
 					get entry container size
 				*/
 				printf("[…]\tGetting entry container size.\n");
+				entryContainerSize = unpackByte(data, dataSize, &hi, &bitIdx, 3, 0xff, 1);
+				printf("[+] Extracted Entry Container Size : %d\n", entryContainerSize);
+				
                         	binaryMax = 8;// only 8 bits are relevent max
 				bitCount = 3;
                                 int lvi = binaryMax-bitCount; // last valid index.
@@ -1250,7 +1259,7 @@
                                 countFill = bitIdx >= 8-dte ? (8-bitIdx):3;
                                 countOverflow = bitCount-countFill;
 				int masterDifference = binaryMax-bitCount-bitIdx;
-
+/*
 				printf("[+]\t\tbinaryMax : %d\n", binaryMax);
 				printf("[+]\t\tbitCount : %d\n", bitCount);
                                 printf("[+]\t\tlvi(last valid index) : %d\n", lvi);
@@ -1301,14 +1310,15 @@
                                         }
                                 }
 				printf("[*]\tIncrementing bitIdx via (%d + 3) %% 8\n", bitIdx);
-				bitIdx = (bitIdx + 3) % 8;
+				bitIdx = (bitIdx + 3) % 8;*/
 				
 				/*
 					get entry frequency value
 				*/
 				printf("[…] Extracting Letter Frequency\n");
-				entryFreq=0;
-				bitCount = 8;
+				entryFreq=unpackByte(data, dataSize, &hi, &bitIdx, 8, 0xff, entryContainerSize);
+				printf("[+] Letter Frequency : %d\n", entryFreq);
+				/*bitCount = 8;
                                 lvi = binaryMax-bitCount; // last valid index.
                                 dte = 7-lvi; // distance to end, from last valid idx.
                                 countFill = bitIdx >= 8-dte ? (8-bitIdx):8;
@@ -1361,15 +1371,15 @@
 					bitIdx = (bitIdx + 8) % 8; 
 					printf("[*]\tIncrementing bit idx via (%d+8)%%8\n", bitIdx);
 					printf("[*]\tExtracted Frequency Value : %d\n", entryFreq);
-				}
+				}*/
 				
 
 				/*
 					Get entry char value
 				*/
 				printf("[…] Extracting Frequency Char.\n");
-				entryChar = 0x00;;
-				bitCount = 8;
+				entryChar = (char)unpackByte(data, dataSize, &hi, &bitIdx, 8, 0xff, 1);
+				/*bitCount = 8;
                                 lvi = binaryMax-bitCount; // last valid index.
                                 dte = 7-lvi; // distance to end, from last valid idx.
                                 countFill = bitIdx >= 8-dte ? (8-bitIdx):8;
@@ -1415,7 +1425,7 @@
 					}
 				}
 				printf("[*]\tIncrementing bitIdx via (%d+8)%%8\n", bitIdx);
-				bitIdx = (bitIdx+8) % 8;
+				bitIdx = (bitIdx+8) % 8;*/
 
 				/*We have our data, lets store it in our tables.*/
 				printf("[*] Extracted the following entry values: \n");
@@ -1423,7 +1433,7 @@
                                 printf("[*]\tfreqency value : %d\n", entryFreq);
                                 printf("[*]\tAssociated Char %d\n", (int)entryChar&0xff);
 
-				printf("[…] Storing Results!\n");
+				printf("[…] Storing Results!\n\n");
 				this->treeLetters[i] = entryChar;
 				this->frequencies[i] = entryFreq;
 			}
