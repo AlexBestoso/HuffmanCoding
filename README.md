@@ -1,9 +1,12 @@
 # HuffmanCoding - Work In Progress
 Huffman Coding implemented in C++ and JavaScript
 
-figure out what is corrupting the tree on decompression.
+Goal : build a dedicated `packByte()` function and a dedicated `unpackByte()` function.
 
-Process for doing this:
+cloned from : https://github.com/AlexBestoso/HuffmanCoding/tree/24-decompress---invalid-message
 
-1) Clean up the debug print out code so that it's more clear what belongs where.
-2) review output and identify what causes the missalignment.
+Next steps: 
+	1) refresh the debug code for the unpack functions again; but this time, with a better focus on the `hi` iterator value, and the data targeted for unpacking.
+	IE; Make the bit stream easier to follow for decompression. The compression printouts seems useful enough for now.
+
+	2) Reduce the amount of useless `printf` statements used for debugging.
