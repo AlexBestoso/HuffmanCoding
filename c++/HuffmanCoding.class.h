@@ -1071,17 +1071,18 @@
 			// validate code table.
 			// validate header.
 
-			this->destroyBody();
 
-			// calculate body size
-			for(int i=0; i<this->frequencies_s; i++){
+			// calculate body size using the code table
+			this->destroyBody();
+			for(int i=0; i<this->frequencies_s; i++)
 				this->body_s += this->codeTable[i] * this->frequencies[i];
-			}
+
 			this->body_s = (this->body_s % 8) == 0 ? this->body_s/8 : (this->body_s/8)+1;
+
 			if(startingBitIndex > 0)
 				this->body_s++;
-
 			this->body = new char[this->body_s];
+
 			int bitIdx=startingBitIndex % 8;
 			int bi=0;
 			this->body[0] = 0;
@@ -1093,18 +1094,8 @@
 				}
 				int bitCount = this->codeTable[tableIdx];
 				int encodedChar = this->codeTable[tableIdx+this->frequencies_s];
-				for(int j=0; j<bitCount; j++){
-					body[bi] += ((encodedChar >> ((bitCount-1)-j)) & 0x01) << (7-bitIdx);
-					bitIdx = (bitIdx + 1) % 8;
-					if(bitIdx == 0){
-						bi++;
-						if(!(bi<this->body_s)){
-							this->setError(435, "packBody() - bi is out of bounds.");
-							return -1;
-						}
-						this->body[bi] = 0;
-					}
-				}
+				int mask = ~(~(0) << bitCount);
+				this->packByte(encodedChar, bitCount, mask, this->body, this->body_s, &bi, &bitIdx);
 			}
 			this->body_s -= (this->body_s-bi);
 			return bitIdx;
@@ -1171,7 +1162,7 @@
 			bitIndex[0] = bitIdx;
 			return ret;
 		}
-		bool unpackHeader(char *data, size_t dataSize){
+		bool unpackHeader(char *data, size_t dataSize, int *ptr_indexOffset, int *ptr_bitOffset,  int *ptr_endPadding){
 			if(data == NULL){
 				this->setError(1100, "unpackHeader(char *data, size_t dataSize) - data is null.");
 				return false;
@@ -1192,8 +1183,6 @@
 			int dbgHi=0;
 			int dbgBi=0;
 			int dbgMod=0;
-
-
 			int padding = unpackByte(data, dataSize, &hi, &bitIdx, 4, 0xf, 1);
 			printf("Unpacked Padding : %d\n", padding);
 			for(int q=dbgHi; q<=hi; q++){
@@ -1281,6 +1270,28 @@
 				this->treeLetters[i] = entryChar;
 				this->frequencies[i] = entryFreq;
 			}
+			ptr_indexOffset[0] = hi;
+			ptr_bitOffset[0] = bitIdx;
+			ptr_endPadding[0] = padding;
+			return true;
+		}
+
+		bool unpackBody(char *data, size_t dataSize, int indexOffset, int bitOffset, int endPadding){
+			// Calculate the output buffer size using code table.
+			// Determine smallest bit count in code table, and it's value.
+			// determine largest bit count in code table, and it's value.
+			// determine the distance between each bit count, store in workbuffer.
+			// Shift largest bit count bits out of data and into a buffer variable.
+
+			/* The loop table i, from biggest to smallest. */
+			// check if equal to table char most bits. 
+			// decrement table i,
+			// right shift extracted bits relative to workbuffer difference.
+			// continue until match is found.
+			// fail if no match.
+			
+			// on match, push code table char to out, increment iterator.
+			
 			return true;
 		}
 
@@ -1452,16 +1463,6 @@
 							return true;
 						}
 						t--;
-						/*if(!(t>targetLayerEnd)){
-							this->setError(453, "getSubIndecies() - tree misaligned.");
-							return false;
-						}
-						sum = this->treeData[i] + sum;
-						if(t == targetIndex){
-							zeroIndex[0] = i;
-							oneIndex[0] = t+1;
-							return true;
-						}*/
 						break;
 					}
 					sum = tracer + this->treeData[i];
@@ -1749,10 +1750,14 @@
                                 return false;
                         }
 
-			if(!this->unpackHeader(data, dataSize)){
+			int indexOffset = 0;
+			int bitOffset = 0;
+			int endPadding = 0;
+			if(!this->unpackHeader(data, dataSize, &indexOffset, &bitOffset, &endPadding)){
 				this->setError(102, "decompress(char *data, size_t dataSize) - faiiled to unpack header.");
 				return false;
 			}
+
 
 			if(!this->plantTree()){
                                 this->setError(103, "decompress(char *data, size_t dataSize) - failed to plant tree.");
@@ -1763,6 +1768,11 @@
 				this->setError(1304, "decompress() - failed to generate code table.");
 				return false;
 			}
+
+			if(!this->unpackBody(data, dataSize, indexOffset, bitOffset, endPadding)){
+				this->setError(4535, "decompress() - failed to unpack body.");
+			}
+			
 			if(!this->decode(data, dataSize)){
 				this->setError(104, "decompress(char *data, size_t dataSize) - failed to decode the data.");
 				return false;
