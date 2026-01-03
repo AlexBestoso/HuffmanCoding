@@ -882,7 +882,7 @@
 		 * */
 		bool packByte(int packingTarget, int targetBitCount, int targetOverflowMask, char *dstBuffer, size_t dstBufferSize, int *dstIndex, int *bitIndex){
 			int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
-			int containerSize = (((packingTarget/0xff)) + 1);
+			int containerSize = packingTarget <= 0xff ? 1 : (((packingTarget/0xff)) + 1);
 			bool maxOverflowed = binaryMax-targetBitCount < 0;
 			if(maxOverflowed) containerSize--;
 			int bitCount=targetBitCount;
@@ -981,7 +981,7 @@
 			int elementCount = this->frequencies_s;
 			int dbgHi=0;
 			int dbgBi=4;
-			int dbgMod=0;;
+			int dbgMod=0;
 			/*
 			 * 1) Number of different values used to create the tree.
 			 * 2) Max different number of values are 2^8 = 256 = 0b1,0000,0000 = 9 bits
@@ -1125,7 +1125,6 @@
                         bool maxOverflowed = binaryMax-expectedBitCount < 0;
                         if(maxOverflowed) expectedContainerSize--;
 			
-			printf("\033[1;34m[HELLO] int unpackByte(%p, %ld, %d, %d, %d, 0x%x, %d):\n", src, srcSize, srcIndex[0], bitIndex[0], expectedBitCount, byteMask, expectedContainerSize);
 		
 			for(int chunkIdx=expectedContainerSize-1; chunkIdx>=0; chunkIdx--){
 				countFill = (maxOverflowed || bitIdx >= binaryMax-dte) ? (binaryMax-bitIdx) : binaryMax;
@@ -1156,7 +1155,7 @@
 						return 0;
 					}
 					chunk += ((int)src[hi] & 0xff) >> (binaryMax-countOverflow);
-				}else if(bitIdx+bitCount >= binaryMax){
+				}else if(bitIdx == lvi || bitIdx+bitCount >= binaryMax){
 					hi++;
                                         if(!(hi<srcSize)){
                                               this->setError(654, "unpackHeader() - i is out of bounds.");
@@ -1170,7 +1169,6 @@
 			
 			srcIndex[0] = hi;
 			bitIndex[0] = bitIdx;
-			printf("[BYE] unpackByte end srcIndex:%d, bitIndex: %d, ret: %d\n\033[0m;", srcIndex[0], bitIndex[0], ret);
 			return ret;
 		}
 		bool unpackHeader(char *data, size_t dataSize){
@@ -1183,7 +1181,7 @@
 				return false;
 			}
 
-			printf("\033[1;33m[HELLO] unpackHeader(%p, %ld)\n", data, dataSize);
+			printf("\n\n----debugging unpackHeader(%p, %ld)\n", data, dataSize);
 			this->destroyTreeLetters();
 			this->destroyFrequencies();
 			char entryChar=0x00;
@@ -1191,12 +1189,41 @@
 			int entryContainerSize=0;
 			int entryFreq=0;
                         int hi=0;
+			int dbgHi=0;
+			int dbgBi=0;
+			int dbgMod=0;
+
 
 			int padding = unpackByte(data, dataSize, &hi, &bitIdx, 4, 0xf, 1);
-			printf("\033[1;33m");
+			printf("Unpacked Padding : %d\n", padding);
+			for(int q=dbgHi; q<=hi; q++){
+				if(dbgMod == 0){
+					printf("\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, dbgBi, 4).c_str());
+				}else{
+					printf("\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, bitIdx, -4).c_str());
+				}
+				dbgMod = (dbgMod +1 ) % 2;
+			}
+			dbgMod = 0;
+			dbgHi = hi;
+			dbgBi = bitIdx;
+
 
 			// clear up to bit idx, 
 			int freqCount = unpackByte(data, dataSize, &hi, &bitIdx, 9, 0x1ff, 2);
+			printf("Unpacked element count : %d\n", freqCount);
+			for(int q=dbgHi; q<=hi; q++){
+				if(dbgMod == 0){
+					printf("\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, dbgBi, 9).c_str());
+				}else{
+					printf("\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, bitIdx, -9).c_str());
+				}
+				dbgMod = (dbgMod +1 ) % 2;
+			}
+			dbgMod = 0;
+			dbgHi = hi;
+			dbgBi = bitIdx;
+
 			this->resizeTreeLetters(freqCount);
 			this->resizeFrequencies(freqCount);
 
@@ -1205,20 +1232,55 @@
 				entryContainerSize=0;
 				entryFreq=0;
 				entryChar=0x00;
+				
+				printf("--Unpacking Freqency Element #%d\n", i);
 
 				/* get entry container size */
 				entryContainerSize = unpackByte(data, dataSize, &hi, &bitIdx, 3, 0xff, 1);
-				printf("\033[1;33m");
+				printf("\tUnpacked Container Size : %d\n", entryContainerSize);
+				for(int q=dbgHi; q<=hi; q++){
+					if(dbgMod == 0){
+						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, dbgBi, 3).c_str());
+					}else{
+						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, bitIdx, -3).c_str());
+					}
+					dbgMod = (dbgMod +1 ) % 2;
+				}
+				dbgMod = 0;
+				dbgHi = hi;
+				dbgBi = bitIdx;
+
 				entryFreq=unpackByte(data, dataSize, &hi, &bitIdx, 8, 0xff, entryContainerSize);
-				printf("\033[1;33m");
+				printf("\tUnpacked Frequency Value : %d\n", entryFreq);
+				for(int q=dbgHi; q<=hi; q++){
+					if(dbgMod == 0){
+						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, dbgBi, 8).c_str());
+					}else{
+						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, bitIdx, -8).c_str());
+					}
+					dbgMod = (dbgMod +1 ) % 2;
+				}
+				dbgMod = 0;
+				dbgHi = hi;
+				dbgBi = bitIdx;
 				entryChar = (char)unpackByte(data, dataSize, &hi, &bitIdx, 8, 0xff, 1);
-				printf("\033[1;33m");
+				printf("\tUnpacked Frequency Letter : %d\n", (int)entryChar & 0xff);
+				for(int q=dbgHi; q<=hi; q++){
+					if(dbgMod == 0){
+						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, dbgBi, 8).c_str());
+					}else{
+						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, bitIdx, -8).c_str());
+					}
+					dbgMod = (dbgMod +1 ) % 2;
+				}
+				dbgMod = 0;
+				dbgHi = hi;
+				dbgBi = bitIdx;
 				
 				/*We have our data, lets store it in our tables.*/
 				this->treeLetters[i] = entryChar;
 				this->frequencies[i] = entryFreq;
 			}
-			printf("[BYE] returning true.\n");
 			return true;
 		}
 

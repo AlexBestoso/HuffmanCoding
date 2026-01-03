@@ -1,18 +1,10 @@
 # HuffmanCoding - Work In Progress
 Huffman Coding implemented in C++ and JavaScript
 
-Goal : build a dedicated `packByte()` function and a dedicated `unpackByte()` function.
+Fully corrected the packing bytes…for now.
 
-cloned from : https://github.com/AlexBestoso/HuffmanCoding/tree/6-test-with-all-256-bytes
+We have gotten back to the invalid message error that this branch is supposed to address…finally.
 
-Next steps: 
-1) refresh the debug code for the unpack functions again; but this time, with a better focus on the `hi` iterator value, and the data targeted for unpacking.
-	IE; Make the bit stream easier to follow for decompression. The compression printouts seems useful enough for now.
+Next step is to use the newly created packing/unpacking functions to fix the body packing/unpacking. 
 
-2) Reduce the amount of useless `printf` statements used for debugging.
-
-
-
-
-
-- packByte debug better now better tracks the algorithm.
+Because as of writing this, it's still using the old broken algorithm.
