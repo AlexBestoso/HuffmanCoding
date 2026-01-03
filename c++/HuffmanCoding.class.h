@@ -1006,7 +1006,7 @@
 				printf("[*] Storing Container Size %d\n", containerSize);
 				this->packByte(containerSize, 3, 0xff, this->header, this->header_s, &hi, &bitIdx);
 				int freq = this->frequencies[i];
-				printf("[*] Storing frequency %d\n", frequencies[i]);
+				printf("[*] Storing %dthfrequency %d\n", i, this->frequencies[i]);
 				this->packByte(freq, 8, 0xff, this->header, this->header_s, &hi, &bitIdx);
 				char letter = this->treeLetters[i];
 				printf("[*] Storing char %d\n", (int)letter&0xff);
@@ -1088,6 +1088,7 @@
                         int countOverflow       = 0;    //bitCount-countFill;
                         int masterDifference    = 0;    //binaryMax-bitCount-bitIdx;
 		
+			printf("[+]\tHi : %d\n", hi);
 			printf("[+]\tbinaryMax : %d\n", binaryMax);
 			printf("[+]\tbitCount : %d\n", bitCount);
 			printf("[+]\tlvi(last valid index) : %d\n", lvi);
@@ -1096,10 +1097,11 @@
 				countFill = (maxOverflowed || bitIdx >= binaryMax-dte) ? (binaryMax-bitIdx) : binaryMax;
                                 countOverflow = (bitCount-countFill) % binaryMax;
                                 masterDifference = binaryMax-bitCount-bitIdx;
+				printf("[+]\tHi : %d\n", hi);
 				printf("[+]\tcountFill : %d\n", countFill);
 				printf("[+]\tcountOverflow : %d\n", countOverflow);
 				printf("[+]\tmasterDifference : %d\n", masterDifference);
-				printf("[…]\tProcessing frequency chunk %d/%d\n", chunkIdx+1, 0);
+				printf("[…]\tProcessing data chunk %d/%d\n", chunkIdx+1, 0);
 				int chunk = 0;//(int) data[i];
 				if(maxOverflowed){
 					printf("[*]\t\t+Max overflow\n");
@@ -1107,12 +1109,12 @@
                                 }else if(masterDifference >= 0){
 					printf("[*]\t\t+Master difference is positive+\n");
 					printf("[+]\t\t\tExtracting frequency chunk via chunk = ((%d & (0xff >> %d)) >> (%d)) & 0xff\n", (int)src[hi]&0xff, bitIdx, masterDifference);
-					chunk = ((src[hi] & (0xff >> bitIdx)) >> masterDifference) & 0xff;
+					chunk = (((int)src[hi] & (0xff >> bitIdx)) >> masterDifference) & 0xff;
 				}else{
 					masterDifference*=-1;
 					printf("[*]\t\t-Master difference is negative-\n");
 					printf("[+]\t\t\tExtracting frequency chunk via chunk = ((%d & (0xff >> %d)) << (%d)) & 0xff\n", (int)src[hi]&0xff, bitIdx, masterDifference);
-					chunk = ((src[hi] & (0xff >> bitIdx)) << masterDifference) & 0xff;
+					chunk = (((int)src[hi] & (0xff >> bitIdx)) << masterDifference) & 0xff;
 				}
 				printf("[+]\t\t\tExtracted Result : %d | From %s -> to %s\n", chunk, this->dbg_getBin((int)(src[hi]&0xff), 8, bitIdx, bitCount).c_str(), this->dbg_getBin(chunk, 8, 8, -7).c_str());
 				printf("\033[0;36m");
@@ -1125,6 +1127,7 @@
 						this->setError(2334, "unpackHeader() - hi overflows data.");
 						return false;
 					}
+					printf("[+]\tHi : %d\n", hi);
 					byteMask = 0xff;
 					printf("[*]\tExtracting Remaining Bits via %d += (%d & ((%d >> %d) << %d)) >> %d\n", ret, (int)src[hi]&0xff, byteMask, countOverflow, countOverflow, countOverflow);
 					ret += (((int)src[hi]) & ((byteMask>>countOverflow)<<countOverflow)) >> (countOverflow);
@@ -1141,8 +1144,9 @@
 						this->setError(654, "unpackHeader() - i is out of bounds.");
 						return false;
 					}
+					printf("[+]\tHi : %d\n", hi);
 					printf("[+]\t\t\tExtracting chunk via : %d += (%d & 0xff) >> (%d-%d)\n", chunk, (int)src[hi]&0xff, binaryMax, countOverflow);
-					chunk += (src[hi] & 0xff) >> (binaryMax-countOverflow);
+					chunk += ((int)src[hi] & 0xff) >> (binaryMax-countOverflow);
 					printf("[+]\t\t\tExtracted Result : %d | From %s -> to %s\n", chunk, this->dbg_getBin((int)(src[hi]&0xff), 8, countOverflow, -bitCount).c_str(), this->dbg_getBin(chunk, 8, 8, -7).c_str());
 					printf("\033[0;36m");
 				}else if(bitIdx+bitCount >= binaryMax){
@@ -1152,6 +1156,7 @@
                                               this->setError(654, "unpackHeader() - i is out of bounds.");
                                               return false;
                                         }
+					printf("[+]\tHi : %d\n", hi);
 				}
 
 				printf("[*]\tAdding chunk to entry freq via %d += %d << (%d*8)\n", ret, chunk, chunkIdx);
@@ -1778,7 +1783,7 @@
 						ret = false;
 					}
 				}
-				printf("%s - %d(%ld)\t%d\t%s\t%c\t%d\n", duplicate.c_str(), i, i+(this->treeData_s-this->frequencies_s), entryCount, entryString.c_str(), entryLetter, entryFrequency);
+				printf("%s - %d(%ld)\t%d\t%s\t%d\t%d\n", duplicate.c_str(), i, i+(this->treeData_s-this->frequencies_s), entryCount, entryString.c_str(), (int)entryLetter&0xff, entryFrequency);
 			}printf("\n");
 			return ret;
 		}
