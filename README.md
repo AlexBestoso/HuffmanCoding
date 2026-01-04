@@ -4,6 +4,7 @@ created a getPackedBits function.
 
 
 TODO: 
-Update the debug printf statements.
-The focus  needs to be shifted from the header packing and unpacking; into the body packing and unpacking.
+the algorithm for extracting the body data, unpackBody()' s for loop that uses `frequencies_s`, it's not too complicated; but it is out of aligmnet.
+
+Therory; It has to do with the potential for inconsistant decrementation in the generated encoded bit lengths. This phenomena is not a bug, and has to be directly addressed.
 

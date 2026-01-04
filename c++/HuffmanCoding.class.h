@@ -1170,7 +1170,7 @@
 		}
 		
 		int getPackedBits(char *data, size_t dataSize, int *index, int *startBit, int numOfBitsToFetch, int bitsContainerSize){
-			printf("[*] getPackedBits()\n");
+			printf("[*] getPackedBits(data:%p, dataSize:%ld, index:%d, startBit:%d, numberOfBitsToFetch:%d, bitsContainerSize:%d)\n", data, dataSize, index[0], startBit[0], numOfBitsToFetch, bitsContainerSize);
 			int ret = 0;
 			int rb = numOfBitsToFetch; // remaining bits.
 			int targetByteCount = bitsContainerSize;
@@ -1218,14 +1218,15 @@
 			// determine largest bit count in code table, and it's value.
 			int largestCount = this->codeTable[this->frequencies_s-1];
 			int expectedContainerSize = largestCount <= 8 ? 1 : ( largestCount % 8 ) == 0 ? (largestCount/8) : (largestCount/8) + 1;
+			int largestMask =  ~((~(0)>>largestCount) << largestCount);
 			printf("[*] Largest Bit Count is %d\n", largestCount);
-			printf("[*] relative mask : 0x%x\n", ~((~(0)>>largestCount) << largestCount));
+			printf("[*] Largest mask : 0x%x\n", largestMask);
 			printf("[*] expected container size : %d\n", expectedContainerSize);
 			printf("[*] first 4 packed bytes : %d %d %d %d\n", (int)data[indexOffset+0]&0xff, (int)data[indexOffset+1]&0xff, (int)data[indexOffset+2]&0xff, (int)data[indexOffset+3]&0xff);
-			// determine the distance between each bit count, store in workbuffer, or calc on fly.
 			// Shift largest bit count of msb bits out of data and into a buffer variable.
 			int calcRegister = this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, largestCount, expectedContainerSize);
-			printf("[*] Extracted encdoed value : %d\n", calcRegister);
+			int calcBitCount = largestCount;
+			int calcMask = largestMask;
 
 			// allocate the output Buffer 
 			this->destroyOut();
@@ -1234,8 +1235,66 @@
 			for(int i=0; i<this->frequencies_s; i++){
 				this->out_s += this->frequencies[i];
 			}
-			this->out = new char[this->outSize];
-			printf("[*] Output buffer size : %ld\n", this->out_s);
+			this->out = new char[this->out_s];
+			printf("-----------\n[*] Output buffer size : %ld\n", this->out_s);
+			int tbleOff = this->frequencies_s;
+			for(int i=0; i<this->out_s; i++){
+				if(calcBitCount < smallestCount){
+					this->setError(45345, "unpackBody() - calculated bits is less than smallest allowed.");
+					return false;
+				}
+				// identify which code is in the chunk by reducing calcRegister.
+				printf("[*] Calculation Buffer : %d (%s)\n", calcRegister, this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str());
+				int targetCode = -1;
+				int leftover = 0;
+				int leftoverBits = 0;
+				/*
+				 * Start Unpack decode algorithm.
+				 * */
+				for(int f=this->frequencies_s-1; f>=0; f--){
+					if(calcRegister == (this->codeTable[tbleOff+f])){
+						targetCode = f;
+						break;
+					}else if(f == 0){
+						this->setError(345, "unpackBody() - no matches found, invalid data.");
+						return false;
+					}else if(this->codeTable[f] > calcBitCount){
+						continue;
+					}
+					
+					int thisBitCount = this->codeTable[f];
+					int nextBitCount = this->codeTable[f-1];
+					int theirDifference = (thisBitCount-nextBitCount);
+					theirDifference = theirDifference < 0 ? theirDifference * (-1) : theirDifference;
+					printf("[*]\tdif debug : f(%d) --> %d - %d = %d\n", f, nextBitCount, thisBitCount, theirDifference);
+					if(theirDifference < 0){
+						this->setError(54354, "unpackBody() - theirDifference is an impossible difference!");
+						return false;
+					}
+					int shiftAmount = theirDifference;
+					int reserveMask = ~((calcMask>>shiftAmount)<<shiftAmount);
+					
+					leftover = (calcRegister & reserveMask) + (leftover << shiftAmount);
+					leftoverBits+=shiftAmount;
+					calcRegister = (calcRegister >> shiftAmount);
+					calcBitCount -= shiftAmount;
+				}
+				printf("[*]\tTarget Freqency Index : %d\n", targetCode);
+				printf("[*]\tReduced Calculation Buffer : %d (%s)\n", calcRegister, this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str());
+				printf("[*]\tLeftovers : %d (%s)\n", leftover, this->dbg_getBin(leftover, leftoverBits, 0, 0).c_str());
+
+				int bitDifference = largestCount - leftoverBits;
+				if(bitDifference < 0){
+					this->setError(43545, "unpackBody() - Impossible bitDifference!");
+					return false;
+				}
+				expectedContainerSize = bitDifference <= 8 ? 1 : ( bitDifference % 8 ) == 0 ? (bitDifference/8) : (bitDifference/8) + 1;
+				calcRegister = (leftover << bitDifference) + this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, bitDifference, expectedContainerSize);
+				
+				out[i] = this->treeLetters[targetCode];
+				
+
+			}
 			// check if equal to table char most bits. 
 			// decrement table i,
 			// right shift extracted bits relative to workbuffer difference.
@@ -1724,6 +1783,7 @@
 
 			if(!this->unpackBody(data, dataSize, indexOffset, bitOffset, endPadding)){
 				this->setError(4535, "decompress() - failed to unpack body.");
+				return false;
 			}
 			
 			if(!this->decode(data, dataSize)){
