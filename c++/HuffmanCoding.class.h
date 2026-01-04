@@ -979,9 +979,6 @@
 			int bitIdx = 4;
 			int hi=0; // header index.
 			int elementCount = this->frequencies_s;
-			int dbgHi=0;
-			int dbgBi=4;
-			int dbgMod=0;
 			/*
 			 * 1) Number of different values used to create the tree.
 			 * 2) Max different number of values are 2^8 = 256 = 0b1,0000,0000 = 9 bits
@@ -992,64 +989,14 @@
 			 * 7) Starting binary offset of argument 6's elemental location.
 			 * */
 			this->packByte(elementCount, 9, 0x1ff, this->header, this->header_s, &hi, &bitIdx);
-			printf("[:)] Packed Element Count : %d | hi start: %d | hi end: %d | bi start: %d | bi end: %d\n", elementCount, dbgHi, hi, dbgBi, bitIdx);
-			printf("Packed element count : %d\n", elementCount);
-			for(int q=dbgHi; q<=hi; q++){
-				if(dbgMod == 0){
-					printf("\t~hi:%d | %s\n", q, this->dbg_getBin((int)this->header[q]&0xff, 8, dbgBi, 9).c_str());
-				}else{
-					printf("\t~hi:%d | %s\n", q, this->dbg_getBin((int)this->header[q]&0xff, 8, bitIdx, -9).c_str());
-				}
-				dbgMod = (dbgMod +1 ) % 2;
-			}
-			dbgMod = 0;
-			dbgHi = hi;
-			dbgBi = bitIdx;
  
 			for(int i=0; i<this->frequencies_s && hi<this->header_s; i++){
-				printf("--Packing Element #%d\n", i);
 				int containerSize = (((this->frequencies[i]/0xff)) + 1);
 				this->packByte(containerSize, 3, 0xff, this->header, this->header_s, &hi, &bitIdx);
-				printf("\tPacked container Size : %d:\n", containerSize);
-				for(int q=dbgHi; q<=hi; q++){
-					if(dbgMod == 0){
-						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)this->header[q]&0xff, 8, dbgBi, 3).c_str());
-					}else{
-						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)this->header[q]&0xff, 8, bitIdx, -3).c_str());
-					}
-					dbgMod = (dbgMod +1 ) % 2;
-				}
-				dbgMod = 0;
-				dbgHi = hi;
-				dbgBi = bitIdx;
 				int freq = this->frequencies[i];
 				this->packByte(freq, 8, 0xff, this->header, this->header_s, &hi, &bitIdx);
-				printf("\tPacked Freqency %d:\n", freq);
-				for(int q=dbgHi; q<=hi; q++){
-					if(dbgMod == 0){
-						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)this->header[q]&0xff, 8, dbgBi, 8).c_str());
-					}else{
-						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)this->header[q]&0xff, 8, bitIdx, -8).c_str());
-					}
-					dbgMod = (dbgMod +1 ) % 2;
-				}
-				dbgMod = 0;
-				dbgHi = hi;
-				dbgBi = bitIdx;
 				char letter = this->treeLetters[i];
 				this->packByte((int)letter&0xff, 8, 0xff, this->header, this->header_s, &hi, &bitIdx);
-				printf("\tPacked Letter %d:\n", (int)letter&0xff);
-				for(int q=dbgHi; q<=hi; q++){
-					if(dbgMod == 0){
-						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)this->header[q]&0xff, 8, dbgBi, 8).c_str());
-					}else{
-						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)this->header[q]&0xff, 8, bitIdx, -8).c_str());
-					}
-					dbgMod = (dbgMod +1 ) % 2;
-				}
-				dbgMod = 0;
-				dbgHi = hi;
-				dbgBi = bitIdx;
 			}
 			return bitIdx;
 		}
@@ -1071,21 +1018,26 @@
 			// validate code table.
 			// validate header.
 
+			printf("[*] Packing Body Bits.\n");
+			printf("[!] Starting Bit Index : %d\n", startingBitIndex);
+			printf("[!] data address : %p\n", data);
+			printf("[!] data size : %ld\n", dataSize);
 
 			// calculate body size using the code table
 			this->destroyBody();
 			for(int i=0; i<this->frequencies_s; i++)
 				this->body_s += this->codeTable[i] * this->frequencies[i];
-
+			
 			this->body_s = (this->body_s % 8) == 0 ? this->body_s/8 : (this->body_s/8)+1;
-
 			if(startingBitIndex > 0)
 				this->body_s++;
+			
 			this->body = new char[this->body_s];
+			printf("[!] Calculated body Size : %ld\n", this->body_s);
 
 			int bitIdx=startingBitIndex % 8;
 			int bi=0;
-			this->body[0] = 0;
+			this->body[bi] = 0;
 			for(int i=0; i<dataSize && bi<this->body_s; i++){
 				int tableIdx = this->getEncodeCharIndex(data[i]);
 				if(tableIdx == -1){
@@ -1095,9 +1047,17 @@
 				int bitCount = this->codeTable[tableIdx];
 				int encodedChar = this->codeTable[tableIdx+this->frequencies_s];
 				int mask = ~(~(0) << bitCount);
+				int dbgA = bi;
+				printf("[*] i: %d | bi: %d | bitIdx: %d\n", i, bi, bitIdx);
 				this->packByte(encodedChar, bitCount, mask, this->body, this->body_s, &bi, &bitIdx);
+				printf("[*]\tPacked %d(%d bits) into :\n", (int)encodedChar & 0xff, bitCount);
+				for(int d=dbgA; d<=bi; d++){
+					std::string bin = this->dbg_getBin(this->body[d], 8, 0, 0);
+					printf("[*]\t\t[idx:%d] (%d) %s\n", d, (int)this->body[d]&0xff, bin.c_str());
+				}
 			}
 			this->body_s -= (this->body_s-bi);
+			printf("[*] final Size %ld, returning bit idx %d\n----------------\n", this->body_s, bitIdx);
 			return bitIdx;
 		}
 		
@@ -1172,7 +1132,6 @@
 				return false;
 			}
 
-			printf("\n\n----debugging unpackHeader(%p, %ld)\n", data, dataSize);
 			this->destroyTreeLetters();
 			this->destroyFrequencies();
 			char entryChar=0x00;
@@ -1180,38 +1139,11 @@
 			int entryContainerSize=0;
 			int entryFreq=0;
                         int hi=0;
-			int dbgHi=0;
-			int dbgBi=0;
-			int dbgMod=0;
 			int padding = unpackByte(data, dataSize, &hi, &bitIdx, 4, 0xf, 1);
-			printf("Unpacked Padding : %d\n", padding);
-			for(int q=dbgHi; q<=hi; q++){
-				if(dbgMod == 0){
-					printf("\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, dbgBi, 4).c_str());
-				}else{
-					printf("\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, bitIdx, -4).c_str());
-				}
-				dbgMod = (dbgMod +1 ) % 2;
-			}
-			dbgMod = 0;
-			dbgHi = hi;
-			dbgBi = bitIdx;
 
 
 			// clear up to bit idx, 
 			int freqCount = unpackByte(data, dataSize, &hi, &bitIdx, 9, 0x1ff, 2);
-			printf("Unpacked element count : %d\n", freqCount);
-			for(int q=dbgHi; q<=hi; q++){
-				if(dbgMod == 0){
-					printf("\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, dbgBi, 9).c_str());
-				}else{
-					printf("\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, bitIdx, -9).c_str());
-				}
-				dbgMod = (dbgMod +1 ) % 2;
-			}
-			dbgMod = 0;
-			dbgHi = hi;
-			dbgBi = bitIdx;
 
 			this->resizeTreeLetters(freqCount);
 			this->resizeFrequencies(freqCount);
@@ -1221,50 +1153,11 @@
 				entryContainerSize=0;
 				entryFreq=0;
 				entryChar=0x00;
-				
-				printf("--Unpacking Freqency Element #%d\n", i);
 
 				/* get entry container size */
 				entryContainerSize = unpackByte(data, dataSize, &hi, &bitIdx, 3, 0xff, 1);
-				printf("\tUnpacked Container Size : %d\n", entryContainerSize);
-				for(int q=dbgHi; q<=hi; q++){
-					if(dbgMod == 0){
-						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, dbgBi, 3).c_str());
-					}else{
-						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, bitIdx, -3).c_str());
-					}
-					dbgMod = (dbgMod +1 ) % 2;
-				}
-				dbgMod = 0;
-				dbgHi = hi;
-				dbgBi = bitIdx;
-
 				entryFreq=unpackByte(data, dataSize, &hi, &bitIdx, 8, 0xff, entryContainerSize);
-				printf("\tUnpacked Frequency Value : %d\n", entryFreq);
-				for(int q=dbgHi; q<=hi; q++){
-					if(dbgMod == 0){
-						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, dbgBi, 8).c_str());
-					}else{
-						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, bitIdx, -8).c_str());
-					}
-					dbgMod = (dbgMod +1 ) % 2;
-				}
-				dbgMod = 0;
-				dbgHi = hi;
-				dbgBi = bitIdx;
 				entryChar = (char)unpackByte(data, dataSize, &hi, &bitIdx, 8, 0xff, 1);
-				printf("\tUnpacked Frequency Letter : %d\n", (int)entryChar & 0xff);
-				for(int q=dbgHi; q<=hi; q++){
-					if(dbgMod == 0){
-						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, dbgBi, 8).c_str());
-					}else{
-						printf("\t\t~hi:%d | %s\n", q, this->dbg_getBin((int)data[q]&0xff, 8, bitIdx, -8).c_str());
-					}
-					dbgMod = (dbgMod +1 ) % 2;
-				}
-				dbgMod = 0;
-				dbgHi = hi;
-				dbgBi = bitIdx;
 				
 				/*We have our data, lets store it in our tables.*/
 				this->treeLetters[i] = entryChar;
@@ -1276,48 +1169,62 @@
 			return true;
 		}
 		
-		int getPackedBits(char *data, size_t dataSize, int *index, int *startBit, int numOfBitsToFetch){
+		int getPackedBits(char *data, size_t dataSize, int *index, int *startBit, int numOfBitsToFetch, int bitsContainerSize){
+			printf("[*] getPackedBits()\n");
 			int ret = 0;
 			int rb = numOfBitsToFetch; // remaining bits.
-			int targetByteCount = numOfBitsToFetch <= 8 ? 1 : numOfBitsToFetch/8;
+			int targetByteCount = bitsContainerSize;
+			printf("[*]\tBits To fetch %d | target byte count : %d\n", rb, targetByteCount);
+			printf("[*]\tLoop start index : %d, bit start index : %d\n", index[0], startBit[0]);
 			for(int i=index[0]; i<dataSize && rb>0; i++){
+				printf("[l]\tlooping %d\n", i);
 				int d = (int)data[i]&0xff; // data
+				printf("[*]\t\tIsolated Data : %d\n", d);
 				int ab = (7-startBit[0])+1;// available bits
+				printf("[*]\t\tBits available in this byte : %d\n", ab);
 				int atf = rb-ab >= 0 ? ab : rb; // amount to fetch
-				int ats = 8-atf;// amount to shift
+				printf("[*]\t\tAmount of bits to fetch from this byte: %d\n", atf);
+				int ats = atf;// amount to shift
+				printf("[*]\t\tBit mask shift amount : %d\n", ats);
 				int em = ~((~(0)>>ats)<<ats);// extraction mask
+				printf("[*]\t\tExtraction Mask : 0x%x (%s)\n", em, this->dbg_getBin(em, ats, 0, 0).c_str());
 				int ev = d & em; // extracted value
+				printf("[*]\t\tExtracted Value : %d (%s)\n", ev, this->dbg_getBin(ev, ats, 0, 0).c_str());
 				ats = (rb-atf); // amt to shift into ret
+				printf("[*]\t\tExtracted Result Left Shift amount : %d\n", ats);
 				ret += ev << ats;
+				printf("[*]\t\tCalculated Ret : %d (%s)\n", ret, this->dbg_getBin(ret, numOfBitsToFetch, 0, 0).c_str());
 				rb -= atf;
 				index[0]++;
 				startBit[0] = (startBit[0]+atf) % 8;
 			}
+			printf("[*]\tReturning : %d (%s)\n", ret, this->dbg_getBin(ret, numOfBitsToFetch, 0, 0).c_str());
 			return ret;
 		}
 
 		bool unpackBody(char *data, size_t dataSize, int indexOffset, int bitOffset, int endPadding){
 			// Calculate the output buffer size using code table.
-			this->destroyOut();
-			int out_i=0;
-			this->out_s = dataSize - indexOffset;
-			if(this->out_s <= 0){
+			this->destroyBody();
+			int body_i=0;
+			this->body_s = dataSize - indexOffset - 1;
+			if(this->body_s <= 0){
 				this->setError(534, "unpackBody() - out_s is out of bounds.");
 				return false;
 			}
-			this->out = new char[this->out_s];
+			this->body = new char[this->body_s];
+			printf("[*] Calculated body size : %ld\n", this->body_s);
 			// Determine smallest bit count in code table, and it's value.
 			int smallestCount = this->codeTable[0];
 			// determine largest bit count in code table, and it's value.
 			int largestCount = this->codeTable[this->frequencies_s-1];
 			int expectedContainerSize = largestCount <= 8 ? 1 : ( largestCount % 8 ) == 0 ? (largestCount/8) : (largestCount/8) + 1;
-			int dbga=indexOffset;
 			printf("[*] Largest Bit Count is %d\n", largestCount);
 			printf("[*] relative mask : 0x%x\n", ~((~(0)>>largestCount) << largestCount));
 			printf("[*] expected container size : %d\n", expectedContainerSize);
+			printf("[*] first 4 packed bytes : %d %d %d %d\n", (int)data[indexOffset+0]&0xff, (int)data[indexOffset+1]&0xff, (int)data[indexOffset+2]&0xff, (int)data[indexOffset+3]&0xff);
 			// determine the distance between each bit count, store in workbuffer, or calc on fly.
 			// Shift largest bit count of msb bits out of data and into a buffer variable.
-			int calcRegister = this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, largestCount-1);
+			int calcRegister = this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, largestCount, expectedContainerSize);
 			printf("[*] Extracted encdoed value : %d\n", calcRegister);
 			exit(1);
 			/* The loop table i, from biggest to smallest. */
@@ -1368,6 +1275,7 @@
 			
 
 			printf("\nHeader Size : %ld | Body Size : %ld\n", this->header_s, this->body_s);
+			printf("Body Debug, first 4 bytes : %d %d %d %d\n", (int)body[0]&0xff, (int)body[1]&0xff, (int)body[2]&0xff, (int)body[3]&0xff);
 			return true;
 		}
 

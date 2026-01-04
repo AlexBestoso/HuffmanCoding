@@ -2,8 +2,8 @@
 Huffman Coding implemented in C++ and JavaScript
 created a getPackedBits function.
 
-This function extracts the encoded data from the buffer by reading the buffer via specificed bit chunks.
 
-Due to how the body is packed, There's no need to use the pack function, because interpreatation is dependent on the tree, not the internal data.
-
+TODO: 
+Update the debug printf statements.
+The focus  needs to be shifted from the header packing and unpacking; into the body packing and unpacking.
 
