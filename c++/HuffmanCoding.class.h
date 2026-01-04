@@ -1226,8 +1226,16 @@
 			// Shift largest bit count of msb bits out of data and into a buffer variable.
 			int calcRegister = this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, largestCount, expectedContainerSize);
 			printf("[*] Extracted encdoed value : %d\n", calcRegister);
-			exit(1);
+
+			// allocate the output Buffer 
+			this->destroyOut();
+			this->out_s = 0;
 			/* The loop table i, from biggest to smallest. */
+			for(int i=0; i<this->frequencies_s; i++){
+				this->out_s += this->frequencies[i];
+			}
+			this->out = new char[this->outSize];
+			printf("[*] Output buffer size : %ld\n", this->out_s);
 			// check if equal to table char most bits. 
 			// decrement table i,
 			// right shift extracted bits relative to workbuffer difference.
