@@ -1,10 +1,9 @@
 # HuffmanCoding - Work In Progress
 Huffman Coding implemented in C++ and JavaScript
+created a getPackedBits function.
 
-Fully corrected the packing bytes…for now.
+This function extracts the encoded data from the buffer by reading the buffer via specificed bit chunks.
 
-We have gotten back to the invalid message error that this branch is supposed to address…finally.
+Due to how the body is packed, There's no need to use the pack function, because interpreatation is dependent on the tree, not the internal data.
 
-Next step is to use the newly created packing/unpacking functions to fix the body packing/unpacking. 
 
-Because as of writing this, it's still using the old broken algorithm.

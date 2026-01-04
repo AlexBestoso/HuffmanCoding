@@ -1275,14 +1275,51 @@
 			ptr_endPadding[0] = padding;
 			return true;
 		}
+		
+		int getPackedBits(char *data, size_t dataSize, int *index, int *startBit, int numOfBitsToFetch){
+			int ret = 0;
+			int rb = numOfBitsToFetch; // remaining bits.
+			int targetByteCount = numOfBitsToFetch <= 8 ? 1 : numOfBitsToFetch/8;
+			for(int i=index[0]; i<dataSize && rb>0; i++){
+				int d = (int)data[i]&0xff; // data
+				int ab = (7-startBit[0])+1;// available bits
+				int atf = rb-ab >= 0 ? ab : rb; // amount to fetch
+				int ats = 8-atf;// amount to shift
+				int em = ~((~(0)>>ats)<<ats);// extraction mask
+				int ev = d & em; // extracted value
+				ats = (rb-atf); // amt to shift into ret
+				ret += ev << ats;
+				rb -= atf;
+				index[0]++;
+				startBit[0] = (startBit[0]+atf) % 8;
+			}
+			return ret;
+		}
 
 		bool unpackBody(char *data, size_t dataSize, int indexOffset, int bitOffset, int endPadding){
 			// Calculate the output buffer size using code table.
+			this->destroyOut();
+			int out_i=0;
+			this->out_s = dataSize - indexOffset;
+			if(this->out_s <= 0){
+				this->setError(534, "unpackBody() - out_s is out of bounds.");
+				return false;
+			}
+			this->out = new char[this->out_s];
 			// Determine smallest bit count in code table, and it's value.
+			int smallestCount = this->codeTable[0];
 			// determine largest bit count in code table, and it's value.
-			// determine the distance between each bit count, store in workbuffer.
-			// Shift largest bit count bits out of data and into a buffer variable.
-
+			int largestCount = this->codeTable[this->frequencies_s-1];
+			int expectedContainerSize = largestCount <= 8 ? 1 : ( largestCount % 8 ) == 0 ? (largestCount/8) : (largestCount/8) + 1;
+			int dbga=indexOffset;
+			printf("[*] Largest Bit Count is %d\n", largestCount);
+			printf("[*] relative mask : 0x%x\n", ~((~(0)>>largestCount) << largestCount));
+			printf("[*] expected container size : %d\n", expectedContainerSize);
+			// determine the distance between each bit count, store in workbuffer, or calc on fly.
+			// Shift largest bit count of msb bits out of data and into a buffer variable.
+			int calcRegister = this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, largestCount-1);
+			printf("[*] Extracted encdoed value : %d\n", calcRegister);
+			exit(1);
 			/* The loop table i, from biggest to smallest. */
 			// check if equal to table char most bits. 
 			// decrement table i,
