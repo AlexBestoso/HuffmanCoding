@@ -112,7 +112,7 @@ int main(int argc, char *argv[]){
                 hc.printCodeTable();
                 printf("\n\033[1;34m");
                 hc.printTree();
-		printf("[FAILED] Invalid message. Decompressed message is not the same size as the original!\n");
+		printf("[FAILED] Invalid message. Decompressed message is not the same size as the original! og:%ld != decomp:%ld\n", ogMsgSize, hc.out_s);
 		delete[] ogMsg;
         	delete[] compressedData;
 		exit(EXIT_FAILURE);

@@ -1163,7 +1163,7 @@
 				this->treeLetters[i] = entryChar;
 				this->frequencies[i] = entryFreq;
 			}
-			ptr_indexOffset[0] = hi;
+			ptr_indexOffset[0] = hi+1; // +1 converts index position into size container.
 			ptr_bitOffset[0] = bitIdx;
 			ptr_endPadding[0] = padding;
 			return true;
@@ -1206,13 +1206,16 @@
 			// Calculate the output buffer size using code table.
 			this->destroyBody();
 			int body_i=0;
-			this->body_s = dataSize - indexOffset - 1;
+			this->body_s = dataSize - indexOffset;
 			if(this->body_s <= 0){
 				this->setError(534, "unpackBody() - out_s is out of bounds.");
 				return false;
 			}
 			this->body = new char[this->body_s];
+			printf("[*] data size : %ld\n", dataSize);
+			printf("[*] header size : %d\n", indexOffset);
 			printf("[*] Calculated body size : %ld\n", this->body_s);
+			indexOffset--;
 			// Determine smallest bit count in code table, and it's value.
 			int smallestCount = this->codeTable[0];
 			// determine largest bit count in code table, and it's value.
@@ -1236,72 +1239,23 @@
 				this->out_s += this->frequencies[i];
 			}
 			this->out = new char[this->out_s];
-			printf("-----------\n[*] Output buffer size : %ld\n", this->out_s);
+			printf("-----------DEBUGGING BODY UNPACK\n[*] Output buffer size : %ld\n", this->out_s);
 			int tbleOff = this->frequencies_s;
-			for(int i=0; i<this->out_s; i++){
+			for(int i=0, tf=-1; i<this->out_s; i++){
 				if(calcBitCount < smallestCount){
 					this->setError(45345, "unpackBody() - calculated bits is less than smallest allowed.");
 					return false;
 				}
-				// identify which code is in the chunk by reducing calcRegister.
-				printf("[*] Calculation Buffer : %d (%s)\n", calcRegister, this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str());
-				int targetCode = -1;
-				int leftover = 0;
-				int leftoverBits = 0;
 				/*
 				 * Start Unpack decode algorithm.
 				 * */
-				for(int f=this->frequencies_s-1; f>=0; f--){
-					if(calcRegister == (this->codeTable[tbleOff+f])){
-						targetCode = f;
-						break;
-					}else if(f == 0){
-						this->setError(345, "unpackBody() - no matches found, invalid data.");
-						return false;
-					}else if(this->codeTable[f] > calcBitCount){
-						continue;
-					}
+				printf("------------\n[%d] Starting Value : %d (%s)\n", i, calcRegister, this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str());
+				printf("[*]\tProcessing Encoded Bytes.\n");
+				for(int f=0; f<this->frequencies_s; f++){
 					
-					int thisBitCount = this->codeTable[f];
-					int nextBitCount = this->codeTable[f-1];
-					int theirDifference = (thisBitCount-nextBitCount);
-					theirDifference = theirDifference < 0 ? theirDifference * (-1) : theirDifference;
-					printf("[*]\tdif debug : f(%d) --> %d - %d = %d\n", f, nextBitCount, thisBitCount, theirDifference);
-					if(theirDifference < 0){
-						this->setError(54354, "unpackBody() - theirDifference is an impossible difference!");
-						return false;
-					}
-					int shiftAmount = theirDifference;
-					int reserveMask = ~((calcMask>>shiftAmount)<<shiftAmount);
-					
-					leftover = (calcRegister & reserveMask) + (leftover << shiftAmount);
-					leftoverBits+=shiftAmount;
-					calcRegister = (calcRegister >> shiftAmount);
-					calcBitCount -= shiftAmount;
 				}
-				printf("[*]\tTarget Freqency Index : %d\n", targetCode);
-				printf("[*]\tReduced Calculation Buffer : %d (%s)\n", calcRegister, this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str());
-				printf("[*]\tLeftovers : %d (%s)\n", leftover, this->dbg_getBin(leftover, leftoverBits, 0, 0).c_str());
-
-				int bitDifference = largestCount - leftoverBits;
-				if(bitDifference < 0){
-					this->setError(43545, "unpackBody() - Impossible bitDifference!");
-					return false;
-				}
-				expectedContainerSize = bitDifference <= 8 ? 1 : ( bitDifference % 8 ) == 0 ? (bitDifference/8) : (bitDifference/8) + 1;
-				calcRegister = (leftover << bitDifference) + this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, bitDifference, expectedContainerSize);
-				
-				out[i] = this->treeLetters[targetCode];
-				
 
 			}
-			// check if equal to table char most bits. 
-			// decrement table i,
-			// right shift extracted bits relative to workbuffer difference.
-			// continue until match is found.
-			// fail if no match.
-			
-			// on match, push code table char to out, increment iterator.
 			
 			return true;
 		}
