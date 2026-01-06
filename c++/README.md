@@ -2,9 +2,6 @@
 
 Development Notes : 
 
-it appears that the flaw is in entry container...
-*] Round i:132/256, hi:315 < dataSize:8101
+Just need to sort the code table, by bitCount, and then make the frequenies and treeLetters arrays reflect that change too.
 
-
-There seems to be some potential high missalignments.
-Need to go through the unpack functions and better track the byte targeted for unpacking, and it's iterator, hi.
+Slower development happening due to other obligations.

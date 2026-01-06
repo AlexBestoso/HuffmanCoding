@@ -698,6 +698,29 @@
 			this->codeTable[codeIdx] = (this->codeTable[codeIdx] << 1) + (bit&0x01);
 			return true;
 		}
+
+		bool codeTableSortByBitCount(void){
+			if(!this->validateTreeData()){
+                                this->setError(44456, "generateCodeTable() - failed to validate tree data.");
+                                return false;
+                        }
+                        if(!this->validateFrequencies()){
+                                this->setError(665434, "generateCodeTable() - failed to validate frequencies.");
+                                return false;
+                        }
+			// TODO: validate code table
+			this->destroyWorkBuffer();
+			this->workBuffer_s = this->frequencies_s;
+			this->workBuffer = new int[this->workBuffer_s];
+			int targetIdxA = 0;
+			int targetIdxB = 0;
+			int swapA = 0;
+			int swapB = 0;
+			
+			
+			this->destroyWorkBuffer();
+			return true;
+		}
 		bool generateCodeTable(void){
 			if(!this->validateTreeData()){
 				this->setError(44456, "generateCodeTable() - failed to validate tree data.");
@@ -779,6 +802,7 @@
 					}
 				}
 			}
+			this->codeTableSortByBitCount();
 			return true;
 		}
 
