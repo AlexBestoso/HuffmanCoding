@@ -12,6 +12,7 @@ int main(int argc, char *argv[]){
 	HuffmanCoding hc;
 	int counts[256];
 	size_t ogMsgSize = 0;
+	size_t endTestSize = 0;
 	std::srand(time(0));
 
 	printf("[*] Generating random byte frequencies...\n");
@@ -19,6 +20,7 @@ int main(int argc, char *argv[]){
 		counts[i] = rand() % (60-1+1)+1;
 		ogMsgSize += counts[i];
 	}
+	endTestSize = ogMsgSize;
 	printf("[*] Original Msg (size : %ld) : \n\033[0;32m", ogMsgSize);
 	if(dbg != "debug") printf("\tRun %s debug to view generated message.", argv[0]);
 	char *ogMsg = new char[ogMsgSize];
@@ -103,7 +105,7 @@ int main(int argc, char *argv[]){
 	}
 	printf("\n");
 
-	if(ogMsgSize != hc.out_s){
+	if(endTestSize != hc.out_s){
 		printf("\n\033[5mDATA DUMP\033[0;31m\n");
                 hc.printTreeLetters();
                 printf("\n\033[0;32m");
@@ -118,7 +120,7 @@ int main(int argc, char *argv[]){
 		exit(EXIT_FAILURE);
 	}
 	
-	for(int i=0; i<ogMsgSize; i++){
+	for(int i=0; i<endTestSize; i++){
 		if(ogMsg[i] != hc.out[i]){
 			printf("[FAILED] Invalid message on index %d. Original message is not the same as the decompressed message.\n", i);
 			delete[] ogMsg;

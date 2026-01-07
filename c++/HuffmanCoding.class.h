@@ -953,7 +953,6 @@
 					}
 				}
 			}
-			this->codeTableSortByBitCount();
 			return true;
 		}
 
@@ -1378,6 +1377,7 @@
 		}
 
 		bool unpackBody(char *data, size_t dataSize, int indexOffset, int bitOffset, int endPadding){
+			//TODO: validate tree
 			// Calculate the output buffer size using code table.
 			this->destroyBody();
 			int body_i=0;
@@ -1408,13 +1408,11 @@
 
 			// allocate the output Buffer 
 			this->destroyOut();
-			this->out_s = 0;
-			/* The loop table i, from biggest to smallest. */
-			for(int i=0; i<this->frequencies_s; i++){
-				this->out_s += this->frequencies[i];
-			}
+			this->out_s = this->treeData[0];
 			this->out = new char[this->out_s];
-			printf("-----------DEBUGGING BODY UNPACK\n[*] Output buffer size : %ld\n", this->out_s);
+			// Sort Code Table for ease of decoding
+			this->codeTableSortByBitCount();
+			printf("-----------DEBUGGING BODY UNPACK\n");
 			int tbleOff = this->frequencies_s;
 			for(int i=0, tf=-1; i<this->out_s; i++){
 				if(calcBitCount < smallestCount){
@@ -1422,7 +1420,7 @@
 					return false;
 				}
 				/*
-				 * Start Unpack decode algorithm.
+				 * TODO: Start Unpack decode algorithm.
 				 * */
 				printf("------------\n[%d] Starting Value : %d (%s)\n", i, calcRegister, this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str());
 				printf("[*]\tProcessing Encoded Bytes.\n");
@@ -1472,35 +1470,6 @@
 
 			printf("\nHeader Size : %ld | Body Size : %ld\n", this->header_s, this->body_s);
 			printf("Body Debug, first 4 bytes : %d %d %d %d\n", (int)body[0]&0xff, (int)body[1]&0xff, (int)body[2]&0xff, (int)body[3]&0xff);
-			return true;
-		}
-
-		bool decode(char *data, size_t dataSize){
-			size_t headerSize = (this->frequencies_s*sizeof(int)) + this->treeLetters_s + 1;
-			int paddingCount = (int)data[headerSize];
-			int dataStart = headerSize+1;
-			int bitCount = ((dataSize - headerSize-1) * 8) - paddingCount;
-			std::string grab = "";
-			std::string obuff="";
-			size_t obuff_s =0;
-			destroyOut();
-			for(int i=dataStart; i<dataSize && bitCount > 0; i++){
-				char val = data[i];
-				for(int j=0; j<8 && bitCount>0; j++){
-					grab += std::to_string((val >> (7-j)) & 1);
-					bitCount--;
-					int decoded = this->codeToTableIndex(grab);
-					if(decoded != -1){
-						obuff += this->treeLetters[decoded];
-						obuff_s++;
-						grab = "";
-					}
-				}
-			}
-			this->out_s = obuff_s;
-			this->out = new char[this->out_s];
-			for(int i=0; i<obuff_s; i++)
-				this->out[i] = obuff[i];
 			return true;
 		}
 
@@ -1921,10 +1890,6 @@
 				return false;
 			}
 			
-			if(!this->decode(data, dataSize)){
-				this->setError(104, "decompress(char *data, size_t dataSize) - failed to decode the data.");
-				return false;
-			}
 			return true;
 		}
 };
