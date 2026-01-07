@@ -1192,11 +1192,6 @@
 			// validate code table.
 			// validate header.
 
-			printf("[*] Packing Body Bits.\n");
-			printf("[!] Starting Bit Index : %d\n", startingBitIndex);
-			printf("[!] data address : %p\n", data);
-			printf("[!] data size : %ld\n", dataSize);
-
 			// calculate body size using the code table
 			this->destroyBody();
 			for(int i=0; i<this->frequencies_s; i++)
@@ -1207,7 +1202,6 @@
 				this->body_s++;
 			
 			this->body = new char[this->body_s];
-			printf("[!] Calculated body Size : %ld\n", this->body_s);
 
 			int bitIdx=startingBitIndex % 8;
 			int bi=0;
@@ -1222,16 +1216,12 @@
 				int encodedChar = this->codeTable[tableIdx+this->frequencies_s];
 				int mask = ~(~(0) << bitCount);
 				int dbgA = bi;
-				printf("[*] i: %d | bi: %d | bitIdx: %d\n", i, bi, bitIdx);
 				this->packByte(encodedChar, bitCount, mask, this->body, this->body_s, &bi, &bitIdx);
-				printf("[*]\tPacked %d(%d bits) into :\n", (int)encodedChar & 0xff, bitCount);
 				for(int d=dbgA; d<=bi; d++){
 					std::string bin = this->dbg_getBin(this->body[d], 8, 0, 0);
-					printf("[*]\t\t[idx:%d] (%d) %s\n", d, (int)this->body[d]&0xff, bin.c_str());
 				}
 			}
 			this->body_s -= (this->body_s-bi);
-			printf("[*] final Size %ld, returning bit idx %d\n----------------\n", this->body_s, bitIdx);
 			return bitIdx;
 		}
 		
