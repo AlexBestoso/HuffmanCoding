@@ -2,6 +2,5 @@
 
 Development Notes : 
 
-Just need to sort the code table, by bitCount, and then make the frequenies and treeLetters arrays reflect that change too.
-
-Slower development happening due to other obligations.
+the bug happens after the first layer is made.
+After seeding, we seem to be able to delete the data.
