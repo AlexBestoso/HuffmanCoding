@@ -1,10 +1,8 @@
-# Huffman Coding - c++
+# Huffman Coding - c++ : BLOCKED
 
 Development Notes : 
+The packing functions have been reviewed.
 
-it appears that the flaw is in entry container...
-*] Round i:132/256, hi:315 < dataSize:8101
-
-
-There seems to be some potential high missalignments.
-Need to go through the unpack functions and better track the byte targeted for unpacking, and it's iterator, hi.
+An out of bounds read was corrected,
+you can now sort the code table,
+and now the only problem is that we need to implement the algorithm using the tools available!
