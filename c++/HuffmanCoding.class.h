@@ -24,6 +24,7 @@
 			size_t workBuffer_fill;
                         size_t workBuffer_s;
                         int *workBuffer;
+			size_t workTypeBuffer_s;
                         int *workTypeBuffer;
 
 			char *header;
@@ -50,19 +51,70 @@
 				this->body_s = 0;
 			}
 
-			void destroyWorkBuffer(void){
-				if(workBuffer != NULL){
-					delete[] workBuffer;
+			// TODO: Move workTypeBuffer delete into it's own function
+			void destroyWorkTypeBuffer(void){
+				if(this->workTypeBuffer != NULL){
+					delete[] this->workTypeBuffer;
 				}
-				if(workTypeBuffer != NULL){
-					delete[] workTypeBuffer;
-				}
-				workBuffer = NULL;
-				workTypeBuffer = NULL;
-				workBuffer_s=0;
-				workBuffer_fill=0;
+				this->workTypeBuffer = NULL;
+				this->workTypeBuffer_s = 0;
 			}
-			
+			void resizeWorkTypeBuffer(size_t size){
+				if(size == 0){
+					this->destroyWorkTypeBuffer();
+				}else if(this->workTypeBuffer == NULL || this->workTypeBuffer_s <= 0){
+					this->destroyWorkTypeBuffer();
+					this->workTypeBuffer = new int[size];
+					this->workTypeBuffer_s = size;
+				}else{
+					size_t oldSize = this->workTypeBuffer_s;
+					int *transfer = new int[oldSize];
+					for(int i=0; i<oldSize; i++){
+						transfer[i] = this->workTypeBuffer[i];
+					}
+					this->destroyWorkTypeBuffer();
+					this->workTypeBuffer = new int[size];
+					this->workTypeBuffer_s = size;
+					for(int i=0; i<this->workTypeBuffer_s && i<oldSize; i++){
+						this->workTypeBuffer[i] = transfer[i];
+					}
+
+					delete[] transfer;
+				}
+			}
+
+			void destroyWorkBuffer(void){
+				if(this->workBuffer != NULL){
+					delete[] this->workBuffer;
+				}
+				this->workBuffer = NULL;
+				this->workBuffer_s=0;
+				this->workBuffer_fill=0;
+			}
+			void resizeWorkBuffer(size_t size){
+				if(size == 0){
+					this->destroyWorkBuffer();
+				}else if(this->workBuffer == NULL || this->workBuffer_s <= 0){
+					this->destroyWorkBuffer();
+					this->workBuffer = new int[size];
+					this->workBuffer_s = size;
+				}else{
+					size_t oldSize = this->workBuffer_s;
+					int *transfer = new int[oldSize];
+					for(int i=0; i<oldSize; i++){
+						transfer[i] = this->workBuffer[i];
+					}
+					this->destroyWorkBuffer();
+					this->workBuffer = new int[size];
+					this->workBuffer_s = size;
+					for(int i=0; i<this->workBuffer_s && i<oldSize; i++){
+						this->workBuffer[i] = transfer[i];
+					}
+
+					delete[] transfer;
+				}
+			}
+
 			void destroyTreeLayers(void){
 				if(this->treeLayerIndecies != NULL)
 					delete[] this->treeLayerIndecies;
@@ -468,7 +520,7 @@
 				return true;
 			}
 
-			bool seedLayers(void){
+			bool seedLayers(int *valueBuffer, size_t valueBuffer_s, int *typeBuffer, size_t typeBuffer_s){
 				if(!this->validateFrequencies()){
 					this->setError(4301, "seedLayers(void) - failed to validate frequenncies.");
 					return false;
@@ -485,12 +537,17 @@
 				this->resizeTreeLayers(1);
 				this->treeLayerSizes[0] = this->frequencies_s; 
 				this->workBuffer_fill=0;
-				this->workBuffer_s = this->frequencies_s;
-				this->workBuffer = new int[workBuffer_s];
-				this->workTypeBuffer = new int[workBuffer_s];
-				for(int i=0; i<this->workBuffer_s; i++){
-					this->workBuffer[i] = 0;
-					this->workTypeBuffer[i] = 0;
+				if(valueBuffer == NULL || valueBuffer_s <= 0){
+					this->setError(454, "seedLayers() - workBuffer is null");
+					return false;
+				}
+				if(typeBuffer == NULL || typeBuffer_s <= 0){
+					this->setError(345, "seedLayers() - workTypeBuffer is null.");
+					return false;
+				}
+				for(int i=0; i<valueBuffer_s; i++){
+					valueBuffer[i] = 0;
+					typeBuffer[i] = 0;
 				}
 				return true;
 
@@ -506,22 +563,37 @@
 				return true;
 			}
 
-			bool growLayer(void){
+			bool growLayer(int *valueBuffer, size_t valueBuffer_s, int *typeBuffer, size_t typeBuffer_s){
 				if(!this->validateFrequencies()){
 					this->setError(601, "growLayer(void) - invalid frequencies.");
 					return false;
 				}
 				if(this->treeData == NULL){
-					if(!this->seedLayers()){
+					if(!this->seedLayers(valueBuffer, valueBuffer_s, typeBuffer, typeBuffer_s)){
 						this->setError(602, "growLoayer(void) - failed to seed layers.");
 						return false;
 					}
 					return true;
 				}
+				if(this->treeData[0] == this->frequencyMax){
+					return false; // no more layers.
+				}
 				
+				if(valueBuffer == NULL){
+					this->setError(4545, "growLAyer() - workBuffer is null.");
+					return false;
+				}
+				if(typeBuffer == NULL){
+					this->setError(46584, "growLayer() = workTypeBuffer is null.");
+					return false;
+				}
 				
 				this->calculateLayerIndecies();
 				size_t layerCount = this->treeDataLayerCount;
+				if(layerCount == 0){
+					this->setError(5345, "growLayer() - Layer count buffer underflow.");
+					return false;
+				}
 				int topLayerStart = this->treeLayerIndecies[layerCount-1];
 				size_t topLayerSize = this->treeLayerSizes[layerCount-1];
 				if(topLayerSize <=0){
@@ -539,7 +611,7 @@
 
 				this->workBuffer_fill=0;
 
-				for(int i=topLayerStart, tracer=-1, sum=-1; i>=0; i--){
+				for(int i=topLayerStart, tracer=-1, sum=-1; i>=0 && i<this->treeData_s; i--){
 					if(this->frequencyMax <= this->treeData[i]) break;
 					if(this->treeDataTypes[i] == 0){ // it's a bottom node, don't use it.
 						continue;
@@ -548,13 +620,17 @@
 						if(i == 0){
 							if(sum == -1){
 								this->setError(777, "growLayer() - this error should never happen, Ha!");
+								this->destroyWorkTypeBuffer();
+								this->destroyWorkBuffer();
 								return false;
 							}
 							sum = this->treeData[i] + sum;
-							workBuffer[workBuffer_fill] = sum;
-							workTypeBuffer[workBuffer_fill] = 1;
-							workTypeBuffer[workBuffer_fill-1] = 0;
-							workBuffer_fill++;
+							valueBuffer[this->workBuffer_fill] = sum;
+							typeBuffer[this->workBuffer_fill] = 1;
+							int widx = this->workBuffer_fill-1;
+							if(widx >= 0)
+								typeBuffer[widx] = 0;
+							this->workBuffer_fill++;
 							break;
 						}
 						tracer = this->treeData[i];
@@ -562,82 +638,116 @@
 					}
 					if(sum == -1){
 						sum = this->treeData[i] + tracer;
-						workBuffer[workBuffer_fill] = sum;
-						workTypeBuffer[workBuffer_fill] = 1;
-						workTypeBuffer[workBuffer_fill-1] = 1;
-						workBuffer_fill++;
+						valueBuffer[this->workBuffer_fill] = sum;
+						typeBuffer[this->workBuffer_fill] = 1;
+						int widx=this->workBuffer_fill-1;
+						if(widx >= 0)
+							typeBuffer[widx] = 1;
+						this->workBuffer_fill++;
 						tracer = -1;
 						continue;
 					}
 					if(this->treeData[i] == sum){
 						if(i==0){
 							sum = tracer + this->treeData[i];
-							workBuffer[workBuffer_fill] = sum;
-                                                	workTypeBuffer[workBuffer_fill] = 1;
-                                                	workTypeBuffer[workBuffer_fill-1] = 1;
-                                                	workBuffer_fill++;
+							valueBuffer[this->workBuffer_fill] = sum;
+                                                	typeBuffer[this->workBuffer_fill] = 1;
+							int widx = this->workBuffer_fill-1;
+							if(widx >= 0)
+								typeBuffer[widx] = 1;
+                                                	this->workBuffer_fill++;
 							break;
 						}
 						sum = tracer + this->treeData[i];
-						workBuffer[workBuffer_fill] = sum;
-                                                workTypeBuffer[workBuffer_fill] = 1;
-                                                workTypeBuffer[workBuffer_fill-1] = 1;
-                                                workBuffer_fill++;
+						valueBuffer[this->workBuffer_fill] = sum;
+                                                typeBuffer[this->workBuffer_fill] = 1;
+						int widx = this->workBuffer_fill-1;
+						if(widx >= 0)
+							typeBuffer[widx] = 1;
+
+                                                this->workBuffer_fill++;
 						tracer = -1;
 						continue;
 					}
 					if(this->treeData[i] < sum){
 						sum = this->treeData[i] + tracer;
-						workBuffer[workBuffer_fill] = sum;
-                                                workTypeBuffer[workBuffer_fill] = 1;
-                                                workTypeBuffer[workBuffer_fill-1] = 1;
-                                                workBuffer_fill++;
+						valueBuffer[this->workBuffer_fill] = sum;
+                                                typeBuffer[this->workBuffer_fill] = 1;
+						int widx = this->workBuffer_fill-1;
+						if(widx >= 0)
+							typeBuffer[widx] = 1;
+                                                this->workBuffer_fill++;
 						tracer = -1;
 					}
 					if(this->treeData[i] > sum){
 						if(i==0){
 							sum = tracer + sum;
-                                                        workBuffer[workBuffer_fill] = sum;
-                                                        workTypeBuffer[workBuffer_fill] = 0;
-                                                        workTypeBuffer[workBuffer_fill-1] = 0;
-                                                        workBuffer_fill++;
+                                                        valueBuffer[this->workBuffer_fill] = sum;
+                                                        typeBuffer[this->workBuffer_fill] = 0;
+							int widx = this->workBuffer_fill-1;
+							if(widx >= 0)
+								typeBuffer[widx] = 0;
+                                                        this->workBuffer_fill++;
 
                                                         sum = this->treeData[i] + sum;
-                                                        workBuffer[workBuffer_fill] = sum;
-                                                        workTypeBuffer[workBuffer_fill] = 1;
-                                                        workBuffer_fill++;
+                                                        valueBuffer[this->workBuffer_fill] = sum;
+                                                        typeBuffer[this->workBuffer_fill] = 1;
+
+                                                        this->workBuffer_fill++;
 							break;
 						}
 						sum = tracer + sum;
-                                                workBuffer[workBuffer_fill] = sum;
-                                                workTypeBuffer[workBuffer_fill] = 0;
-                                                workTypeBuffer[workBuffer_fill-1] = 0;
-                                                workBuffer_fill++;
+                                                valueBuffer[this->workBuffer_fill] = sum;
+                                                typeBuffer[this->workBuffer_fill] = 0;
+						int widx = this->workBuffer_fill - 1;
+						if(widx >= 0)
+							typeBuffer[widx] = 0;
+
+                                                this->workBuffer_fill++;
 						tracer = this->treeData[i];
 					}
 				}
-				if(workBuffer_fill <= 0){
+				if(this->workBuffer_fill <= 0){
 					printf("Nothing to fill.\n");
+					this->destroyWorkTypeBuffer();
+					this->destroyWorkBuffer();
 					return false;
 				}
-				workTypeBuffer[workBuffer_fill-1] = 1;
+				if(this->workBuffer_fill - 1 < 0 || this->workBuffer_fill >= this->frequencies_s){
+                                	this->setError(456, "growLayer() - workBuffer_fill out of bounds.");
+                                	return false;
+                                }
+				if((this->workBuffer_fill - 1) >= 0)
+					typeBuffer[this->workBuffer_fill-1] = 1;
 
-				this->resizeTreeLayers(this->treeDataLayerCount+1);
-				this->treeLayerSizes[this->treeDataLayerCount-1] = workBuffer_fill;
+
+				this->resizeTreeLayers(this->treeDataLayerCount + 1);
+				this->treeLayerSizes[this->treeDataLayerCount - 1] = this->workBuffer_fill;
 							
 				// push original data to end of array
 				size_t originalSize = this->treeData_s;
-				this->resizeTreeData(originalSize+workBuffer_fill);
+				this->resizeTreeData(originalSize + this->workBuffer_fill);
 				for(int i=this->treeData_s-1, track=0;  track<originalSize && i>=0; i--, track++){
-					if((i-workBuffer_fill) < 0){break;}
-					this->treeData[i] = this->treeData[i-workBuffer_fill];
-					this->treeDataTypes[i] = this->treeDataTypes[i-workBuffer_fill];
+					if((i - this->workBuffer_fill) < 0 || (i - this->workBuffer_fill) >= this->treeData_s){
+						break;
+					}
+					this->treeData[i] = this->treeData[i-this->workBuffer_fill];
+					this->treeDataTypes[i] = this->treeDataTypes[i-this->workBuffer_fill];
 				}
 
 				// populate front of array with new data
-				for(int i=0; i<workBuffer_fill && (workBuffer_fill-1-i) >= 0 && (workBuffer_fill-1-i) < workBuffer_s; i++){
-					this->treeData[i] = workBuffer[workBuffer_fill-1-i];
-					this->treeDataTypes[i] = workTypeBuffer[workBuffer_fill-1-i];
+				for(int i=0; i<this->workBuffer_fill && i<this->treeData_s; i++){
+					int workIdx = this->workBuffer_fill-1-i;
+					if(workIdx < 0 || workIdx >= valueBuffer_s){
+						this->setError(645, "growLayer() - workIdx: value overflow");
+						return false;
+					}
+					if(workIdx < 0 || workIdx >= typeBuffer_s){
+						this->setError(645, "growLayer() - workIdx: type overflow");
+						return false;
+					}
+					this->treeData[i] = valueBuffer[workIdx];
+					this->treeDataTypes[i] = typeBuffer[workIdx];
 				}
 
 				return true;
@@ -649,12 +759,16 @@
 					return false;
 				}
 				this->destroyTreeData();
+				this->destroyWorkTypeBuffer();
+				this->destroyWorkBuffer();
+				this->resizeWorkBuffer(this->frequencies_s);
+				this->resizeWorkTypeBuffer(this->workBuffer_s);
 				
 				// seed the tree, and begin coding table.
 				int startSize = this->treeData_s;
 				this->treeDataLayerCount=0;
 				// TODO: put an error time out. This shouldn't loop more than frequencies_s times.
-				while(this->growLayer()){
+				while(this->growLayer(this->workBuffer, this->workBuffer_s, this->workTypeBuffer, this->workTypeBuffer_s)){
 					if(this->failed()){
 						return false;
 					}
@@ -662,6 +776,10 @@
 				if(this->failed()){
 					return false;
 				}
+
+				this->destroyWorkBuffer();
+				this->destroyWorkTypeBuffer();
+
 				this->calculateLayerIndecies();
 				if(this->treeData[0] != this->frequencyMax){
 					this->setError(3333, "plantTree(void) - Failed to grow tree, tree is corrupt.");
@@ -696,6 +814,62 @@
 			this->codeTable[targetIndex]++;
 			int codeIdx = targetIndex+this->frequencies_s;
 			this->codeTable[codeIdx] = (this->codeTable[codeIdx] << 1) + (bit&0x01);
+			return true;
+		}
+
+		bool codeTableSortByBitCount(void){
+			if(!this->validateTreeData()){
+                                this->setError(44456, "generateCodeTable() - failed to validate tree data.");
+                                return false;
+                        }
+                        if(!this->validateFrequencies()){
+                                this->setError(665434, "generateCodeTable() - failed to validate frequencies.");
+                                return false;
+                        }
+			// TODO: validate code table
+			this->destroyWorkBuffer();
+			this->resizeWorkBuffer(this->frequencies_s);
+			for(int i=0, grab=this->codeTable[0], grabIdx=0; i<this->workBuffer_s; i++){
+				if(grab > this->codeTable[i]){
+					// get the index of grab, 
+					int biggerIdx = grabIdx;
+					// get the index of code table.
+					int smallerIdx = i;
+					// swap grabI and codeTableI,
+					int tmpG = grab;
+					int tmpT = this->codeTable[i];
+					this->codeTable[biggerIdx] = tmpT;
+					this->codeTable[smallerIdx] = tmpG;
+					// swap grabI+freq and codeTableI + freq
+					tmpG = this->codeTable[biggerIdx+this->frequencies_s];
+					tmpT = this->codeTable[smallerIdx+this->frequencies_s];
+					this->codeTable[biggerIdx+this->frequencies_s] = tmpT;
+					this->codeTable[smallerIdx+this->frequencies_s] = tmpG;
+					// swap grabI and treeLetterI
+					tmpG = (int)this->treeLetters[biggerIdx] & 0xff;
+					tmpT = (int)this->treeLetters[smallerIdx] & 0xff;
+					this->treeLetters[biggerIdx] = ((char)tmpT) & 0xff;
+					this->treeLetters[smallerIdx] = ((char)tmpG) & 0xff;
+					
+					// swap grabI and freqeuncieI
+					tmpG = this->frequencies[biggerIdx];
+					tmpT = this->frequencies[smallerIdx];
+					this->frequencies[biggerIdx] = tmpT;
+					this->frequencies[smallerIdx] = tmpG;
+
+					// set I = 0,
+					i = 0;
+					// set grab = codeTable[0]
+					grab = this->codeTable[0];
+					grabIdx = 0;
+				}else{
+					grab = this->codeTable[i];
+					grabIdx = i;
+				}
+			}
+			
+			
+			this->destroyWorkBuffer();
 			return true;
 		}
 		bool generateCodeTable(void){
@@ -779,6 +953,7 @@
 					}
 				}
 			}
+			this->codeTableSortByBitCount();
 			return true;
 		}
 
@@ -1524,6 +1699,11 @@
 			this->treeData_s = 0;
 			this->workQueue_s = 0;
 			this->workQueue = NULL;
+			this->workBuffer = NULL;
+			this->workTypeBuffer = NULL;
+			this->workTypeBuffer_s = 0;
+			this->workBuffer_s = 0;
+			this->workBuffer_fill = 0;
 			this->treeLayerIndecies = NULL;
                         this->treeLayerSizes = NULL;
                         this->treeDataLayerCount = 0;
@@ -1544,6 +1724,7 @@
 			this->destroyTreeLayers();
 			this->destroyBody();
 			this->destroyHeader();
+			this->destroyWorkBuffer();
 		}
 
 		void printTreeLetters(void){
