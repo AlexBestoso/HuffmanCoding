@@ -620,6 +620,8 @@
 						if(i == 0){
 							if(sum == -1){
 								this->setError(777, "growLayer() - this error should never happen, Ha!");
+								this->destroyWorkTypeBuffer();
+								this->destroyWorkBuffer();
 								return false;
 							}
 							sum = this->treeData[i] + sum;
@@ -662,6 +664,7 @@
 						int widx = this->workBuffer_fill-1;
 						if(widx >= 0)
 							typeBuffer[widx] = 1;
+
                                                 this->workBuffer_fill++;
 						tracer = -1;
 						continue;
@@ -689,6 +692,7 @@
                                                         sum = this->treeData[i] + sum;
                                                         valueBuffer[this->workBuffer_fill] = sum;
                                                         typeBuffer[this->workBuffer_fill] = 1;
+
                                                         this->workBuffer_fill++;
 							break;
 						}
@@ -698,29 +702,33 @@
 						int widx = this->workBuffer_fill - 1;
 						if(widx >= 0)
 							typeBuffer[widx] = 0;
+
                                                 this->workBuffer_fill++;
 						tracer = this->treeData[i];
 					}
 				}
 				if(this->workBuffer_fill <= 0){
 					printf("Nothing to fill.\n");
+					this->destroyWorkTypeBuffer();
+					this->destroyWorkBuffer();
 					return false;
 				}
-				if(this->workBuffer_fill-1 < 0 || this->workBuffer_fill >= this->frequencies_s){
+				if(this->workBuffer_fill - 1 < 0 || this->workBuffer_fill >= this->frequencies_s){
                                 	this->setError(456, "growLayer() - workBuffer_fill out of bounds.");
                                 	return false;
                                 }
-				if((this->workBuffer_fill-1) >= 0)
+				if((this->workBuffer_fill - 1) >= 0)
 					typeBuffer[this->workBuffer_fill-1] = 1;
 
-				this->resizeTreeLayers(this->treeDataLayerCount+1);
-				this->treeLayerSizes[this->treeDataLayerCount-1] = this->workBuffer_fill;
+
+				this->resizeTreeLayers(this->treeDataLayerCount + 1);
+				this->treeLayerSizes[this->treeDataLayerCount - 1] = this->workBuffer_fill;
 							
 				// push original data to end of array
 				size_t originalSize = this->treeData_s;
-				this->resizeTreeData(originalSize+this->workBuffer_fill);
+				this->resizeTreeData(originalSize + this->workBuffer_fill);
 				for(int i=this->treeData_s-1, track=0;  track<originalSize && i>=0; i--, track++){
-					if((i-this->workBuffer_fill) < 0 || (i-this->workBuffer_fill) >= this->treeData_s){
+					if((i - this->workBuffer_fill) < 0 || (i - this->workBuffer_fill) >= this->treeData_s){
 						break;
 					}
 					this->treeData[i] = this->treeData[i-this->workBuffer_fill];
@@ -741,7 +749,6 @@
 					this->treeData[i] = valueBuffer[workIdx];
 					this->treeDataTypes[i] = typeBuffer[workIdx];
 				}
-				
 
 				return true;
 			}
