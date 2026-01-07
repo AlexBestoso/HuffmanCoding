@@ -778,7 +778,6 @@
 				}
 
 				this->destroyWorkBuffer();
-				printf("nigger\n");
 				this->destroyWorkTypeBuffer();
 
 				this->calculateLayerIndecies();
@@ -828,16 +827,48 @@
                                 return false;
                         }
 			// TODO: validate code table
-			printf("Work buffer size : %ld\n", this->workBuffer_s);
 			this->destroyWorkBuffer();
 			this->resizeWorkBuffer(this->frequencies_s);
-			int targetIdxA = 0;
-			int targetIdxB = 0;
-			int swapA = 0;
-			int swapB = 0;
+			for(int i=0, grab=this->codeTable[0], grabIdx=0; i<this->workBuffer_s; i++){
+				if(grab > this->codeTable[i]){
+					// get the index of grab, 
+					int biggerIdx = grabIdx;
+					// get the index of code table.
+					int smallerIdx = i;
+					// swap grabI and codeTableI,
+					int tmpG = grab;
+					int tmpT = this->codeTable[i];
+					this->codeTable[biggerIdx] = tmpT;
+					this->codeTable[smallerIdx] = tmpG;
+					// swap grabI+freq and codeTableI + freq
+					tmpG = this->codeTable[biggerIdx+this->frequencies_s];
+					tmpT = this->codeTable[smallerIdx+this->frequencies_s];
+					this->codeTable[biggerIdx+this->frequencies_s] = tmpT;
+					this->codeTable[smallerIdx+this->frequencies_s] = tmpG;
+					// swap grabI and treeLetterI
+					tmpG = (int)this->treeLetters[biggerIdx] & 0xff;
+					tmpT = (int)this->treeLetters[smallerIdx] & 0xff;
+					this->treeLetters[biggerIdx] = ((char)tmpT) & 0xff;
+					this->treeLetters[smallerIdx] = ((char)tmpG) & 0xff;
+					
+					// swap grabI and freqeuncieI
+					tmpG = this->frequencies[biggerIdx];
+					tmpT = this->frequencies[smallerIdx];
+					this->frequencies[biggerIdx] = tmpT;
+					this->frequencies[smallerIdx] = tmpG;
+
+					// set I = 0,
+					i = 0;
+					// set grab = codeTable[0]
+					grab = this->codeTable[0];
+					grabIdx = 0;
+				}else{
+					grab = this->codeTable[i];
+					grabIdx = i;
+				}
+			}
 			
 			
-			printf("Work buffer size : %ld\n", this->workBuffer_s);
 			this->destroyWorkBuffer();
 			return true;
 		}
