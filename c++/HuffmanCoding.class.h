@@ -563,9 +563,7 @@
 				return true;
 			}
 
-			int dbgnig = 0;
 			bool growLayer(int *valueBuffer, size_t valueBuffer_s, int *typeBuffer, size_t typeBuffer_s){
-				printf("Growing layer %d\n", dbgnig);
 				if(!this->validateFrequencies()){
 					this->setError(601, "growLayer(void) - invalid frequencies.");
 					return false;
@@ -614,13 +612,6 @@
 				this->workBuffer_fill=0;
 
 				for(int i=topLayerStart, tracer=-1, sum=-1; i>=0 && i<this->treeData_s; i--){
-					if(this->dbgnig == 1 && i==254){
-						printf("Something goes wrong on round %d\n", i);
-					}else if(this->dbgnig == 1 && i==253){
-						//printf("%d >= 0 && < %d ?  the test...", i, this->treeData_s);
-						//this->destroyWorkTypeBuffer();
-						//printf("passed!\n");
-					}
 					if(this->frequencyMax <= this->treeData[i]) break;
 					if(this->treeDataTypes[i] == 0){ // it's a bottom node, don't use it.
 						continue;
@@ -711,7 +702,6 @@
 						tracer = this->treeData[i];
 					}
 				}
-				/* Memory bug is above this line.*/
 				if(this->workBuffer_fill <= 0){
 					printf("Nothing to fill.\n");
 					return false;
@@ -771,12 +761,10 @@
 				int startSize = this->treeData_s;
 				this->treeDataLayerCount=0;
 				// TODO: put an error time out. This shouldn't loop more than frequencies_s times.
-				this->dbgnig = 0;
 				while(this->growLayer(this->workBuffer, this->workBuffer_s, this->workTypeBuffer, this->workTypeBuffer_s)){
 					if(this->failed()){
 						return false;
 					}
-					this->dbgnig++;
 				}
 				if(this->failed()){
 					return false;
