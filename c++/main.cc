@@ -134,6 +134,10 @@ int main(int argc, char *argv[]){
 	delete[] ogMsg;
 	delete[] compressedData;
 
-	printf("[SUCCESS] Message passed compression AND decompression.");
+	if(goods != endTestSize){
+		printf("[FAILURE] Compression was not successful.\n");
+	}else{
+		printf("[SUCCESS] Message passed compression AND decompression.\n");
+	}
 	exit(EXIT_SUCCESS);
 }
