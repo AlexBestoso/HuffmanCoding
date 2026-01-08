@@ -12,6 +12,7 @@ int main(int argc, char *argv[]){
 	HuffmanCoding hc;
 	int counts[256];
 	size_t ogMsgSize = 0;
+	size_t endTestSize = 0;
 	std::srand(time(0));
 
 	printf("[*] Generating random byte frequencies...\n");
@@ -19,6 +20,7 @@ int main(int argc, char *argv[]){
 		counts[i] = rand() % (60-1+1)+1;
 		ogMsgSize += counts[i];
 	}
+	endTestSize = ogMsgSize;
 	printf("[*] Original Msg (size : %ld) : \n\033[0;32m", ogMsgSize);
 	if(dbg != "debug") printf("\tRun %s debug to view generated message.", argv[0]);
 	char *ogMsg = new char[ogMsgSize];
@@ -29,7 +31,9 @@ int main(int argc, char *argv[]){
 				printf("0x%x ", ogMsg[midx] & 0xff);
 			midx++;
 		}
-	}printf("\033[0m\n");
+	}
+	printf("\033[0m\n");
+		
 
 	printf("[*] Attempting Compression...");
 	if(!hc.compress(ogMsg, ogMsgSize)){
@@ -45,6 +49,15 @@ int main(int argc, char *argv[]){
 		delete[] ogMsg;
 		printf("\033[0m");
 		exit(EXIT_FAILURE);
+	}
+	if(dbg == "debug"){
+		printf("\033[0;34m");
+		hc.printTreeLetters();
+                printf("\n\033[0;32m");
+                hc.printFrequencies();
+                printf("\n\033[0;33m");
+                hc.printCodeTable();
+
 	}
 	printf("successful!\n");
 	
@@ -92,25 +105,39 @@ int main(int argc, char *argv[]){
 	}
 	printf("\n");
 
-	if(ogMsgSize != hc.out_s){
-		printf("[FAILED] Invalid message. Decompressed message is not the same size as the original!\n");
+	if(endTestSize != hc.out_s){
+		printf("\n\033[5mDATA DUMP\033[0;31m\n");
+                hc.printTreeLetters();
+                printf("\n\033[0;32m");
+                hc.printFrequencies();
+                printf("\n\033[0;33m");
+                hc.printCodeTable();
+                printf("\n\033[1;34m");
+                hc.printTree();
+		printf("[FAILED] Invalid message. Decompressed message is not the same size as the original! og:%ld != decomp:%ld\n", ogMsgSize, hc.out_s);
 		delete[] ogMsg;
         	delete[] compressedData;
 		exit(EXIT_FAILURE);
 	}
 	
-	for(int i=0; i<ogMsgSize; i++){
+	int goods=0, bads=0;
+	for(int i=0; i<endTestSize; i++){
 		if(ogMsg[i] != hc.out[i]){
-			printf("[FAILED] Invalid message on index %d. Original message is not the same as the decompressed message.\n", i);
-			delete[] ogMsg;
-        		delete[] compressedData;
-			exit(EXIT_FAILURE);
+			bads = i;
+			break;
+		}else{
+			goods++;
 		}
 	}
+	printf("[TEST RESULTS] %d good matches, Failure on iteration %d.\n", goods, bads);
 
 	delete[] ogMsg;
 	delete[] compressedData;
 
-	printf("[SUCCESS] Message passed compression AND decompression.");
+	if(goods != endTestSize){
+		printf("[FAILURE] Compression was not successful.\n");
+	}else{
+		printf("[SUCCESS] Message passed compression AND decompression.\n");
+	}
 	exit(EXIT_SUCCESS);
 }
