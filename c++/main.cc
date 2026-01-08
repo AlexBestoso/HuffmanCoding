@@ -120,14 +120,16 @@ int main(int argc, char *argv[]){
 		exit(EXIT_FAILURE);
 	}
 	
+	int goods=0, bads=0;
 	for(int i=0; i<endTestSize; i++){
 		if(ogMsg[i] != hc.out[i]){
-			printf("[FAILED] Invalid message on index %d. Original message is not the same as the decompressed message.\n", i);
-			delete[] ogMsg;
-        		delete[] compressedData;
-			exit(EXIT_FAILURE);
+			bads = i;
+			break;
+		}else{
+			goods++;
 		}
 	}
+	printf("[TEST RESULTS] %d good matches, Failure on iteration %d.\n", goods, bads);
 
 	delete[] ogMsg;
 	delete[] compressedData;

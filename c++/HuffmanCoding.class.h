@@ -1403,7 +1403,7 @@
 				for(int f=this->frequencies_s - 1, prevCount=largestCount; f>=0; f--){
 					if(prevCount > this->codeTable[f]){
 						int diff = prevCount - this->codeTable[f];
-						restoreCalc = (restoreCalc << diff) + ((~((~(0)>>diff)<<diff)) & calcRegister);
+						restoreCalc += (calcRegister & (~( ((~(0)) >> diff) << diff)) ) << restoreBitCount;
 						restoreBitCount += diff;
 						calcRegister >>= diff;
 						calcBitCount -= diff;
@@ -1417,6 +1417,7 @@
 						if(this->codeTable[f+tbleOff] == calcRegister){
 							printf("[*]\tFound match on index %d, left over bits (%s) %d bits\n", f, this->dbg_getBin(restoreCalc, restoreBitCount, 0, 0).c_str(), restoreBitCount);
 							printf("[!]\tMatch compare : real (%s) | (%s) expected\n", this->dbg_getBin(this->codeTable[f+tbleOff], calcBitCount, 0, 0).c_str(), this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str());
+							printf("[*]\tTree Letter at index %d : %d\n", f, (int)this->treeLetters[f]&0xff);
 							this->out[i] = this->treeLetters[f];
 							printf("[?]\tOut %d (%s)\n", (int)out[i]&0xff, this->dbg_getBin((int)out[i]&0xff, 8, 0, 0).c_str());
 							error = false;
@@ -1432,9 +1433,11 @@
 				int newCount = largestCount - restoreBitCount;
 				
 				calcRegister = this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, newCount, expectedContainerSize);
+				printf("[*]\t\t\tFetched %d new bits %s\n", newCount, this->dbg_getBin(calcRegister, newCount, 0, 0).c_str());
 				calcRegister += (restoreCalc << newCount);
+				printf("[*]\t\t\tPrepended %d old bits %s\n", restoreCalc, this->dbg_getBin(restoreCalc, restoreBitCount, 0, 0).c_str());
+				printf("[*]\t\t\tNew Cache : %s\n", this->dbg_getBin(calcRegister, largestCount, 0, 0).c_str());
 				calcBitCount = largestCount;
-				printf("[%d]\t\t\tDecoded %d (%s), calcRegister : %d (%s), %d bits.\n", i, (int)out[i]&0xff, this->dbg_getBin((int)out[i]&0xff, 8, 0, 0).c_str(), calcRegister, this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str(), calcBitCount);
 			}
 			
 			return true;
