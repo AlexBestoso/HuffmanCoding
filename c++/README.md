@@ -1,7 +1,6 @@
 # Huffman Coding - c++ : BLOCKED
 
 Development Notes : 
-	A memory corruption is occuring, which may be resulting in the getPackedBits function faililng to increment the index, thus preventing decompression....
 
-
-	- Populating leftovers is doing so in reverse.
+We should probably address the condition where there's 0 good matches first.
+	Step one: print out only the first unpack calc result and the first created encoded result

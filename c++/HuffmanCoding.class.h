@@ -1365,7 +1365,7 @@
 				return false;
 			}
 			this->body = new char[this->body_s];
-			indexOffset--;
+			printf("decomp Body Size : %ld\n", this->body_s);
 			this->codeTableSortByBitCount();
 			// Determine smallest bit count in code table, and it's value.
 			int smallestCount = this->codeTable[0];
@@ -1434,7 +1434,7 @@
 				calcRegister = this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, newCount, expectedContainerSize);
 				printf("[*]\t\t\tFetched %d new bits %s\n", newCount, this->dbg_getBin(calcRegister, newCount, 0, 0).c_str());
 				calcRegister += (restoreCalc << newCount);
-				printf("[*]\t\t\tPrepended %d old bits %s\n", restoreCalc, this->dbg_getBin(restoreCalc, restoreBitCount, 0, 0).c_str());
+				printf("[*]\t\t\tPrepended %d old bits %s\n", restoreBitCount, this->dbg_getBin(restoreCalc, restoreBitCount, 0, 0).c_str());
 				printf("[*]\t\t\tNew Cache : %s\n", this->dbg_getBin(calcRegister, largestCount, 0, 0).c_str());
 				calcBitCount = largestCount;
 			}
