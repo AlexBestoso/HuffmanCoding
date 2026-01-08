@@ -1338,26 +1338,15 @@
 			int ret = 0;
 			int rb = numOfBitsToFetch; // remaining bits.
 			int targetByteCount = bitsContainerSize;
-			printf("[*]\tBits To fetch %d | target byte count : %d\n", rb, targetByteCount);
-			printf("[*]\tLoop start index : %d, bit start index : %d\n", index[0], startBit[0]);
 			for(int i=index[0]; i<dataSize && rb>0; i++){
-				printf("[l]\tlooping %d\n", i);
 				int d = (int)data[i]&0xff; // data
-				printf("[*]\t\tIsolated Data : %d\n", d);
 				int ab = (7-startBit[0])+1;// available bits
-				printf("[*]\t\tBits available in this byte : %d\n", ab);
 				int atf = rb-ab >= 0 ? ab : rb; // amount to fetch
-				printf("[*]\t\tAmount of bits to fetch from this byte: %d\n", atf);
 				int ats = atf;// amount to shift
-				printf("[*]\t\tBit mask shift amount : %d\n", ats);
 				int em = ~((~(0)>>ats)<<ats);// extraction mask
-				printf("[*]\t\tExtraction Mask : 0x%x (%s)\n", em, this->dbg_getBin(em, ats, 0, 0).c_str());
 				int ev = d & em; // extracted value
-				printf("[*]\t\tExtracted Value : %d (%s)\n", ev, this->dbg_getBin(ev, ats, 0, 0).c_str());
 				ats = (rb-atf); // amt to shift into ret
-				printf("[*]\t\tExtracted Result Left Shift amount : %d\n", ats);
 				ret += ev << ats;
-				printf("[*]\t\tCalculated Ret : %d (%s)\n", ret, this->dbg_getBin(ret, numOfBitsToFetch, 0, 0).c_str());
 				rb -= atf;
 				index[0]++;
 				startBit[0] = (startBit[0]+atf) % 8;
@@ -1404,6 +1393,9 @@
 			this->codeTableSortByBitCount();
 			printf("-----------DEBUGGING BODY UNPACK\n");
 			int tbleOff = this->frequencies_s;
+			int restoreCalc = 0;
+			int restoreBitCount = 0;
+			bool error = true;
 			for(int i=0, tf=-1; i<this->out_s; i++){
 				if(calcBitCount < smallestCount){
 					this->setError(45345, "unpackBody() - calculated bits is less than smallest allowed.");
@@ -1414,10 +1406,39 @@
 				 * */
 				printf("------------\n[%d] Starting Value : %d (%s)\n", i, calcRegister, this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str());
 				printf("[*]\tProcessing Encoded Bytes.\n");
-				for(int f=0; f<this->frequencies_s; f++){
-					
-				}
+				restoreCalc = 0;
+				restoreBitCount = 0;
+				for(int f=this->frequencies_s - 1, prevCount=largestCount; f>=0; f--){
+					if(prevCount > this->codeTable[f]){
+						int diff = prevCount - this->codeTable[f];
+						restoreCalc = (restoreCalc << diff) + ((~((~(0)>>diff)<<diff)) & calcRegister);
+						restoreBitCount += diff;
+						calcRegister >>= diff;
+						calcBitCount -= diff;
+						calcMask >>= diff;
+					}
 
+					if(this->codeTable[f] > calcBitCount){
+						prevCount = this->codeTable[f];
+						continue;
+					}else if(this->codeTable[f] == calcBitCount){
+						if(this->codeTable[f+tbleOff] == calcRegister){
+							this->out[i] = this->treeLetters[f];
+							error = false;
+							break;
+						}
+					}
+					prevCount = this->codeTable[f];
+				}
+				if(error){
+					this->setError(345, "unpackBody() - failed to extract body char.");
+					return false;
+				}
+				int newCount = largestCount - restoreBitCount;
+				
+				calcRegister = this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, newCount, expectedContainerSize);
+				calcRegister += (restoreCalc << newCount);
+				calcBitCount = largestCount;
 			}
 			
 			return true;
