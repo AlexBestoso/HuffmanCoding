@@ -1334,7 +1334,7 @@
 		}
 		
 		int getPackedBits(char *data, size_t dataSize, int *index, int *startBit, int numOfBitsToFetch, int bitsContainerSize){
-			printf("[*] getPackedBits(data:%p, dataSize:%ld, index:%d, startBit:%d, numberOfBitsToFetch:%d, bitsContainerSize:%d)\n", data, dataSize, index[0], startBit[0], numOfBitsToFetch, bitsContainerSize);
+			printf("[*]\tgetPackedBits(data:%p, dataSize:%ld, index:%d, startBit:%d, numberOfBitsToFetch:%d, bitsContainerSize:%d)\n", data, dataSize, index[0], startBit[0], numOfBitsToFetch, bitsContainerSize);
 			int ret = 0;
 			int rb = numOfBitsToFetch; // remaining bits.
 			int targetByteCount = bitsContainerSize;
@@ -1351,7 +1351,6 @@
 				index[0]++;
 				startBit[0] = (startBit[0]+atf) % 8;
 			}
-			printf("[*]\tReturning : %d (%s)\n", ret, this->dbg_getBin(ret, numOfBitsToFetch, 0, 0).c_str());
 			return ret;
 		}
 
@@ -1366,9 +1365,6 @@
 				return false;
 			}
 			this->body = new char[this->body_s];
-			printf("[*] data size : %ld\n", dataSize);
-			printf("[*] header size : %d\n", indexOffset);
-			printf("[*] Calculated body size : %ld\n", this->body_s);
 			indexOffset--;
 			// Determine smallest bit count in code table, and it's value.
 			int smallestCount = this->codeTable[0];
@@ -1376,10 +1372,6 @@
 			int largestCount = this->codeTable[this->frequencies_s-1];
 			int expectedContainerSize = largestCount <= 8 ? 1 : ( largestCount % 8 ) == 0 ? (largestCount/8) : (largestCount/8) + 1;
 			int largestMask =  ~((~(0)>>largestCount) << largestCount);
-			printf("[*] Largest Bit Count is %d\n", largestCount);
-			printf("[*] Largest mask : 0x%x\n", largestMask);
-			printf("[*] expected container size : %d\n", expectedContainerSize);
-			printf("[*] first 4 packed bytes : %d %d %d %d\n", (int)data[indexOffset+0]&0xff, (int)data[indexOffset+1]&0xff, (int)data[indexOffset+2]&0xff, (int)data[indexOffset+3]&0xff);
 			// Shift largest bit count of msb bits out of data and into a buffer variable.
 			int calcRegister = this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, largestCount, expectedContainerSize);
 			int calcBitCount = largestCount;
@@ -1389,9 +1381,10 @@
 			this->destroyOut();
 			this->out_s = this->treeData[0];
 			this->out = new char[this->out_s];
+
 			// Sort Code Table for ease of decoding
 			this->codeTableSortByBitCount();
-			printf("-----------DEBUGGING BODY UNPACK\n");
+
 			int tbleOff = this->frequencies_s;
 			int restoreCalc = 0;
 			int restoreBitCount = 0;
@@ -1404,8 +1397,7 @@
 				/*
 				 * TODO: Start Unpack decode algorithm.
 				 * */
-				printf("------------\n[%d] Starting Value : %d (%s)\n", i, calcRegister, this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str());
-				printf("[*]\tProcessing Encoded Bytes.\n");
+				printf("-------------\n[%d] Starting Value : %d (%s)\n", i, calcRegister, this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str());
 				restoreCalc = 0;
 				restoreBitCount = 0;
 				for(int f=this->frequencies_s - 1, prevCount=largestCount; f>=0; f--){
@@ -1423,7 +1415,10 @@
 						continue;
 					}else if(this->codeTable[f] == calcBitCount){
 						if(this->codeTable[f+tbleOff] == calcRegister){
+							printf("[*]\tFound match on index %d, left over bits (%s) %d bits\n", f, this->dbg_getBin(restoreCalc, restoreBitCount, 0, 0).c_str(), restoreBitCount);
+							printf("[!]\tMatch compare : real (%s) | (%s) expected\n", this->dbg_getBin(this->codeTable[f+tbleOff], calcBitCount, 0, 0).c_str(), this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str());
 							this->out[i] = this->treeLetters[f];
+							printf("[?]\tOut %d (%s)\n", (int)out[i]&0xff, this->dbg_getBin((int)out[i]&0xff, 8, 0, 0).c_str());
 							error = false;
 							break;
 						}
@@ -1439,6 +1434,7 @@
 				calcRegister = this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, newCount, expectedContainerSize);
 				calcRegister += (restoreCalc << newCount);
 				calcBitCount = largestCount;
+				printf("[%d]\t\t\tDecoded %d (%s), calcRegister : %d (%s), %d bits.\n", i, (int)out[i]&0xff, this->dbg_getBin((int)out[i]&0xff, 8, 0, 0).c_str(), calcRegister, this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str(), calcBitCount);
 			}
 			
 			return true;

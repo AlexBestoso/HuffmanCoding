@@ -2,3 +2,6 @@
 
 Development Notes : 
 	A memory corruption is occuring, which may be resulting in the getPackedBits function faililng to increment the index, thus preventing decompression....
+
+
+	- Populating leftovers is doing so in reverse.
