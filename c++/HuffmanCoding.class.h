@@ -1366,6 +1366,7 @@
 			}
 			this->body = new char[this->body_s];
 			indexOffset--;
+			this->codeTableSortByBitCount();
 			// Determine smallest bit count in code table, and it's value.
 			int smallestCount = this->codeTable[0];
 			// determine largest bit count in code table, and it's value.
@@ -1382,8 +1383,6 @@
 			this->out_s = this->treeData[0];
 			this->out = new char[this->out_s];
 
-			// Sort Code Table for ease of decoding
-			this->codeTableSortByBitCount();
 
 			int tbleOff = this->frequencies_s;
 			int restoreCalc = 0;
