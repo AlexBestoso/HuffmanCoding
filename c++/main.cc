@@ -46,7 +46,6 @@ int main(int argc, char *argv[]){
 		hc.printCodeTable();
 		printf("\n\033[1;34m");
 		hc.printTree();
-		delete[] ogMsg;
 		printf("\033[0m");
 		exit(EXIT_FAILURE);
 	}
@@ -86,8 +85,6 @@ int main(int argc, char *argv[]){
                 hc.printCodeTable();
                 printf("\n\033[1;34m");
                 hc.printTree();
-                delete[] ogMsg;
-		delete[] compressedData;
                 printf("\033[0m");
                 exit(EXIT_FAILURE);
 	}
@@ -115,8 +112,6 @@ int main(int argc, char *argv[]){
                 printf("\n\033[1;34m");
                 hc.printTree();
 		printf("[FAILED] Invalid message. Decompressed message is not the same size as the original! og:%ld != decomp:%ld\n", ogMsgSize, hc.out_s);
-		delete[] ogMsg;
-        	delete[] compressedData;
 		exit(EXIT_FAILURE);
 	}
 	
@@ -131,11 +126,9 @@ int main(int argc, char *argv[]){
 	}
 	printf("[TEST RESULTS] %d good matches, Failure on iteration %d.\n", goods, bads);
 
-	delete[] ogMsg;
-	delete[] compressedData;
-
 	if(goods != endTestSize){
 		printf("[FAILURE] Compression was not successful.\n");
+		exit(EXIT_FAILURE);
 	}else{
 		printf("[SUCCESS] Message passed compression AND decompression.\n");
 	}
