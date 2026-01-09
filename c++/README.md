@@ -2,5 +2,5 @@
 
 Development Notes : 
 
-We should probably address the condition where there's 0 good matches first.
-	Step one: print out only the first unpack calc result and the first created encoded result
+	it appears that the problem is in the pack byte function.
+	Where the bits that gets packed aren't properly delegated across the output bugger

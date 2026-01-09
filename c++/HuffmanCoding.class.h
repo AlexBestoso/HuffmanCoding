@@ -1206,6 +1206,7 @@
 			int bitIdx=startingBitIndex % 8;
 			int bi=0;
 			this->body[bi] = 0;
+			printf("Starting bit idx : %d\n", startingBitIndex);
 			for(int i=0; i<dataSize && bi<this->body_s; i++){
 				int tableIdx = this->getEncodeCharIndex(data[i]);
 				if(tableIdx == -1){
@@ -1217,9 +1218,14 @@
 				int mask = ~(~(0) << bitCount);
 				int dbgA = bi;
 				this->packByte(encodedChar, bitCount, mask, this->body, this->body_s, &bi, &bitIdx);
-				for(int d=dbgA; d<=bi; d++){
-					std::string bin = this->dbg_getBin(this->body[d], 8, 0, 0);
-				}
+				// dbg
+				if(i < 30){
+					printf("iter:%d: %s encoded to %s.\n", i, this->dbg_getBin(data[i], 8, 0, 0).c_str(), this->dbg_getBin(encodedChar, bitCount, 0, 0).c_str());
+					for(int d=dbgA; d<=bi; d++){
+						std::string bin = this->dbg_getBin(this->body[d], 8, 0, 0);
+						printf("body[%d] : %d(%s)\t", d, this->body[d], bin.c_str());
+					}printf("\n");
+				}// dbg end
 			}
 			this->body_s -= (this->body_s-bi);
 			return bitIdx;
@@ -1334,7 +1340,6 @@
 		}
 		
 		int getPackedBits(char *data, size_t dataSize, int *index, int *startBit, int numOfBitsToFetch, int bitsContainerSize){
-			printf("[*]\tgetPackedBits(data:%p, dataSize:%ld, index:%d, startBit:%d, numberOfBitsToFetch:%d, bitsContainerSize:%d)\n", data, dataSize, index[0], startBit[0], numOfBitsToFetch, bitsContainerSize);
 			int ret = 0;
 			int rb = numOfBitsToFetch; // remaining bits.
 			int targetByteCount = bitsContainerSize;
@@ -1365,7 +1370,6 @@
 				return false;
 			}
 			this->body = new char[this->body_s];
-			printf("decomp Body Size : %ld\n", this->body_s);
 			this->codeTableSortByBitCount();
 			// Determine smallest bit count in code table, and it's value.
 			int smallestCount = this->codeTable[0];
@@ -1396,7 +1400,6 @@
 				/*
 				 * TODO: Start Unpack decode algorithm.
 				 * */
-				printf("-------------\n[%d] Starting Value : %d (%s)\n", i, calcRegister, this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str());
 				restoreCalc = 0;
 				restoreBitCount = 0;
 				for(int f=this->frequencies_s - 1, prevCount=largestCount; f>=0; f--){
@@ -1414,11 +1417,7 @@
 						continue;
 					}else if(this->codeTable[f] == calcBitCount){
 						if(this->codeTable[f+tbleOff] == calcRegister){
-							printf("[*]\tFound match on index %d, left over bits (%s) %d bits\n", f, this->dbg_getBin(restoreCalc, restoreBitCount, 0, 0).c_str(), restoreBitCount);
-							printf("[!]\tMatch compare : real (%s) | (%s) expected\n", this->dbg_getBin(this->codeTable[f+tbleOff], calcBitCount, 0, 0).c_str(), this->dbg_getBin(calcRegister, calcBitCount, 0, 0).c_str());
-							printf("[*]\tTree Letter at index %d : %d\n", f, (int)this->treeLetters[f]&0xff);
 							this->out[i] = this->treeLetters[f];
-							printf("[?]\tOut %d (%s)\n", (int)out[i]&0xff, this->dbg_getBin((int)out[i]&0xff, 8, 0, 0).c_str());
 							error = false;
 							break;
 						}
@@ -1432,10 +1431,7 @@
 				int newCount = largestCount - restoreBitCount;
 				
 				calcRegister = this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, newCount, expectedContainerSize);
-				printf("[*]\t\t\tFetched %d new bits %s\n", newCount, this->dbg_getBin(calcRegister, newCount, 0, 0).c_str());
 				calcRegister += (restoreCalc << newCount);
-				printf("[*]\t\t\tPrepended %d old bits %s\n", restoreBitCount, this->dbg_getBin(restoreCalc, restoreBitCount, 0, 0).c_str());
-				printf("[*]\t\t\tNew Cache : %s\n", this->dbg_getBin(calcRegister, largestCount, 0, 0).c_str());
 				calcBitCount = largestCount;
 			}
 			
@@ -1459,7 +1455,6 @@
 			
 			this->out_s = this->header_s + this->body_s;
 			this->out = new char[this->out_s];
-			printf("Packing bodyPadding %d\n", bodyPadding);
 			// Join padding with header
 			for(int i=0; i<this->header_s; i++){
 				this->out[i] = i == 0 ? ((bodyPadding&0xf)<<4) + this->header[i] : this->header[i];
@@ -1476,9 +1471,6 @@
 				this->out[o] = this->body[i];
 			}
 			
-
-			printf("\nHeader Size : %ld | Body Size : %ld\n", this->header_s, this->body_s);
-			printf("Body Debug, first 4 bytes : %d %d %d %d\n", (int)body[0]&0xff, (int)body[1]&0xff, (int)body[2]&0xff, (int)body[3]&0xff);
 			return true;
 		}
 
