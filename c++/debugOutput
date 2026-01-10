@@ -1,0 +1,132 @@
+[*] Running Huffman Coding 256 Byte Test
+[*] Generating random byte frequencies...
+[*] Original Msg (size : 7873) : 
+[0;32m	Run ./main.o debug to view generated message.[0m
+[*] Attempting Compression...bit idx : 6
+iter:0: 00000000 encoded to 011011010.
+body[0] : 3(00000011)	body[1] : -128(10000000)	
+-----------
+bit idx : 7
+iter:1: 00000000 encoded to 011011010.
+body[1] : 1(00000001)	body[2] : 0(00000000)	
+-----------
+bit idx : 0
+iter:2: 00000000 encoded to 011011010.
+body[2] : -38(11011010)	body[3] : -38(11011010)	
+-----------
+bit idx : 1
+iter:3: 00000000 encoded to 011011010.
+body[3] : 109(01101101)	body[4] : 0(00000000)	
+-----------
+bit idx : 2
+iter:4: 00000000 encoded to 011011010.
+body[4] : 54(00110110)	body[5] : 8(00001000)	
+-----------
+bit idx : 3
+iter:5: 00000000 encoded to 011011010.
+body[5] : 27(00011011)	body[6] : 16(00010000)	
+-----------
+bit idx : 4
+iter:6: 00000000 encoded to 011011010.
+body[6] : 13(00001101)	body[7] : -96(10100000)	
+-----------
+bit idx : 5
+iter:7: 00000000 encoded to 011011010.
+body[7] : 6(00000110)	body[8] : 64(01000000)	
+-----------
+bit idx : 6
+iter:8: 00000000 encoded to 011011010.
+body[8] : 3(00000011)	body[9] : -128(10000000)	
+-----------
+bit idx : 7
+iter:9: 00000000 encoded to 011011010.
+body[9] : 1(00000001)	body[10] : 0(00000000)	
+-----------
+bit idx : 0
+iter:10: 00000000 encoded to 011011010.
+body[10] : -38(11011010)	body[11] : -38(11011010)	
+-----------
+bit idx : 1
+iter:11: 00000000 encoded to 011011010.
+body[11] : 109(01101101)	body[12] : 0(00000000)	
+-----------
+bit idx : 2
+iter:12: 00000000 encoded to 011011010.
+body[12] : 54(00110110)	body[13] : 8(00001000)	
+-----------
+bit idx : 3
+iter:13: 00000000 encoded to 011011010.
+body[13] : 27(00011011)	body[14] : 16(00010000)	
+-----------
+bit idx : 4
+iter:14: 00000000 encoded to 011011010.
+body[14] : 13(00001101)	body[15] : -96(10100000)	
+-----------
+bit idx : 5
+iter:15: 00000000 encoded to 011011010.
+body[15] : 6(00000110)	body[16] : 64(01000000)	
+-----------
+bit idx : 6
+iter:16: 00000000 encoded to 011011010.
+body[16] : 3(00000011)	body[17] : -128(10000000)	
+-----------
+bit idx : 7
+iter:17: 00000000 encoded to 011011010.
+body[17] : 1(00000001)	body[18] : 0(00000000)	
+-----------
+bit idx : 0
+iter:18: 00000000 encoded to 011011010.
+body[18] : -38(11011010)	body[19] : -38(11011010)	
+-----------
+bit idx : 1
+iter:19: 00000000 encoded to 011011010.
+body[19] : 109(01101101)	body[20] : 0(00000000)	
+-----------
+bit idx : 2
+iter:20: 00000000 encoded to 011011010.
+body[20] : 54(00110110)	body[21] : 8(00001000)	
+-----------
+bit idx : 3
+iter:21: 00000000 encoded to 011011010.
+body[21] : 27(00011011)	body[22] : 16(00010000)	
+-----------
+bit idx : 4
+iter:22: 00000000 encoded to 011011010.
+body[22] : 13(00001101)	body[23] : -96(10100000)	
+-----------
+bit idx : 5
+iter:23: 00000000 encoded to 011011010.
+body[23] : 6(00000110)	body[24] : 64(01000000)	
+-----------
+bit idx : 6
+iter:24: 00000000 encoded to 011011010.
+body[24] : 3(00000011)	body[25] : -128(10000000)	
+-----------
+bit idx : 7
+iter:25: 00000000 encoded to 011011010.
+body[25] : 1(00000001)	body[26] : 0(00000000)	
+-----------
+bit idx : 0
+iter:26: 00000000 encoded to 011011010.
+body[26] : -38(11011010)	body[27] : -38(11011010)	
+-----------
+bit idx : 1
+iter:27: 00000000 encoded to 011011010.
+body[27] : 109(01101101)	body[28] : 0(00000000)	
+-----------
+bit idx : 2
+iter:28: 00000000 encoded to 011011010.
+body[28] : 54(00110110)	body[29] : 8(00001000)	
+-----------
+bit idx : 3
+iter:29: 00000000 encoded to 011011010.
+body[29] : 27(00011011)	body[30] : 16(00010000)	
+-----------
+successful!
+[*] Generated Output (size : 8312):
+	[0;32mRun ./main.o debug to view generated message.[0m
+[*] Attempting decompression...success!
+[*] Generated Output (size : 7873):
+	[0;32mRun ./main.o debug to view generated message.[0m
+[TEST RESULTS] 0 good matches, Failure on iteration 0.
+[FAILURE] Compression was not successful.
