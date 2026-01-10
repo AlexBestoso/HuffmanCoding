@@ -1056,8 +1056,9 @@
 		 * */
 		bool packByte(int packingTarget, int targetBitCount, int targetOverflowMask, char *dstBuffer, size_t dstBufferSize, int *dstIndex, int *bitIndex){
 			int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
-			int containerSize = packingTarget <= 0xff ? 1 : (((packingTarget/0xff)) + 1);
-			bool maxOverflowed = binaryMax-targetBitCount < 0;
+			int containerSize = targetBitCount / 8;
+			containerSize = (targetBitCount % 8) == 0 ? containerSize : containerSize + 1;
+			bool maxOverflowed = binaryMax - targetBitCount < 0;
 			if(maxOverflowed) containerSize--;
 			int bitCount=targetBitCount;
 			int bitIdx = bitIndex[0];
@@ -1206,7 +1207,6 @@
 			int bitIdx=startingBitIndex % 8;
 			int bi=0;
 			this->body[bi] = 0;
-			printf("Starting bit idx : %d\n", startingBitIndex);
 			for(int i=0; i<dataSize && bi<this->body_s; i++){
 				int tableIdx = this->getEncodeCharIndex(data[i]);
 				if(tableIdx == -1){
@@ -1220,11 +1220,12 @@
 				this->packByte(encodedChar, bitCount, mask, this->body, this->body_s, &bi, &bitIdx);
 				// dbg
 				if(i < 30){
+					printf("bit idx : %d\n", bitIdx);
 					printf("iter:%d: %s encoded to %s.\n", i, this->dbg_getBin(data[i], 8, 0, 0).c_str(), this->dbg_getBin(encodedChar, bitCount, 0, 0).c_str());
 					for(int d=dbgA; d<=bi; d++){
 						std::string bin = this->dbg_getBin(this->body[d], 8, 0, 0);
 						printf("body[%d] : %d(%s)\t", d, this->body[d], bin.c_str());
-					}printf("\n");
+					}printf("\n-----------\n");
 				}// dbg end
 			}
 			this->body_s -= (this->body_s-bi);
