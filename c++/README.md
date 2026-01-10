@@ -1,9 +1,8 @@
 # Huffman Coding - c++ : BLOCKED
 
 Development Notes : 
-	The pack byte function has had it's container size corrected;
-	but we now have an error where the second portion of the byte isn't properly 
-	pushed into the body array cell.
+	packByte faulure may be because of this line of code: 
 
-	Review all things greater than 8 bit,
-	review all things less than 8 bit.
+		int chunk = (packingTarget >> (chunkIdx*binaryMax)) & 0xff;
+	
+	this line does nothing to allign packign target bits.

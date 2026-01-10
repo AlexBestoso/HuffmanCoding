@@ -1072,9 +1072,9 @@
 
 			for(int chunkIdx=containerSize-1; chunkIdx>=0 && hi < dstBufferSize; chunkIdx--){
 				int chunk = (packingTarget >> (chunkIdx*binaryMax)) & 0xff;
-				countFill = (maxOverflowed || bitIdx >= binaryMax-dte) ? (binaryMax-bitIdx) : binaryMax;
-				countOverflow = (bitCount-countFill) % binaryMax;
-				masterDifference = binaryMax-bitCount-bitIdx;
+				countFill = (maxOverflowed || bitIdx >= (binaryMax - dte)) ? (binaryMax - bitIdx) : binaryMax;
+				countOverflow = (bitCount - countFill) % binaryMax;
+				masterDifference = binaryMax - bitCount - bitIdx;
 				
 				if(maxOverflowed){
                         		dstBuffer[hi] = (char)((packingTarget >> countOverflow)&0xff);
@@ -1091,13 +1091,13 @@
                         		        return false;
                         		}
                         		dstBuffer[hi] = (char)(((packingTarget & (0x1ff>>countFill)) << countOverflow)&0xff);
-				}else if(bitIdx >= binaryMax-dte){
+				}else if(bitIdx >= (binaryMax - dte)){
 					hi++;
 					if(!(hi < dstBufferSize)){
 						this->setError(345, "packByte() - hi is out of bounds.");
 						return false;
 					}
-					dstBuffer[hi] = (char)(((chunk & (targetOverflowMask>>countFill)) & 0xff) << (binaryMax-countOverflow));
+					dstBuffer[hi] = (char)(((chunk & (targetOverflowMask >> countFill)) & 0xff) << (binaryMax - countOverflow));
 				}else if(bitIdx == lvi){
 					hi++;
 					if(!(hi<dstBufferSize)){
@@ -1106,7 +1106,7 @@
 					}
 					dstBuffer[hi] = 0x00;
 				}
-				bitIdx = (bitIdx+bitCount) % binaryMax;
+				bitIdx = (bitIdx + bitCount) % binaryMax;
 			}
 			bitIndex[0] =  bitIdx;
                         dstIndex[0] = hi;
