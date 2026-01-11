@@ -1098,7 +1098,7 @@
 
 			for(int chunkIdx=containerSize-1; chunkIdx>=0 && hi < dstBufferSize; chunkIdx--){
 				int chunk = (packingTarget >> (chunkIdx*binaryMax)) & 0xff;
-				lsbPos = msbPos - bitIndex;
+				lsbPos = msbPos - bitIndex[0];
 				/*
 
 					if lsbPos is 0, then we have our chunk.
