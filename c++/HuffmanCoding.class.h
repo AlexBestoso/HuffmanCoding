@@ -1056,7 +1056,6 @@
 		 * */
 		bool packByte(int packingTarget, int targetBitCount, int targetOverflowMask, char *dstBuffer, size_t dstBufferSize, int *dstIndex, int *bitIndex){
 			int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
-<<<<<<< HEAD
 			if(bitIndex == NULL){
 				this->setError(345345, "packByte() - bitIndex is null.");
 				return false;
@@ -1066,11 +1065,6 @@
 			}
 			int containerSize = packingTarget <= 0xff ? 1 : (((packingTarget/0xff)) + 1);
 			bool maxOverflowed = binaryMax-targetBitCount < 0;
-=======
-			int containerSize = targetBitCount / 8;
-			containerSize = (targetBitCount % 8) == 0 ? containerSize : containerSize + 1;
-			bool maxOverflowed = binaryMax - targetBitCount < 0;
->>>>>>> 3f4f68a720004b1205b0b28886ab8e77ec79035c
 			if(maxOverflowed) containerSize--;
 			int bitCount=targetBitCount;
 			int bitIdx = bitIndex[0];
@@ -1104,7 +1098,6 @@
 
 			for(int chunkIdx=containerSize-1; chunkIdx>=0 && hi < dstBufferSize; chunkIdx--){
 				int chunk = (packingTarget >> (chunkIdx*binaryMax)) & 0xff;
-<<<<<<< HEAD
 				lsbPos = msbPos - bitIndex;
 				/*
 
@@ -1124,11 +1117,6 @@
 				countFill = (maxOverflowed || bitIdx >= binaryMax-dte) ? (binaryMax-bitIdx) : binaryMax;
 				countOverflow = (bitCount-countFill) % binaryMax;
 				masterDifference = binaryMax-bitCount-bitIdx;
-=======
-				countFill = (maxOverflowed || bitIdx >= (binaryMax - dte)) ? (binaryMax - bitIdx) : binaryMax;
-				countOverflow = (bitCount - countFill) % binaryMax;
-				masterDifference = binaryMax - bitCount - bitIdx;
->>>>>>> 3f4f68a720004b1205b0b28886ab8e77ec79035c
 				
 				if(maxOverflowed){
                         		dstBuffer[hi] = (char)((packingTarget >> countOverflow)&0xff);
