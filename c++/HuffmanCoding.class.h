@@ -1056,6 +1056,13 @@
 		 * */
 		bool packByte(int packingTarget, int targetBitCount, int targetOverflowMask, char *dstBuffer, size_t dstBufferSize, int *dstIndex, int *bitIndex){
 			int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
+			if(bitIndex == NULL){
+				this->setError(345345, "packByte() - bitIndex is null.");
+				return false;
+			}else if(bitIndex[0] >= binaryMax){
+				this->setError(345345, "packByte() - bitIndex overflows the 8 bit max. Ensure MOD 8.");
+				return false;
+			}
 			int containerSize = packingTarget <= 0xff ? 1 : (((packingTarget/0xff)) + 1);
 			bool maxOverflowed = binaryMax-targetBitCount < 0;
 			if(maxOverflowed) containerSize--;
@@ -1069,8 +1076,44 @@
 			int countOverflow 	= 0;	//bitCount-countFill;
 			int masterDifference 	= 0;	//binaryMax-bitCount-bitIdx;
 
+			// NOTE: no remiander, msb is the maximum index, else its the remainder - 1.
+			int msbPos = (targetBitCount % binaryMax);
+			msbPos = msbPos == 0 ? binaryMax - 1 : msbPos - 1;
+			// NOTE: because we grab chunks via a left shift alignment with lsb, lsb is always 0.
+			int lsbPos = 0;
+			
+			// NOTE: shift and direction,  
+			int sherrection = (7 - bitIndex[0]) - msbPos;
+// devnote : shift the first chunk
+			if(sherrection < 0){
+				// Negative, right Shift
+			}else if(sherrection > 0){
+				// Positive, Left shift
+			}// 0, no shift.
+
+			int chunkLeftovers = 0;
+			int chunkLeftoversBitCount = 0;
+
+			// NOTE: Bit index points to an EMPTY binary position that grows FROM the MSB.
+
 			for(int chunkIdx=containerSize-1; chunkIdx>=0 && hi < dstBufferSize; chunkIdx--){
 				int chunk = (packingTarget >> (chunkIdx*binaryMax)) & 0xff;
+				lsbPos = msbPos - bitIndex;
+				/*
+
+					if lsbPos is 0, then we have our chunk.
+					if lsbPos is negative, then we need to left shift x bits, and grab x bits from the msb of the next chunk, if it exists.
+					if lsbPos is positive, then we need to right shift x bits, and account for the loss of those x bits in the next chunk.
+				*/
+				if(lsbPos > 0){
+					chunk = chunk << lsbPos;
+					if((chunkIdx - 1) >= 0){
+						int nextChunk = (packingTarget >> ((chunkIdx - 1) * binaryMax)) & 0xff;
+						int irrelBitCount = 8 - lsbPos;
+						int mask = (0xff >> irrelBitCount) << irrelBitCount;
+						chunk += (nextChunk & mask) >> irrelBitCount;
+					}
+				}
 				countFill = (maxOverflowed || bitIdx >= binaryMax-dte) ? (binaryMax-bitIdx) : binaryMax;
 				countOverflow = (bitCount-countFill) % binaryMax;
 				masterDifference = binaryMax-bitCount-bitIdx;
@@ -1149,7 +1192,7 @@
 			this->header_s = (headerBitCount % 8) != 0 ? (headerBitCount/8)+1 : headerBitCount/8; 
 			this->header = new char[this->header_s];
 
-			// All we know is padding is 4 bits is size, so start beyond that.
+			// NOTE: bitIdx indexes the binary number with msb as position 0.
 			int bitIdx = 4;
 			int hi=0; // header index.
 			int elementCount = this->frequencies_s;

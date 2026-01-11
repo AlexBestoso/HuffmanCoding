@@ -1,6 +1,8 @@
 # Huffman Coding - c++ : BLOCKED
 
 Development Notes : 
+	pack header, Why are you oh so annoying.
 
-	it appears that the problem is in the pack byte function.
-	Where the bits that gets packed aren't properly delegated across the output bugger
+		lol, use the sherrection to calculate the first chunk to process.
+		set the relbitIdx so that the loop can figure out where to start.
+		figure out the loop,  
