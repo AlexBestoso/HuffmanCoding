@@ -1107,27 +1107,20 @@
 				bitsRemaining -= bitsUsed;
 
 				dstBuffer[dstIndex[0]] += chunk;
-				dstIndex[0]++;
-				bitIndex[0] = (bitIndex[0] + bitsUsed) % binaryMax;
-				if(!(dstIndex[0] < dstBufferSize) || bitsRemaining <= 0){
+				bitIndex[0] = (bitIndex[0] + bitsUsed);
+				if(bitIndex >= binaryMax){
+					dstIndex[0]++;
+					bitIndex[0] = bitIndex[0] % binaryMax;
+					if(!(dstIndex[0] < dstBufferSize)){
+						// nothing more we can do.
+						return true;
+					}
+					dstBuffer[dstIndex[0]] = 0x00;
+				}
+				if(bitsRemaining <= 0){
 					// nothing more we can do.
 					return true;
 				}
-				dstBuffer[dstIndex[0]] = 0x00;
-
-				
-
-
-
-
-
-
-
-				this->deriveChunkIndex(binaryMax, bitsRemaining)
-				chunk = (packingTarget >> (i*binaryMax)) & 0xff;
-				msbPos = (bitsRemaining % binaryMax);
-                        	msbPos = msbPos == 0 ? binaryMax - 1 : msbPos - 1
-				lsbPos = 0;
 			}
 
 			return true;
