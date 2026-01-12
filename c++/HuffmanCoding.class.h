@@ -1072,8 +1072,6 @@
 			}else if(bitIndex[0] >= binaryMax){
 				this->setError(345345, "packByte() - bitIndex overflows the 8 bit max. Ensure MOD 8.");
 				return false;
-			}else if(bitIndex[0] == 0){
-				dstBuffer[bitIndex[0]] = 0x00; // initalize this.
 			}
 	
 			if(targetBitCount <= 0){
@@ -1109,7 +1107,7 @@
 				bitsRemaining -= bitsUsed;
 
 				printf("\t\tAdding chunk : %s\n", this->dbg_getBin(chunk, 8, 0, 0).c_str());
-				printf("\t\tDst before : %s\t|\t dst after: ", this->dbg_getBin(dstBuffer[dstIndex[0]], 8, 0, 0).c_str());
+				printf("\t\t%d] Dst before : %s\t|\t dst after: ", dstIndex[0], this->dbg_getBin(dstBuffer[dstIndex[0]], 8, 0, 0).c_str());
 				dstBuffer[dstIndex[0]] += chunk;
 				printf("%s\n", this->dbg_getBin(dstBuffer[dstIndex[0]], 8, 0, 0).c_str());
 				printf("\t\tBits remaining : %d\n", bitsRemaining);
@@ -1134,6 +1132,16 @@
 			printf("\tnew bitidx %d\n", bitIndex[0]);
 			return true;
 		}
+		
+		int countBits(int val){
+			int ret = 0;
+			int math = val;
+			while(math >= 1){
+				ret++;
+				math /= 2;
+			}
+			return ret;
+		}
 
 		int packHeader(void){
 			if(!this->validateFrequencies()){
@@ -1145,49 +1153,45 @@
 				this->setError(12323, "packHeader() - frequency and tree letter arrays are missaligned.");
 				return -1;
 			}
-
 			
-			// Calculate header size.
 			this->destroyHeader();
-			// Padding is the bitIDX, so it's modulo 8, and because 0x08 = 0b1000, we only need 4 binary digits.
-			int paddingBitCount = 4;
-			// element max is 256, so because 256 is 0x1FF, and 0x1ff = 0b1,0000,0000, we need 9 binary digits.
-			int elementCountBitCount = 9;
-			// initalize the header bit count with p + en…(padding + element count)
+			int paddingBitCount = 4; // only 4 bits needed to represent
+			int elementCountBitCount = 9; // max of 9 bits required to represent
 			int headerBitCount = paddingBitCount + elementCountBitCount;
-			// sizeof(int) = 4, so since 0x4 = 0b100, we only need 3 binary digits to store size.
-			int containerSizeBitCount = 3;
-			int byteBitCount = 8;
+			int containerSizeBitCount = 3; // only 3 bits required to rep int's byte usage.
+			int byteBitCount = 8; // a byte is 8 bits
 			for(int i=0; i<this->frequencies_s; i++){
-				// byte is 8 bits, ((freq / 0b1111,1111) + 1) = bytes required to contain freqs value.
-				int freqencyContainerSizeBitCount = byteBitCount * ((this->frequencies[i]/0xff)+ 1);
-				// letter bitcount + freq bit count, + size of freq container bit count
-				headerBitCount += byteBitCount + freqencyContainerSizeBitCount + containerSizeBitCount;
+				/*
+					[3bit : number of bytes to read]
+					[8bit * bytes to read  : bits representing frequency vale]
+					[8bit : bits representing letter value]
+				*/
+				int freqBitCount = byteBitCount * ((this->frequencies[i] / 0xff) + 1);
+				headerBitCount += byteBitCount + freqBitCount + containerSizeBitCount;
 			}
-			if(headerBitCount < paddingBitCount+elementCountBitCount+containerSizeBitCount+(2*byteBitCount)){
+			if(headerBitCount < paddingBitCount + elementCountBitCount + containerSizeBitCount + (2 * byteBitCount)){
 				this->setError(45345, "packHeader() - invalid header bit count.");
 				return false;
 			}
-			// Conver the bits to bytes and allocate.
-			this->header_s = (headerBitCount % 8) != 0 ? (headerBitCount/8)+1 : headerBitCount/8; 
+			this->header_s = (headerBitCount % 8) == 0 ? headerBitCount / 8 : (headerBitCount / 8) + 1; 
 			this->header = new char[this->header_s];
 			this->header[0] = 0x0;
 
-			// NOTE: bitIdx indexes the binary number with msb as position 0.
-			int bitIdx = 4;
-			int hi=0; // header index.
-			int elementCount = this->frequencies_s;
-			this->packByte(elementCount, 9, this->header, this->header_s, &hi, &bitIdx);
+			int bitIdx = 4; // index to a byte's binary diget. where 0 is the MSB 2⁷, left side of the binary number.
+			int headerIdx = 0; // literal array index.
+
+			// pack element count
+			this->packByte(this->frequencies_s, 9, this->header, this->header_s, &headerIdx, &bitIdx);
  
-			for(int i=0; i<this->frequencies_s && hi<this->header_s; i++){
+			for(int i=0; i<this->frequencies_s && headerIdx<this->header_s; i++){
 				int containerSize = (((this->frequencies[i]/0xff)) + 1); // rel to sizeof(int) data type
-				this->packByte(containerSize, 3, this->header, this->header_s, &hi, &bitIdx);
+				this->packByte(containerSize, 3, this->header, this->header_s, &headerIdx, &bitIdx);
 
 				int freq = this->frequencies[i];
-				this->packByte(freq, 8, this->header, this->header_s, &hi, &bitIdx);
+				this->packByte(freq, 8, this->header, this->header_s, &headerIdx, &bitIdx);
 				
 				char letter = this->treeLetters[i];
-				this->packByte((int)letter&0xff, 8, this->header, this->header_s, &hi, &bitIdx);
+				this->packByte((int)letter&0xff, 8, this->header, this->header_s, &headerIdx, &bitIdx);
 			}
 			return bitIdx;
 		}
@@ -1216,15 +1220,13 @@
 			
 			this->body_s = (this->body_s % 8) == 0 ? this->body_s/8 : (this->body_s/8)+1;
 			if(startingBitIndex > 0)
-				this->body_s++;
+				this->body_s++; // adjust for header's binary offset
 			
 			this->body = new char[this->body_s];
 
 			int bitIdx=startingBitIndex % 8;
 			int bi=0;
 			this->body[bi] = 0;
-			system("clear");
-			printf("Packing the body...\n");
 			for(int i=0; i<dataSize && bi<this->body_s; i++){
 				int tableIdx = this->getEncodeCharIndex(data[i]);
 				if(tableIdx == -1){
@@ -1233,20 +1235,8 @@
 				}
 				int bitCount = this->codeTable[tableIdx];
 				int encodedChar = this->codeTable[tableIdx+this->frequencies_s];
-				int mask = ~(~(0) << bitCount);
-				int dbgA = bi;
 				this->packByte(encodedChar, bitCount, this->body, this->body_s, &bi, &bitIdx);
-				// dbg
-				if(i < 30){
-					printf("bit idx : %d\n", bitIdx);
-					printf("iter:%d: %s encoded to %s.\n", i, this->dbg_getBin(data[i], 8, 0, 0).c_str(), this->dbg_getBin(encodedChar, bitCount, 0, 0).c_str());
-					for(int d=dbgA; d<=bi; d++){
-						std::string bin = this->dbg_getBin(this->body[d], 8, 0, 0);
-						printf("body[%d] : %d(%s)\t", d, this->body[d], bin.c_str());
-					}printf("\n-----------\n");
-				}// dbg end
 			}
-			this->body_s -= (this->body_s-bi);
 			return bitIdx;
 		}
 		
@@ -1466,28 +1456,42 @@
 				return false;
 			}
 
+
 			int bodyPadding = this->packBody(headerPadding, data, dataSize);
 			if(bodyPadding <= -1){
 				this->setError(4324, "encode() - failed to pack body.");
 				return false;
 			}
+
+			printf("HEADER BYTE %d : %d\n", 0, this->header[0]);
 			
-			this->out_s = this->header_s + this->body_s;
-			this->out = new char[this->out_s];
-			// Join padding with header
-			for(int i=0; i<this->header_s; i++){
-				this->out[i] = i == 0 ? ((bodyPadding&0xf)<<4) + this->header[i] : this->header[i];
-			}
+			int a=0, b=0;
+			printf("Packing padding into header.\n");
+			this->packByte(bodyPadding, 4, this->header, this->header_s, &a, &b);
 
-			// Bind header tail to body head
+			printf("HEADER BYTE %d : %d\n", 0, this->header[0]);
+	
+			this->out_s = this->header_s;
 			if(headerPadding != 0)
-				this->out[this->header_s-1] += this->body[0]; 
-			else
-				this->out[this->header_s] = this->body[0];
+				this->out_s--;
+			this->out_s += this->header_s;
+			
+			this->out = new char[this->out_s];
 
-			// fetch rest of body.
-			for(int i=1, o=this->header_s; i<this->body_s && o<this->out_s; i++, o++){
-				this->out[o] = this->body[i];
+			for(int o=0,h=0,b=0; o<this->out_s && (h<this->header_s || b<this->body_s); o++){
+				if(h<this->header_s){
+					this->out[o] = this->header[h];
+					h++;
+					if(!(h<this->header_s) && headerPadding != 0){
+						this->out[o] += this->body[b];
+						b++;
+					}
+				}else if(b<this->body_s){
+					this->out[o] = this->body[b];
+					b++;
+				}else{
+					break;
+				}
 			}
 			
 			return true;
