@@ -1043,6 +1043,16 @@
 			return ret;
                 }
 
+		int deriveChunkIndex(int maxChunkBitCount, int bitsLeft){
+			if(maxChunkBitCount <= 0){
+				this->setError(345, "deriveChunkIndex() - maxChunkBitCount must be > than 0.");
+				return -1;
+			}
+			if(bitsLeft <= 0) return -1;
+			int ret = bitsLeft / maxChunkBitCount;
+			if((ret % maxChunkBitCount) == 0) ret--;
+			return ret;
+		}
 		 /* * packByte Parameter Breakdown
 		 * 1) The value that we want to pack into a location.
 		 * 2) From lsb; number of bits within arg 1 that we care about.
@@ -1062,10 +1072,13 @@
 			}else if(bitIndex[0] >= binaryMax){
 				this->setError(345345, "packByte() - bitIndex overflows the 8 bit max. Ensure MOD 8.");
 				return false;
+			}else if(bitIndex[0] == 0){
+				dstBuffer[bitIndex[0]] = 0x00; // initalize this.
 			}
 
+			int bitsRemaining = targetBitCount;
 			int containerSize = packingTarget <= 0xff ? 1 : (((packingTarget/0xff)) + 1);
-			int chunk = (packingTarget >> ((containerSize - 1)*binaryMax)) & 0xff;
+			int chunk = (packingTarget >> (this->deriveChunkIndex(binaryMax, bitsRemaining)*binaryMax)) & 0xff;
 			int msbPos = (targetBitCount % binaryMax);
 			msbPos = msbPos == 0 ? binaryMax - 1 : msbPos - 1;
 			int lsbPos = 0;
@@ -1075,6 +1088,7 @@
 			
 			int sherrection = (7 - bitIndex[0]) - msbPos;
 			int chunkState = 0;
+			int bitsUsed = 0;
 			if(sherrection < 0){
 				// Negative, right Shift, preserve lost bits.
 				chunkState = 0;
@@ -1084,6 +1098,8 @@
 				chunk = chunk >> sherrection
 				msbPos -= sherrection;
 				chunkExtrasBitCount = 0;
+				bitsUsed = (msbPos + 1);
+				bitsRemaining -= bitsUsed;
 			}else if(sherrection > 0){
 				// Positive, Left shift, fetch extra bits
 				chunkState = 1;
@@ -1091,11 +1107,15 @@
 				msbPos += sherrection;
 				if((containerSize - 2) >= 0){
 					int futureChunk = (packingTarget >> ((containerSize - 2)*binaryMax)) & 0xff;
-					int futureMask = (~((~(0) >> sherrection) << sherrection)) << (8-sherrection);
-					chunk += (futureChunk & futureMask) >> (8-sherrection);
+					int futureMask = (~((~(0) >> sherrection) << sherrection)) << (binaryMax-sherrection);
+					chunk += (futureChunk & futureMask) >> (binaryMax-sherrection);
 					chunkExtrasBitCount = sherrection;
+					bitsUsed = (msbPos + 1);
+					bitsRemaining -= bitsUsed;
 				}else{
 					lsbPos += sherrection;
+					bitsUsed = (msbPos + 1) - lsbPos;
+					bitsRemaining -= bitsUsed;
 				}
 				chunkLeftoversBitCount = 0;
 				chunkLeftovers = 0
@@ -1106,23 +1126,40 @@
 				chunkLeftoversBitCount = 0;
 				chunkLeftovers = 0
 				chunkExtrasBitCount = 0;
+				bitsRemaining -= binaryMax;
+				bitsUsed = binaryMax;
 			}
 
-			int chunkBitIdx = msbPos;
-			
-
-			switch(chunkState){
-				case 0:
-				break;
-				case 1:
-				break;
-				case 2:
-				break;
-				default:
-					this->setError(34534, "packByte() - invalid chunk state.");
-				return false;
+			dstBuffer[dstIndex[0]] += chunk;
+			dstIndex[0]++;
+			bitIndex[0] = (bitIndex[0] + bitsUsed) % binaryMax;
+			if(!(dstIndex[0] < dstBufferSize) || bitsRemaining <= 0){
+				// nothing more we can do.
+				return true;
 			}
+			dstBuffer[dstIndex[0]] = 0x00;
 
+			for(int i=this->deriveChunkIndex(binaryMax, bitsRemaining); i>=0; i=this->deriveChunkIndex(binaryMax, bitsRemaining)){
+				chunk = (packingTarget >> (i*binaryMax)) & 0xff;
+				msbPos = (bitsRemaining % binaryMax);
+                        	msbPos = msbPos == 0 ? binaryMax - 1 : msbPos - 1
+				lsbPos = 0;
+				
+				switch(chunkState){
+					case 0: // Lost bits need to be preserved for the next chunk.
+						chunk = chunk >> chunkLeftoversBitCount;
+					break;
+					case 1: // extra bits need to be removed from the next chunk.
+					break;
+					case 2: // nothing needs to happen :)
+					break;
+					default:
+						this->setError(34534, "packByte() - invalid chunk state.");
+					return false;
+				}
+
+				sherrection = (7 - bitIndex[0]) - msbPos;
+			}
 
 			return true;
 		}
