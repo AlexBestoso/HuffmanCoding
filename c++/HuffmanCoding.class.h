@@ -1132,7 +1132,69 @@
 			printf("\tnew bitidx %d\n", bitIndex[0]);
 			return true;
 		}
+
+		int unpackByte(char *src, size_t srcSize, int *srcIndex, int *bitIndex, int expectedBitCount, int byteMask, int expectedContainerSize){
+			int ret = 0;
+			int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
+                        int bitCount=expectedBitCount;
+                        int bitIdx = bitIndex[0];
+                        int hi = srcIndex[0];
+                        int lvi = binaryMax - bitCount;
+                        int dte = (binaryMax-1) - lvi;
+                        int countFill           = 0;    //bitIdx >= binaryMax-dte ? (binaryMax-bitIdx) : binaryMax;
+                        int countOverflow       = 0;    //bitCount-countFill;
+                        int masterDifference    = 0;    //binaryMax-bitCount-bitIdx;
+
+                        bool maxOverflowed = binaryMax-expectedBitCount < 0;
+                        if(maxOverflowed) expectedContainerSize--;
+			
 		
+			for(int chunkIdx=expectedContainerSize-1; chunkIdx>=0; chunkIdx--){
+				countFill = (maxOverflowed || bitIdx >= binaryMax-dte) ? (binaryMax-bitIdx) : binaryMax;
+                                countOverflow = (bitCount-countFill) % binaryMax;
+                                masterDifference = binaryMax-bitCount-bitIdx;
+				int chunk = 0;
+				if(maxOverflowed){
+					chunk = (((int)src[hi]) & (byteMask>>countOverflow)) << (countOverflow);
+                                }else if(masterDifference >= 0){
+					chunk = (((int)src[hi] & (0xff >> bitIdx)) >> masterDifference) & 0xff;
+				}else{
+					masterDifference*=-1;
+					chunk = (((int)src[hi] & (0xff >> bitIdx)) << masterDifference) & 0xff;
+				}
+
+				if(maxOverflowed){
+					hi++;
+					if(!(hi < srcSize)){
+						this->setError(2334, "unpackHeader() - hi overflows data.");
+						return 0;
+					}
+					byteMask = 0xff;
+					ret += (((int)src[hi]) & ((byteMask>>countOverflow)<<countOverflow)) >> (countOverflow);
+				}else if(bitIdx >= binaryMax-dte){ // overflow
+					hi++;
+					if(!(hi<srcSize)){
+						this->setError(654, "unpackHeader() - i is out of bounds.");
+						return 0;
+					}
+					chunk += ((int)src[hi] & 0xff) >> (binaryMax-countOverflow);
+				}else if(bitIdx == lvi || bitIdx+bitCount >= binaryMax){
+					hi++;
+                                        if(!(hi<srcSize)){
+                                              this->setError(654, "unpackHeader() - i is out of bounds.");
+                                              return 0;
+                                        }
+				}
+
+				ret += chunk << (chunkIdx*binaryMax);
+				bitIdx = (bitIdx + bitCount) % binaryMax; 
+			}
+			
+			srcIndex[0] = hi;
+			bitIndex[0] = bitIdx;
+			return ret;
+		}
+
 		int countBits(int val){
 			int ret = 0;
 			int math = val;
@@ -1240,68 +1302,7 @@
 			return bitIdx;
 		}
 		
-		int unpackByte(char *src, size_t srcSize, int *srcIndex, int *bitIndex, int expectedBitCount, int byteMask, int expectedContainerSize){
-			int ret = 0;
-			int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
-                        int bitCount=expectedBitCount;
-                        int bitIdx = bitIndex[0];
-                        int hi = srcIndex[0];
-                        int lvi = binaryMax - bitCount;
-                        int dte = (binaryMax-1) - lvi;
-                        int countFill           = 0;    //bitIdx >= binaryMax-dte ? (binaryMax-bitIdx) : binaryMax;
-                        int countOverflow       = 0;    //bitCount-countFill;
-                        int masterDifference    = 0;    //binaryMax-bitCount-bitIdx;
-
-                        bool maxOverflowed = binaryMax-expectedBitCount < 0;
-                        if(maxOverflowed) expectedContainerSize--;
-			
-		
-			for(int chunkIdx=expectedContainerSize-1; chunkIdx>=0; chunkIdx--){
-				countFill = (maxOverflowed || bitIdx >= binaryMax-dte) ? (binaryMax-bitIdx) : binaryMax;
-                                countOverflow = (bitCount-countFill) % binaryMax;
-                                masterDifference = binaryMax-bitCount-bitIdx;
-				int chunk = 0;
-				if(maxOverflowed){
-					chunk = (((int)src[hi]) & (byteMask>>countOverflow)) << (countOverflow);
-                                }else if(masterDifference >= 0){
-					chunk = (((int)src[hi] & (0xff >> bitIdx)) >> masterDifference) & 0xff;
-				}else{
-					masterDifference*=-1;
-					chunk = (((int)src[hi] & (0xff >> bitIdx)) << masterDifference) & 0xff;
-				}
-
-				if(maxOverflowed){
-					hi++;
-					if(!(hi < srcSize)){
-						this->setError(2334, "unpackHeader() - hi overflows data.");
-						return 0;
-					}
-					byteMask = 0xff;
-					ret += (((int)src[hi]) & ((byteMask>>countOverflow)<<countOverflow)) >> (countOverflow);
-				}else if(bitIdx >= binaryMax-dte){ // overflow
-					hi++;
-					if(!(hi<srcSize)){
-						this->setError(654, "unpackHeader() - i is out of bounds.");
-						return 0;
-					}
-					chunk += ((int)src[hi] & 0xff) >> (binaryMax-countOverflow);
-				}else if(bitIdx == lvi || bitIdx+bitCount >= binaryMax){
-					hi++;
-                                        if(!(hi<srcSize)){
-                                              this->setError(654, "unpackHeader() - i is out of bounds.");
-                                              return 0;
-                                        }
-				}
-
-				ret += chunk << (chunkIdx*binaryMax);
-				bitIdx = (bitIdx + bitCount) % binaryMax; 
-			}
-			
-			srcIndex[0] = hi;
-			bitIndex[0] = bitIdx;
-			return ret;
-		}
-		bool unpackHeader(char *data, size_t dataSize, int *ptr_indexOffset, int *ptr_bitOffset,  int *ptr_endPadding){
+				bool unpackHeader(char *data, size_t dataSize, int *ptr_indexOffset, int *ptr_bitOffset,  int *ptr_endPadding){
 			if(data == NULL){
 				this->setError(1100, "unpackHeader(char *data, size_t dataSize) - data is null.");
 				return false;
@@ -1456,26 +1457,19 @@
 				return false;
 			}
 
-
 			int bodyPadding = this->packBody(headerPadding, data, dataSize);
 			if(bodyPadding <= -1){
 				this->setError(4324, "encode() - failed to pack body.");
 				return false;
 			}
-
-			printf("HEADER BYTE %d : %d\n", 0, this->header[0]);
 			
 			int a=0, b=0;
-			printf("Packing padding into header.\n");
 			this->packByte(bodyPadding, 4, this->header, this->header_s, &a, &b);
-
-			printf("HEADER BYTE %d : %d\n", 0, this->header[0]);
 	
 			this->out_s = this->header_s;
 			if(headerPadding != 0)
 				this->out_s--;
 			this->out_s += this->header_s;
-			
 			this->out = new char[this->out_s];
 
 			for(int o=0,h=0,b=0; o<this->out_s && (h<this->header_s || b<this->body_s); o++){
@@ -1493,7 +1487,6 @@
 					break;
 				}
 			}
-			
 			return true;
 		}
 
