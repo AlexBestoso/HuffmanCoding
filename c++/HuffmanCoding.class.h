@@ -1063,95 +1063,67 @@
 				this->setError(345345, "packByte() - bitIndex overflows the 8 bit max. Ensure MOD 8.");
 				return false;
 			}
+
 			int containerSize = packingTarget <= 0xff ? 1 : (((packingTarget/0xff)) + 1);
-			bool maxOverflowed = binaryMax-targetBitCount < 0;
-			if(maxOverflowed) containerSize--;
-			int bitCount=targetBitCount;
-			int bitIdx = bitIndex[0];
-			int hi = dstIndex[0];
-
-			int lvi = binaryMax - bitCount;
-			int dte = (binaryMax-1) - lvi;
-			int countFill 		= 0;	//bitIdx >= binaryMax-dte ? (binaryMax-bitIdx) : binaryMax;
-			int countOverflow 	= 0;	//bitCount-countFill;
-			int masterDifference 	= 0;	//binaryMax-bitCount-bitIdx;
-
-			// NOTE: no remiander, msb is the maximum index, else its the remainder - 1.
+			int chunk = (packingTarget >> ((containerSize - 1)*binaryMax)) & 0xff;
 			int msbPos = (targetBitCount % binaryMax);
 			msbPos = msbPos == 0 ? binaryMax - 1 : msbPos - 1;
-			// NOTE: because we grab chunks via a left shift alignment with lsb, lsb is always 0.
 			int lsbPos = 0;
-			
-			// NOTE: shift and direction,  
-			int sherrection = (7 - bitIndex[0]) - msbPos;
-// devnote : shift the first chunk
-			if(sherrection < 0){
-				// Negative, right Shift
-			}else if(sherrection > 0){
-				// Positive, Left shift
-			}// 0, no shift.
-
 			int chunkLeftovers = 0;
 			int chunkLeftoversBitCount = 0;
-
-			// NOTE: Bit index points to an EMPTY binary position that grows FROM the MSB.
-
-			for(int chunkIdx=containerSize-1; chunkIdx>=0 && hi < dstBufferSize; chunkIdx--){
-				int chunk = (packingTarget >> (chunkIdx*binaryMax)) & 0xff;
-				lsbPos = msbPos - bitIndex[0];
-				/*
-
-					if lsbPos is 0, then we have our chunk.
-					if lsbPos is negative, then we need to left shift x bits, and grab x bits from the msb of the next chunk, if it exists.
-					if lsbPos is positive, then we need to right shift x bits, and account for the loss of those x bits in the next chunk.
-				*/
-				if(lsbPos > 0){
-					chunk = chunk << lsbPos;
-					if((chunkIdx - 1) >= 0){
-						int nextChunk = (packingTarget >> ((chunkIdx - 1) * binaryMax)) & 0xff;
-						int irrelBitCount = 8 - lsbPos;
-						int mask = (0xff >> irrelBitCount) << irrelBitCount;
-						chunk += (nextChunk & mask) >> irrelBitCount;
-					}
-				}
-				countFill = (maxOverflowed || bitIdx >= binaryMax-dte) ? (binaryMax-bitIdx) : binaryMax;
-				countOverflow = (bitCount-countFill) % binaryMax;
-				masterDifference = binaryMax-bitCount-bitIdx;
-				
-				if(maxOverflowed){
-                        		dstBuffer[hi] = (char)((packingTarget >> countOverflow)&0xff);
-				}else if(masterDifference >= 0){
-					dstBuffer[hi] += ((chunk) << (masterDifference));
+			int chunkExtrasBitCount = 0;
+			
+			int sherrection = (7 - bitIndex[0]) - msbPos;
+			int chunkState = 0;
+			if(sherrection < 0){
+				// Negative, right Shift, preserve lost bits.
+				chunkState = 0;
+				sherrection *= -1;
+				chunkLeftoversBitCount = sherrection;
+				chunkLeftovers = chunk & (~((~(0) >> sherrection) << sherrection));
+				chunk = chunk >> sherrection
+				msbPos -= sherrection;
+				chunkExtrasBitCount = 0;
+			}else if(sherrection > 0){
+				// Positive, Left shift, fetch extra bits
+				chunkState = 1;
+				chunk = chunk << sherrection;
+				msbPos += sherrection;
+				if((containerSize - 2) >= 0){
+					int futureChunk = (packingTarget >> ((containerSize - 2)*binaryMax)) & 0xff;
+					int futureMask = (~((~(0) >> sherrection) << sherrection)) << (8-sherrection);
+					chunk += (futureChunk & futureMask) >> (8-sherrection);
+					chunkExtrasBitCount = sherrection;
 				}else{
-					masterDifference *= -1;
-					dstBuffer[hi] += ((chunk) >> (masterDifference));
+					lsbPos += sherrection;
 				}
-				if(maxOverflowed){
-					hi++;
-                        		if(!(hi < dstBufferSize)){
-                        		        this->setError(54545, "packByte() - hi out of bounds.");
-                        		        return false;
-                        		}
-                        		dstBuffer[hi] = (char)(((packingTarget & (0x1ff>>countFill)) << countOverflow)&0xff);
-				}else if(bitIdx >= (binaryMax - dte)){
-					hi++;
-					if(!(hi < dstBufferSize)){
-						this->setError(345, "packByte() - hi is out of bounds.");
-						return false;
-					}
-					dstBuffer[hi] = (char)(((chunk & (targetOverflowMask >> countFill)) & 0xff) << (binaryMax - countOverflow));
-				}else if(bitIdx == lvi){
-					hi++;
-					if(!(hi<dstBufferSize)){
-						this->setError(454, "packByte() - hi is out of bounds.");
-						return false;
-					}
-					dstBuffer[hi] = 0x00;
-				}
-				bitIdx = (bitIdx + bitCount) % binaryMax;
+				chunkLeftoversBitCount = 0;
+				chunkLeftovers = 0
+				
+			}else{
+				// 0, no shift, no leftovers or extras.
+				chunkState = 2;
+				chunkLeftoversBitCount = 0;
+				chunkLeftovers = 0
+				chunkExtrasBitCount = 0;
 			}
-			bitIndex[0] =  bitIdx;
-                        dstIndex[0] = hi;
+
+			int chunkBitIdx = msbPos;
+			
+
+			switch(chunkState){
+				case 0:
+				break;
+				case 1:
+				break;
+				case 2:
+				break;
+				default:
+					this->setError(34534, "packByte() - invalid chunk state.");
+				return false;
+			}
+
+
 			return true;
 		}
 
