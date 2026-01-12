@@ -1064,7 +1064,7 @@
 		 *  \
 		 *  |_-> 6 to which byte in array of bytes, 7 points to which bit in selected byte.
 		 * */
-		bool packByte(int packingTarget, int targetBitCount, int targetOverflowMask, char *dstBuffer, size_t dstBufferSize, int *dstIndex, int *bitIndex){
+		bool packByte(int packingTarget, int targetBitCount, char *dstBuffer, size_t dstBufferSize, int *dstIndex, int *bitIndex){
 			int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
 			if(bitIndex == NULL){
 				this->setError(345345, "packByte() - bitIndex is null.");
@@ -1080,9 +1080,11 @@
 				this->setError(3423, "packByte() - targetBitCount <= 0. It's not allowed to be.");
 				return false;
 			}
+			printf("Packing the value %s at bit index %d\n", this->dbg_getBin(packingTarget, targetBitCount, 0,0).c_str(), bitIndex[0]);
 
 			int bitsRemaining = targetBitCount;
 
+			printf("\tProcessing %d bits.\n", bitsRemaining);
 			for(int i=this->deriveChunkIndex(binaryMax, bitsRemaining); i>=0 && dstIndex[0] < dstBufferSize; i=this->deriveChunkIndex(binaryMax, bitsRemaining)){
 				int chunk = (packingTarget >> (i*binaryMax)) & 0xff;
 				int msbPos = (bitsRemaining % binaryMax);
@@ -1106,9 +1108,14 @@
 				bitsUsed = (msbPos - lsbPos) + 1;
 				bitsRemaining -= bitsUsed;
 
+				printf("\t\tAdding chunk : %s\n", this->dbg_getBin(chunk, 8, 0, 0).c_str());
+				printf("\t\tDst before : %s\t|\t dst after: ", this->dbg_getBin(dstBuffer[dstIndex[0]], 8, 0, 0).c_str());
 				dstBuffer[dstIndex[0]] += chunk;
+				printf("%s\n", this->dbg_getBin(dstBuffer[dstIndex[0]], 8, 0, 0).c_str());
+				printf("\t\tBits remaining : %d\n", bitsRemaining);
 				bitIndex[0] = (bitIndex[0] + bitsUsed);
-				if(bitIndex >= binaryMax){
+				if(bitIndex[0] >= binaryMax){
+					printf("\t\t\tbumping out index %d+1\n", dstIndex[0]);
 					dstIndex[0]++;
 					bitIndex[0] = bitIndex[0] % binaryMax;
 					if(!(dstIndex[0] < dstBufferSize)){
@@ -1119,10 +1126,12 @@
 				}
 				if(bitsRemaining <= 0){
 					// nothing more we can do.
+					printf("\tnew bitidx %d\n", bitIndex[0]);
 					return true;
 				}
 			}
 
+			printf("\tnew bitidx %d\n", bitIndex[0]);
 			return true;
 		}
 
@@ -1162,29 +1171,23 @@
 			// Conver the bits to bytes and allocate.
 			this->header_s = (headerBitCount % 8) != 0 ? (headerBitCount/8)+1 : headerBitCount/8; 
 			this->header = new char[this->header_s];
+			this->header[0] = 0x0;
 
 			// NOTE: bitIdx indexes the binary number with msb as position 0.
 			int bitIdx = 4;
 			int hi=0; // header index.
 			int elementCount = this->frequencies_s;
-			/*
-			 * 1) Number of different values used to create the tree.
-			 * 2) Max different number of values are 2^8 = 256 = 0b1,0000,0000 = 9 bits
-			 * 3) The only mask that can select 9 bits via AND is 0x1ff = 0b1,1111,1111
-			 * 4) the place to pack argument 1 into.
-			 * 5) size of argument 4's location.
-			 * 6) Starting element offset into argument 4's location.
-			 * 7) Starting binary offset of argument 6's elemental location.
-			 * */
-			this->packByte(elementCount, 9, 0x1ff, this->header, this->header_s, &hi, &bitIdx);
+			this->packByte(elementCount, 9, this->header, this->header_s, &hi, &bitIdx);
  
 			for(int i=0; i<this->frequencies_s && hi<this->header_s; i++){
-				int containerSize = (((this->frequencies[i]/0xff)) + 1);
-				this->packByte(containerSize, 3, 0xff, this->header, this->header_s, &hi, &bitIdx);
+				int containerSize = (((this->frequencies[i]/0xff)) + 1); // rel to sizeof(int) data type
+				this->packByte(containerSize, 3, this->header, this->header_s, &hi, &bitIdx);
+
 				int freq = this->frequencies[i];
-				this->packByte(freq, 8, 0xff, this->header, this->header_s, &hi, &bitIdx);
+				this->packByte(freq, 8, this->header, this->header_s, &hi, &bitIdx);
+				
 				char letter = this->treeLetters[i];
-				this->packByte((int)letter&0xff, 8, 0xff, this->header, this->header_s, &hi, &bitIdx);
+				this->packByte((int)letter&0xff, 8, this->header, this->header_s, &hi, &bitIdx);
 			}
 			return bitIdx;
 		}
@@ -1220,6 +1223,8 @@
 			int bitIdx=startingBitIndex % 8;
 			int bi=0;
 			this->body[bi] = 0;
+			system("clear");
+			printf("Packing the body...\n");
 			for(int i=0; i<dataSize && bi<this->body_s; i++){
 				int tableIdx = this->getEncodeCharIndex(data[i]);
 				if(tableIdx == -1){
@@ -1230,7 +1235,7 @@
 				int encodedChar = this->codeTable[tableIdx+this->frequencies_s];
 				int mask = ~(~(0) << bitCount);
 				int dbgA = bi;
-				this->packByte(encodedChar, bitCount, mask, this->body, this->body_s, &bi, &bitIdx);
+				this->packByte(encodedChar, bitCount, this->body, this->body_s, &bi, &bitIdx);
 				// dbg
 				if(i < 30){
 					printf("bit idx : %d\n", bitIdx);
