@@ -1281,6 +1281,7 @@
 				this->body_s++; // adjust for header's binary offset
 			
 			this->body = new char[this->body_s];
+			printf("packBody() - body_s : %ld\n", this->body_s);
 
 			int bitIdx=startingBitIndex % 8;
 			int bi=0;
@@ -1309,6 +1310,7 @@
 			}
 			this->body = new char[this->body_s];
 			this->codeTableSortByBitCount();
+			printf("unpackBody() - body_s : %ld\n", this->body_s);
 			// Determine smallest bit count in code table, and it's value.
 			int smallestCount = this->codeTable[0];
 			// determine largest bit count in code table, and it's value.
