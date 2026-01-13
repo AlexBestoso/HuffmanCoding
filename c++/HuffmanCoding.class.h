@@ -1134,10 +1134,14 @@
 		}
 
 		int unpackByte(char *src, size_t srcSize, int *srcIndex, int *bitIndex, int expectedBitCount){
+			printf("\033[0;33m");
+			printf("Unpacking Byte by:%d, bi:%d, bits:%d\n", srcIndex[0], bitIndex[0], expectedBitCount);
 			int ret = 0;
 			int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
 			int bitsRemaining = expectedBitCount;
 			for(int i=this->deriveChunkIndex(binaryMax, bitsRemaining); i >= 0 && srcIndex[0] < srcSize; i=this->deriveChunkIndex(binaryMax, bitsRemaining)){
+				printf("Chunk Index : %d\n", i);
+				printf("\tbitsRemaining %d\n", bitsRemaining);
 				if(bitsRemaining <= 0) break;
 				int msb = bitsRemaining % binaryMax;
 				msb = msb == 0 ? binaryMax - 1 : msb - 1;
@@ -1145,23 +1149,25 @@
 				int data = ((int)src[srcIndex[0]] & 0xff);
 				int sherrection = (7 - bitIndex[0]) - msb;
 				int bitsUsed = 0;
+				printf("\tSrc Byte : %d (%s)\n", data, dbg_getBin(data, 8, 0, 0).c_str());
+				printf("\tbit range : [%d:%d]\n", msb, lsb);
+				printf("\tSherrection : %d\n", sherrection);
 				if(sherrection < 0){
 					// Negative, right Shift, preserve lost bits.
 					sherrection *= -1;
 					int mask = ~((~(0) >> (msb - lsb + 1)) << (msb - lsb + 1));
-					data = data & (mask >> sherrection);
-					msb -= sherrection;
-					lsb = 0;
+					data = (data & (mask >> sherrection)) << sherrection;
+					lsb += sherrection;
 				}else if(sherrection > 0){
 					// Positive, Left shift, fetch extra bits
 					int mask = ~((~(0) >> (msb - lsb + 1)) << (msb - lsb + 1));
 					data = (data & (mask << sherrection)) >> sherrection;
-					msb += sherrection;
-					lsb += sherrection;	
 				} // Else no modification needed.
 				bitsUsed = (msb - lsb) + 1;
 				bitsRemaining -= bitsUsed;
-				ret = (ret << bitsUsed) + data;
+				printf("\tCleaned Src Byte : %d (%s)\n", data, dbg_getBin(data, 8, 0, 0).c_str());
+				ret += (data & (~((~(0)>>expectedBitCount)<<expectedBitCount))) << (i*8);
+				printf("\tret : %s\n", dbg_getBin(ret, expectedBitCount, 0, 0).c_str());
 
 				bitIndex[0] += bitsUsed;
 				if(bitIndex[0] >= binaryMax){
@@ -1170,6 +1176,7 @@
 				}
 			}
 			
+			printf("\033[0m");
 			return ret;
 		}
 
