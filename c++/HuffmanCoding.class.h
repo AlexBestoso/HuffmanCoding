@@ -1133,65 +1133,43 @@
 			return true;
 		}
 
-		int unpackByte(char *src, size_t srcSize, int *srcIndex, int *bitIndex, int expectedBitCount, int byteMask, int expectedContainerSize){
+		int unpackByte(char *src, size_t srcSize, int *srcIndex, int *bitIndex, int expectedBitCount){
 			int ret = 0;
 			int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
-                        int bitCount=expectedBitCount;
-                        int bitIdx = bitIndex[0];
-                        int hi = srcIndex[0];
-                        int lvi = binaryMax - bitCount;
-                        int dte = (binaryMax-1) - lvi;
-                        int countFill           = 0;    //bitIdx >= binaryMax-dte ? (binaryMax-bitIdx) : binaryMax;
-                        int countOverflow       = 0;    //bitCount-countFill;
-                        int masterDifference    = 0;    //binaryMax-bitCount-bitIdx;
+			int bitsRemaining = expectedBitCount;
+			for(int i=this->deriveChunkIndex(binaryMax, bitsRemaining); i >= 0 && srcIndex[0] < srcSize; i=this->deriveChunkIndex(binaryMax, bitsRemaining)){
+				if(bitsRemaining <= 0) break;
+				int msb = bitsRemaining % binaryMax;
+				msb = msb == 0 ? binaryMax - 1 : msb - 1;
+				int lsb = 0;
+				int data = ((int)src[srcIndex[0]] & 0xff);
+				int sherrection = (7 - bitIndex[0]) - msb;
+				int bitsUsed = 0;
+				if(sherrection < 0){
+					// Negative, right Shift, preserve lost bits.
+					sherrection *= -1;
+					int mask = ~((~(0) >> (msb - lsb + 1)) << (msb - lsb + 1));
+					data = data & (mask >> sherrection);
+					msb -= sherrection;
+					lsb = 0;
+				}else if(sherrection > 0){
+					// Positive, Left shift, fetch extra bits
+					int mask = ~((~(0) >> (msb - lsb + 1)) << (msb - lsb + 1));
+					data = (data & (mask << sherrection)) >> sherrection;
+					msb += sherrection;
+					lsb += sherrection;	
+				} // Else no modification needed.
+				bitsUsed = (msb - lsb) + 1;
+				bitsRemaining -= bitsUsed;
+				ret = (ret << bitsUsed) + data;
 
-                        bool maxOverflowed = binaryMax-expectedBitCount < 0;
-                        if(maxOverflowed) expectedContainerSize--;
-			
-		
-			for(int chunkIdx=expectedContainerSize-1; chunkIdx>=0; chunkIdx--){
-				countFill = (maxOverflowed || bitIdx >= binaryMax-dte) ? (binaryMax-bitIdx) : binaryMax;
-                                countOverflow = (bitCount-countFill) % binaryMax;
-                                masterDifference = binaryMax-bitCount-bitIdx;
-				int chunk = 0;
-				if(maxOverflowed){
-					chunk = (((int)src[hi]) & (byteMask>>countOverflow)) << (countOverflow);
-                                }else if(masterDifference >= 0){
-					chunk = (((int)src[hi] & (0xff >> bitIdx)) >> masterDifference) & 0xff;
-				}else{
-					masterDifference*=-1;
-					chunk = (((int)src[hi] & (0xff >> bitIdx)) << masterDifference) & 0xff;
+				bitIndex[0] += bitsUsed;
+				if(bitIndex[0] >= binaryMax){
+					bitIndex[0] = bitIndex[0] % binaryMax;
+					srcIndex[0]++;
 				}
-
-				if(maxOverflowed){
-					hi++;
-					if(!(hi < srcSize)){
-						this->setError(2334, "unpackHeader() - hi overflows data.");
-						return 0;
-					}
-					byteMask = 0xff;
-					ret += (((int)src[hi]) & ((byteMask>>countOverflow)<<countOverflow)) >> (countOverflow);
-				}else if(bitIdx >= binaryMax-dte){ // overflow
-					hi++;
-					if(!(hi<srcSize)){
-						this->setError(654, "unpackHeader() - i is out of bounds.");
-						return 0;
-					}
-					chunk += ((int)src[hi] & 0xff) >> (binaryMax-countOverflow);
-				}else if(bitIdx == lvi || bitIdx+bitCount >= binaryMax){
-					hi++;
-                                        if(!(hi<srcSize)){
-                                              this->setError(654, "unpackHeader() - i is out of bounds.");
-                                              return 0;
-                                        }
-				}
-
-				ret += chunk << (chunkIdx*binaryMax);
-				bitIdx = (bitIdx + bitCount) % binaryMax; 
 			}
 			
-			srcIndex[0] = hi;
-			bitIndex[0] = bitIdx;
 			return ret;
 		}
 
@@ -1257,7 +1235,61 @@
 			}
 			return bitIdx;
 		}
-		
+
+		bool unpackHeader(char *data, size_t dataSize, int *bodyStart, int *bodyPadding, int *headerPadding){
+			if(data == NULL){
+				this->setError(1100, "unpackHeader(char *data, size_t dataSize) - data is null.");
+				return false;
+			}
+			if(dataSize <= 2){
+				this->setError(1101, "unpackHeader(char *data, size_t dataSize) - dataSize <= 2, which is invalid, treating as null.");
+				return false;
+			}
+
+			this->destroyTreeLetters();
+			this->destroyFrequencies();
+			int byteIdx=0, bitIdx=0;
+
+			printf("\n\nATTEMPTING TO UNPACK PADDING, 4 bits...\n");
+			bodyPadding[0] = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 4);
+			printf("\tExtracted Body Padding %d\n", bodyPadding[0]);
+			int elementCount = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 9);
+			printf("\tExtracted Element Count : %d\n", elementCount); 
+/*			char entryChar=0x00;
+                        int bitIdx = 0;// first 3 bits are reserved for padding.
+			int entryContainerSize=0;
+			int entryFreq=0;
+                        int hi=0;
+			int padding = unpackByte(data, dataSize, &hi, &bitIdx, 4, 0xf, 1);
+
+
+			// clear up to bit idx, 
+			int freqCount = unpackByte(data, dataSize, &hi, &bitIdx, 9, 0x1ff, 2);
+
+			this->resizeTreeLetters(freqCount);
+			this->resizeFrequencies(freqCount);
+
+			// This loop is the problem. Need to loop frequency_s amount of times, and incrememnt hi speratately.
+			for(int i=0; i<this->frequencies_s && hi < dataSize; i++){
+				entryContainerSize=0;
+				entryFreq=0;
+				entryChar=0x00;
+
+				/* get entry container size */
+		/*		entryContainerSize = unpackByte(data, dataSize, &hi, &bitIdx, 3, 0xff, 1);
+				entryFreq=unpackByte(data, dataSize, &hi, &bitIdx, 8, 0xff, entryContainerSize);
+				entryChar = (char)unpackByte(data, dataSize, &hi, &bitIdx, 8, 0xff, 1);
+				
+				/*We have our data, lets store it in our tables.*/
+		/*		this->treeLetters[i] = entryChar;
+				this->frequencies[i] = entryFreq;
+			}
+			ptr_indexOffset[0] = hi+1; // +1 converts index position into size container.
+			ptr_bitOffset[0] = bitIdx;
+			ptr_endPadding[0] = padding;*/
+			return true;
+		}
+	
 		int getEncodeCharIndex(char target){
 			// validate tree letters.
 			for(int i=0; i<this->treeLetters_s; i++){
@@ -1302,52 +1334,6 @@
 			return bitIdx;
 		}
 		
-				bool unpackHeader(char *data, size_t dataSize, int *ptr_indexOffset, int *ptr_bitOffset,  int *ptr_endPadding){
-			if(data == NULL){
-				this->setError(1100, "unpackHeader(char *data, size_t dataSize) - data is null.");
-				return false;
-			}
-			if(dataSize <= 2){
-				this->setError(1101, "unpackHeader(char *data, size_t dataSize) - dataSize <= 2, which is invalid, treating as null.");
-				return false;
-			}
-
-			this->destroyTreeLetters();
-			this->destroyFrequencies();
-			char entryChar=0x00;
-                        int bitIdx = 0;// first 3 bits are reserved for padding.
-			int entryContainerSize=0;
-			int entryFreq=0;
-                        int hi=0;
-			int padding = unpackByte(data, dataSize, &hi, &bitIdx, 4, 0xf, 1);
-
-
-			// clear up to bit idx, 
-			int freqCount = unpackByte(data, dataSize, &hi, &bitIdx, 9, 0x1ff, 2);
-
-			this->resizeTreeLetters(freqCount);
-			this->resizeFrequencies(freqCount);
-
-			// This loop is the problem. Need to loop frequency_s amount of times, and incrememnt hi speratately.
-			for(int i=0; i<this->frequencies_s && hi < dataSize; i++){
-				entryContainerSize=0;
-				entryFreq=0;
-				entryChar=0x00;
-
-				/* get entry container size */
-				entryContainerSize = unpackByte(data, dataSize, &hi, &bitIdx, 3, 0xff, 1);
-				entryFreq=unpackByte(data, dataSize, &hi, &bitIdx, 8, 0xff, entryContainerSize);
-				entryChar = (char)unpackByte(data, dataSize, &hi, &bitIdx, 8, 0xff, 1);
-				
-				/*We have our data, lets store it in our tables.*/
-				this->treeLetters[i] = entryChar;
-				this->frequencies[i] = entryFreq;
-			}
-			ptr_indexOffset[0] = hi+1; // +1 converts index position into size container.
-			ptr_bitOffset[0] = bitIdx;
-			ptr_endPadding[0] = padding;
-			return true;
-		}
 		
 		int getPackedBits(char *data, size_t dataSize, int *index, int *startBit, int numOfBitsToFetch, int bitsContainerSize){
 			int ret = 0;
@@ -1883,10 +1869,10 @@
                                 return false;
                         }
 
-			int indexOffset = 0;
-			int bitOffset = 0;
-			int endPadding = 0;
-			if(!this->unpackHeader(data, dataSize, &indexOffset, &bitOffset, &endPadding)){
+			int bodyStart = 0;
+			int bodyPadding = 0;
+			int headerPadding = 0;
+			if(!this->unpackHeader(data, dataSize, &bodyStart, &bodyPadding, &headerPadding)){
 				this->setError(102, "decompress(char *data, size_t dataSize) - faiiled to unpack header.");
 				return false;
 			}
@@ -1902,10 +1888,10 @@
 				return false;
 			}
 
-			if(!this->unpackBody(data, dataSize, indexOffset, bitOffset, endPadding)){
+		/*	if(!this->unpackBody(data, dataSize, indexOffset, bitOffset, endPadding)){
 				this->setError(4535, "decompress() - failed to unpack body.");
 				return false;
-			}
+			}*/
 			
 			return true;
 		}
