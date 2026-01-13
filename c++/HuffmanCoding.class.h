@@ -1078,11 +1078,9 @@
 				this->setError(3423, "packByte() - targetBitCount <= 0. It's not allowed to be.");
 				return false;
 			}
-			printf("Packing the value %s at bit index %d\n", this->dbg_getBin(packingTarget, targetBitCount, 0,0).c_str(), bitIndex[0]);
 
 			int bitsRemaining = targetBitCount;
 
-			printf("\tProcessing %d bits.\n", bitsRemaining);
 			for(int i=this->deriveChunkIndex(binaryMax, bitsRemaining); i>=0 && dstIndex[0] < dstBufferSize; i=this->deriveChunkIndex(binaryMax, bitsRemaining)){
 				int chunk = (packingTarget >> (i*binaryMax)) & 0xff;
 				int msbPos = (bitsRemaining % binaryMax);
@@ -1106,14 +1104,9 @@
 				bitsUsed = (msbPos - lsbPos) + 1;
 				bitsRemaining -= bitsUsed;
 
-				printf("\t\tAdding chunk : %s\n", this->dbg_getBin(chunk, 8, 0, 0).c_str());
-				printf("\t\t%d] Dst before : %s\t|\t dst after: ", dstIndex[0], this->dbg_getBin(dstBuffer[dstIndex[0]], 8, 0, 0).c_str());
 				dstBuffer[dstIndex[0]] += chunk;
-				printf("%s\n", this->dbg_getBin(dstBuffer[dstIndex[0]], 8, 0, 0).c_str());
-				printf("\t\tBits remaining : %d\n", bitsRemaining);
 				bitIndex[0] = (bitIndex[0] + bitsUsed);
 				if(bitIndex[0] >= binaryMax){
-					printf("\t\t\tbumping out index %d+1\n", dstIndex[0]);
 					dstIndex[0]++;
 					bitIndex[0] = bitIndex[0] % binaryMax;
 					if(!(dstIndex[0] < dstBufferSize)){
@@ -1124,24 +1117,18 @@
 				}
 				if(bitsRemaining <= 0){
 					// nothing more we can do.
-					printf("\tnew bitidx %d\n", bitIndex[0]);
 					return true;
 				}
 			}
 
-			printf("\tnew bitidx %d\n", bitIndex[0]);
 			return true;
 		}
 
 		int unpackByte(char *src, size_t srcSize, int *srcIndex, int *bitIndex, int expectedBitCount){
-			printf("\033[0;33m");
-			printf("Unpacking Byte by:%d, bi:%d, bits:%d\n", srcIndex[0], bitIndex[0], expectedBitCount);
 			int ret = 0;
 			int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
 			int bitsRemaining = expectedBitCount;
 			for(int i=this->deriveChunkIndex(binaryMax, bitsRemaining); i >= 0 && srcIndex[0] < srcSize; i=this->deriveChunkIndex(binaryMax, bitsRemaining)){
-				printf("Chunk Index : %d\n", i);
-				printf("\tbitsRemaining %d\n", bitsRemaining);
 				if(bitsRemaining <= 0) break;
 				int msb = bitsRemaining % binaryMax;
 				msb = msb == 0 ? binaryMax - 1 : msb - 1;
@@ -1149,9 +1136,6 @@
 				int data = ((int)src[srcIndex[0]] & 0xff);
 				int sherrection = (7 - bitIndex[0]) - msb;
 				int bitsUsed = 0;
-				printf("\tSrc Byte : %d (%s)\n", data, dbg_getBin(data, 8, 0, 0).c_str());
-				printf("\tbit range : [%d:%d]\n", msb, lsb);
-				printf("\tSherrection : %d\n", sherrection);
 				if(sherrection < 0){
 					// Negative, right Shift, preserve lost bits.
 					sherrection *= -1;
@@ -1165,9 +1149,7 @@
 				} // Else no modification needed.
 				bitsUsed = (msb - lsb) + 1;
 				bitsRemaining -= bitsUsed;
-				printf("\tCleaned Src Byte : %d (%s)\n", data, dbg_getBin(data, 8, 0, 0).c_str());
 				ret += (data & (~((~(0)>>expectedBitCount)<<expectedBitCount))) << (i*8);
-				printf("\tret : %s\n", dbg_getBin(ret, expectedBitCount, 0, 0).c_str());
 
 				bitIndex[0] += bitsUsed;
 				if(bitIndex[0] >= binaryMax){
@@ -1176,7 +1158,6 @@
 				}
 			}
 			
-			printf("\033[0m");
 			return ret;
 		}
 
@@ -1257,59 +1238,19 @@
 			this->destroyFrequencies();
 			int byteIdx=0, bitIdx=0;
 
-			printf("\n\n-------Unpacking Header-------\n");
 			bodyPadding[0] = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 4);
-			printf("\tExtracted Body Padding %d\n", bodyPadding[0]);
 			int elementCount = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 9);
-			printf("\tExtracted Element Count : %d\n", elementCount); 
 			this->resizeTreeLetters(elementCount);
                         this->resizeFrequencies(elementCount);
 			for(int i=0; i<this->frequencies_s; i++){
-				printf("----- %d of %ld -----\n", i, this->frequencies_s);
-				printf("\tby: %d | %d : bi\n", byteIdx, bitIdx);
 				int containerSize = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 3);
-				printf("\t\tExtracted Container Size : %d\n", containerSize);
 				int freqValue = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, containerSize * 8);
-				printf("\t\tExtracted Freq Value : %d\n", freqValue);
 				int freqLetter = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 8);
-				printf("\t\tExtracted Freq Letter : %d\n-------------\n", freqLetter);
 				this->frequencies[i] = freqValue;
 				this->treeLetters[i] = (char)freqLetter&0xff;
 			}
 			headerPadding[0] = bitIdx;
 			bodyStart[0] = byteIdx;
-/*			char entryChar=0x00;
-                        int bitIdx = 0;// first 3 bits are reserved for padding.
-			int entryContainerSize=0;
-			int entryFreq=0;
-                        int hi=0;
-			int padding = unpackByte(data, dataSize, &hi, &bitIdx, 4, 0xf, 1);
-
-
-			// clear up to bit idx, 
-			int freqCount = unpackByte(data, dataSize, &hi, &bitIdx, 9, 0x1ff, 2);
-
-			this->resizeTreeLetters(freqCount);
-			this->resizeFrequencies(freqCount);
-
-			// This loop is the problem. Need to loop frequency_s amount of times, and incrememnt hi speratately.
-			for(int i=0; i<this->frequencies_s && hi < dataSize; i++){
-				entryContainerSize=0;
-				entryFreq=0;
-				entryChar=0x00;
-
-				/* get entry container size */
-		/*		entryContainerSize = unpackByte(data, dataSize, &hi, &bitIdx, 3, 0xff, 1);
-				entryFreq=unpackByte(data, dataSize, &hi, &bitIdx, 8, 0xff, entryContainerSize);
-				entryChar = (char)unpackByte(data, dataSize, &hi, &bitIdx, 8, 0xff, 1);
-				
-				/*We have our data, lets store it in our tables.*/
-		/*		this->treeLetters[i] = entryChar;
-				this->frequencies[i] = entryFreq;
-			}
-			ptr_indexOffset[0] = hi+1; // +1 converts index position into size container.
-			ptr_bitOffset[0] = bitIdx;
-			ptr_endPadding[0] = padding;*/
 			return true;
 		}
 	
@@ -1356,31 +1297,9 @@
 			}
 			return bitIdx;
 		}
-		
-		
-		int getPackedBits(char *data, size_t dataSize, int *index, int *startBit, int numOfBitsToFetch, int bitsContainerSize){
-			int ret = 0;
-			int rb = numOfBitsToFetch; // remaining bits.
-			int targetByteCount = bitsContainerSize;
-			for(int i=index[0]; i<dataSize && rb>0; i++){
-				int d = (int)data[i]&0xff; // data
-				int ab = (7-startBit[0])+1;// available bits
-				int atf = rb-ab >= 0 ? ab : rb; // amount to fetch
-				int ats = atf;// amount to shift
-				int em = ~((~(0)>>ats)<<ats);// extraction mask
-				int ev = d & em; // extracted value
-				ats = (rb-atf); // amt to shift into ret
-				ret += ev << ats;
-				rb -= atf;
-				index[0]++;
-				startBit[0] = (startBit[0]+atf) % 8;
-			}
-			return ret;
-		}
 
 		bool unpackBody(char *data, size_t dataSize, int indexOffset, int bitOffset, int endPadding){
 			//TODO: validate tree
-			// Calculate the output buffer size using code table.
 			this->destroyBody();
 			int body_i=0;
 			this->body_s = dataSize - indexOffset;
@@ -1457,6 +1376,28 @@
 			return true;
 		}
 
+		
+		int getPackedBits(char *data, size_t dataSize, int *index, int *startBit, int numOfBitsToFetch, int bitsContainerSize){
+			int ret = 0;
+			int rb = numOfBitsToFetch; // remaining bits.
+			int targetByteCount = bitsContainerSize;
+			for(int i=index[0]; i<dataSize && rb>0; i++){
+				int d = (int)data[i]&0xff; // data
+				int ab = (7-startBit[0])+1;// available bits
+				int atf = rb-ab >= 0 ? ab : rb; // amount to fetch
+				int ats = atf;// amount to shift
+				int em = ~((~(0)>>ats)<<ats);// extraction mask
+				int ev = d & em; // extracted value
+				ats = (rb-atf); // amt to shift into ret
+				ret += ev << ats;
+				rb -= atf;
+				index[0]++;
+				startBit[0] = (startBit[0]+atf) % 8;
+			}
+			return ret;
+		}
+
+		
 		bool encode(char *data, size_t dataSize){
 			this->destroyOut();
 
@@ -1911,10 +1852,10 @@
 				return false;
 			}
 
-		/*	if(!this->unpackBody(data, dataSize, indexOffset, bitOffset, endPadding)){
+			if(!this->unpackBody(data, dataSize, bodyStart, headerPadding, bodyPadding)){
 				this->setError(4535, "decompress() - failed to unpack body.");
 				return false;
-			}*/
+			}
 			
 			return true;
 		}
