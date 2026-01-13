@@ -1250,11 +1250,27 @@
 			this->destroyFrequencies();
 			int byteIdx=0, bitIdx=0;
 
-			printf("\n\nATTEMPTING TO UNPACK PADDING, 4 bits...\n");
+			printf("\n\n-------Unpacking Header-------\n");
 			bodyPadding[0] = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 4);
 			printf("\tExtracted Body Padding %d\n", bodyPadding[0]);
 			int elementCount = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 9);
 			printf("\tExtracted Element Count : %d\n", elementCount); 
+			this->resizeTreeLetters(elementCount);
+                        this->resizeFrequencies(elementCount);
+			for(int i=0; i<this->frequencies_s; i++){
+				printf("----- %d of %ld -----\n", i, this->frequencies_s);
+				printf("\tby: %d | %d : bi\n", byteIdx, bitIdx);
+				int containerSize = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 3);
+				printf("\t\tExtracted Container Size : %d\n", containerSize);
+				int freqValue = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, containerSize * 8);
+				printf("\t\tExtracted Freq Value : %d\n", freqValue);
+				int freqLetter = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 8);
+				printf("\t\tExtracted Freq Letter : %d\n-------------\n", freqLetter);
+				this->frequencies[i] = freqValue;
+				this->treeLetters[i] = (char)freqLetter&0xff;
+			}
+			headerPadding[0] = bitIdx;
+			bodyStart[0] = byteIdx;
 /*			char entryChar=0x00;
                         int bitIdx = 0;// first 3 bits are reserved for padding.
 			int entryContainerSize=0;
