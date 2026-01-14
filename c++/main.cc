@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
 		
 		if(dbg == "debug"){
 			if((i%16) == 0) printf("\n");
-			printf("%x ", hc.out[i]&0xff);
+			printf("%d]%d ", i, hc.out[i]&0xff);
 		}
 	}
 	printf("\n");

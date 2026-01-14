@@ -708,7 +708,6 @@
 					}
 				}
 				if(this->workBuffer_fill <= 0){
-					printf("Nothing to fill.\n");
 					this->destroyWorkTypeBuffer();
 					this->destroyWorkBuffer();
 					return false;
@@ -1281,7 +1280,6 @@
 				this->body_s++; // adjust for header's binary offset
 			
 			this->body = new char[this->body_s];
-			printf("packBody() - body_s : %ld\n", this->body_s);
 
 			int bitIdx=startingBitIndex % 8;
 			int bi=0;
@@ -1358,11 +1356,15 @@
 
 			for(int o=0; o<out_s; o++){
 				int maxBitCount = this->codeTable[this->frequencies_s-1];
+				int dbgC = maxBitCount;
+				int dbgA = indexOffset;
+				int dbgB = bitOffset;
 				int encoded = this->unpackByte(data, dataSize, &indexOffset, &bitOffset, maxBitCount);
+				int tableCode = 0;
 				int bitBackTrack = 0;
 				bool success = false;
 				for(int f=this->frequencies_s-1; f>=0; f--){
-					int tableCode = this->codeTable[f+this->frequencies_s];
+					tableCode = this->codeTable[f+this->frequencies_s];
 					if(maxBitCount != this->codeTable[f]){
 						int diff = maxBitCount - this->codeTable[f];
 						encoded >>= diff;
@@ -1370,8 +1372,8 @@
 						bitBackTrack+= diff;
 						encoded &= ~((~(0) >> maxBitCount) << maxBitCount);
 					}
-					
-					if((encoded ^ tableCode) == 0){
+					int mask = ~((~(0) >> maxBitCount) << maxBitCount);	
+					if((encoded & mask) == (tableCode & mask)){
 						this->out[o] = this->treeLetters[f];
 						bitOffset -= bitBackTrack;
 						if(bitOffset < 0){
