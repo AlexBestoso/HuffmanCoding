@@ -1,4 +1,4 @@
 # Huffman Coding - c++
+This branch code is currently undergoing testing via the `run.sh` script.
 
-Development Notes : 
-	- it appears that the generated output isn't producing the entire message. Fix that and it should fully decompress.
+Goal is 2000 uninterupted executions.
