@@ -27,10 +27,16 @@ int main(int argc, char *argv[]){
 	for(int i=0, midx=0; i<256 && midx < ogMsgSize; i++){
 		for(int j=0; j<counts[i] && midx < ogMsgSize; j++){
 			ogMsg[midx] = i;
-			if(dbg == "debug")
-				printf("0x%x ", ogMsg[midx] & 0xff);
 			midx++;
 		}
+	}
+	
+	if(dbg == "debug"){
+		for(int i=0; i<ogMsgSize; i++){
+			if((i%16) == 0) printf("\n");
+			printf("%x ", ogMsg[i]&0xff);
+		}
+		printf("\n");
 	}
 	printf("\033[0m\n");
 		
@@ -93,8 +99,6 @@ int main(int argc, char *argv[]){
 	printf("[*] Generated Output (size : %ld):\n", hc.out_s);
 	if(dbg != "debug") printf("\t\033[0;32mRun %s debug to view generated message.\033[0m", argv[0]);
 	for(int i=0; i<hc.out_s; i++){
-		compressedData[i] = hc.out[i];
-		
 		if(dbg == "debug"){
 			if((i%16) == 0) printf("\n");
 			printf("%x ", hc.out[i]&0xff);
@@ -116,7 +120,6 @@ int main(int argc, char *argv[]){
 	}
 	
 	int goods=0, bads=0;
-	printf("Og vs decomp round 0 : %d != %d\n", ogMsg[0], hc.out[0]);
 	for(int i=0; i<endTestSize; i++){
 		if(ogMsg[i] != hc.out[i]){
 			bads = i;
@@ -125,9 +128,9 @@ int main(int argc, char *argv[]){
 			goods++;
 		}
 	}
-	printf("[TEST RESULTS] %d good matches, Failure on iteration %d.\n", goods, bads);
 
 	if(goods != endTestSize){
+		printf("[TEST RESULTS] %d good matches, Failure on iteration %d.\n", goods, bads);
 		printf("[FAILURE] Compression was not successful.\n");
 		exit(EXIT_FAILURE);
 	}else{

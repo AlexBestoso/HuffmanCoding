@@ -1349,7 +1349,6 @@
 				return false;
 			}
 			this->body = new char[this->body_s];
-			printf("\nunpackBody() - body_s : %ld\n", this->body_s);
 
 			this->destroyOut();
 			this->out_s = this->treeData[0];
@@ -1358,14 +1357,9 @@
 			this->codeTableSortByBitCount();
 
 			for(int o=0; o<out_s; o++){
-				printf("----------\n");
-				printf("\tRound : %d\n", o);
 				int maxBitCount = this->codeTable[this->frequencies_s-1];
 				int encoded = this->unpackByte(data, dataSize, &indexOffset, &bitOffset, maxBitCount);
 				int bitBackTrack = 0;
-				printf("\tMax bit Count : %d\n", maxBitCount);
-				printf("\tEncoded unpacked Byte : %s\n", this->dbg_getBin(encoded, maxBitCount, 0, 0).c_str());
-				printf("\tBit Offset : %d\n", bitOffset);
 				bool success = false;
 				for(int f=this->frequencies_s-1; f>=0; f--){
 					int tableCode = this->codeTable[f+this->frequencies_s];
@@ -1375,20 +1369,14 @@
 						maxBitCount = this->codeTable[f];
 						bitBackTrack+= diff;
 						encoded &= ~((~(0) >> maxBitCount) << maxBitCount);
-						printf("\t\t\tshifted encoded Byte : %s\n", this->dbg_getBin(encoded, maxBitCount, 0, 0).c_str());
 					}
 					
-					printf("\t\t%d %s == %d %s\n", encoded, this->dbg_getBin(encoded, maxBitCount, 0, 0).c_str(), tableCode, this->dbg_getBin(tableCode, maxBitCount, 0, 0).c_str());
 					if((encoded ^ tableCode) == 0){
-						printf("\t\t\tConverting %s into %s\n", this->dbg_getBin(encoded, maxBitCount, 0, 0).c_str(), this->dbg_getBin((int)this->treeLetters[f], 8, 0, 0).c_str());
 						this->out[o] = this->treeLetters[f];
-						printf("\t\t\tBit backtrack : %d\n", bitBackTrack);
 						bitOffset -= bitBackTrack;
 						if(bitOffset < 0){
-							printf("\t\t\t\t1/2negative mod : %d\n", bitOffset);
 							bitOffset *= -1;
 							bitOffset = 8 - (bitOffset % 8);
-							printf("\t\t\t\t2/2negative mod : %d\n", bitOffset);
 							indexOffset--;
 						}
 						//this->reduceFrequency(f);
@@ -1447,7 +1435,7 @@
 			this->out_s = this->header_s;
 			if(headerPadding != 0)
 				this->out_s--;
-			this->out_s += this->header_s;
+			this->out_s += this->body_s;
 			this->out = new char[this->out_s];
 
 			for(int o=0,h=0,b=0; o<this->out_s && (h<this->header_s || b<this->body_s); o++){
