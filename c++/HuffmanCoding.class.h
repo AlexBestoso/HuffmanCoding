@@ -1298,7 +1298,47 @@
 			}
 			return bitIdx;
 		}
+		
+		bool popTables(int freqIndex){
+			if(!this->validateFrequencies()){
+                                this->setError(4345, "reduceFrequency()- frequencies table is invalid.");
+                                return false;
+                        }
+			if(!(freqIndex < this->frequencies_s) || freqIndex < 0){
+                                this->setError(345, "reduceFrequency() - freqIndex out of bounds.");
+                                return false;
+                        }
 
+			for(int i=freqIndex+1; i<this->frequencies_s; i++){
+				// remove index from frequencies
+				this->frequencies[i-1] = this->frequencies[i];
+				// remove index from treeLetters
+				this->treeLetters[i-1] = this->treeLetters[i];
+				// remove index from codeTable
+				this->codeTable[i-1] = this->codeTable[i];
+				this->codeTable[this->frequencies_s + i - 1] = this->codeTable[this->frequencies_s + i];
+			}
+			for(int i=this->frequencies_s+1; i<this->codeTable_s; i++){
+				this->codeTable[i-1] = this->codeTable[i];
+			}
+			this->codeTable_s -= 2;
+			this->frequencies_s -= 1;
+			return true;
+		}
+		bool reduceFrequency(int freqIndex){
+			if(!this->validateFrequencies()){
+				this->setError(4345, "reduceFrequency()- frequencies table is invalid.");
+				return false;
+			}
+			if(!(freqIndex < this->frequencies_s) || freqIndex < 0){
+				this->setError(345, "reduceFrequency() - freqIndex out of bounds.");
+				return false;
+			}
+			this->frequencies[freqIndex]--;
+			if(this->frequencies[freqIndex] <= 0)
+				return this->popTables(freqIndex);
+			return true;
+		}
 		bool unpackBody(char *data, size_t dataSize, int indexOffset, int bitOffset, int endPadding){
 			//TODO: validate tree
 			this->destroyBody();
@@ -1309,7 +1349,7 @@
 				return false;
 			}
 			this->body = new char[this->body_s];
-			printf("unpackBody() - body_s : %ld\n", this->body_s);
+			printf("\nunpackBody() - body_s : %ld\n", this->body_s);
 
 			this->destroyOut();
 			this->out_s = this->treeData[0];
@@ -1317,7 +1357,48 @@
 
 			this->codeTableSortByBitCount();
 
-			
+			for(int o=0; o<out_s; o++){
+				printf("----------\n");
+				printf("\tRound : %d\n", o);
+				int maxBitCount = this->codeTable[this->frequencies_s-1];
+				int encoded = this->unpackByte(data, dataSize, &indexOffset, &bitOffset, maxBitCount);
+				int bitBackTrack = 0;
+				printf("\tMax bit Count : %d\n", maxBitCount);
+				printf("\tEncoded unpacked Byte : %s\n", this->dbg_getBin(encoded, maxBitCount, 0, 0).c_str());
+				printf("\tBit Offset : %d\n", bitOffset);
+				bool success = false;
+				for(int f=this->frequencies_s-1; f>=0; f--){
+					int tableCode = this->codeTable[f+this->frequencies_s];
+					if(maxBitCount != this->codeTable[f]){
+						int diff = maxBitCount - this->codeTable[f];
+						encoded >>= diff;
+						maxBitCount = this->codeTable[f];
+						bitBackTrack+= diff;
+						printf("\t\tshifted encoded Byte : %s\n", this->dbg_getBin(encoded, maxBitCount, 0, 0).c_str());
+					}
+					
+					if(encoded == tableCode){
+						printf("\t\tConverting %s into %s\n", this->dbg_getBin(encoded, maxBitCount, 0, 0).c_str(), this->dbg_getBin((int)this->treeLetters[f], 8, 0, 0).c_str());
+						this->out[o] = this->treeLetters[f];
+						printf("\t\tBit backtrack : %d\n", bitBackTrack);
+						bitOffset -= bitBackTrack;
+						if(bitOffset < 0){
+							printf("\t\t\t1/2negative mod : %d\n", bitOffset);
+							bitOffset *= -1;
+							bitOffset = 8 - (bitOffset % 8);
+							printf("\t\t\t2/2negative mod : %d\n", bitOffset);
+							indexOffset--;
+						}
+						this->reduceFrequency(f);
+						success = true;
+						break;
+					}
+				}
+				if(!success){
+					this->setError(34544, "unpackBody() - failed to decode data.");
+					return false;
+				}
+			}
 			return true;
 		}
 
