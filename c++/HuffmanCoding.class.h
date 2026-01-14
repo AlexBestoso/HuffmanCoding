@@ -1385,7 +1385,8 @@
 					}
 				}
 				if(!success){
-					this->setError(34544, "unpackBody() - failed to decode data.");
+					std::string msg = "Failure index : "+std::to_string(o);
+					this->setError(34544, "unpackBody() - failed to decode data. "+msg);
 					return false;
 				}
 			}
