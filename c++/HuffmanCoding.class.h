@@ -1335,7 +1335,7 @@
 				return false;
 			}
 			this->frequencies[freqIndex]--;
-			if(this->frequencies[freqIndex] <= 0)
+			if(this->frequencies[freqIndex] < 0)
 				return this->popTables(freqIndex);
 			return true;
 		}
@@ -1374,22 +1374,24 @@
 						encoded >>= diff;
 						maxBitCount = this->codeTable[f];
 						bitBackTrack+= diff;
-						printf("\t\tshifted encoded Byte : %s\n", this->dbg_getBin(encoded, maxBitCount, 0, 0).c_str());
+						encoded &= ~((~(0) >> maxBitCount) << maxBitCount);
+						printf("\t\t\tshifted encoded Byte : %s\n", this->dbg_getBin(encoded, maxBitCount, 0, 0).c_str());
 					}
 					
-					if(encoded == tableCode){
-						printf("\t\tConverting %s into %s\n", this->dbg_getBin(encoded, maxBitCount, 0, 0).c_str(), this->dbg_getBin((int)this->treeLetters[f], 8, 0, 0).c_str());
+					printf("\t\t%d %s == %d %s\n", encoded, this->dbg_getBin(encoded, maxBitCount, 0, 0).c_str(), tableCode, this->dbg_getBin(tableCode, maxBitCount, 0, 0).c_str());
+					if((encoded ^ tableCode) == 0){
+						printf("\t\t\tConverting %s into %s\n", this->dbg_getBin(encoded, maxBitCount, 0, 0).c_str(), this->dbg_getBin((int)this->treeLetters[f], 8, 0, 0).c_str());
 						this->out[o] = this->treeLetters[f];
-						printf("\t\tBit backtrack : %d\n", bitBackTrack);
+						printf("\t\t\tBit backtrack : %d\n", bitBackTrack);
 						bitOffset -= bitBackTrack;
 						if(bitOffset < 0){
-							printf("\t\t\t1/2negative mod : %d\n", bitOffset);
+							printf("\t\t\t\t1/2negative mod : %d\n", bitOffset);
 							bitOffset *= -1;
 							bitOffset = 8 - (bitOffset % 8);
-							printf("\t\t\t2/2negative mod : %d\n", bitOffset);
+							printf("\t\t\t\t2/2negative mod : %d\n", bitOffset);
 							indexOffset--;
 						}
-						this->reduceFrequency(f);
+						//this->reduceFrequency(f);
 						success = true;
 						break;
 					}

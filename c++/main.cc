@@ -116,6 +116,7 @@ int main(int argc, char *argv[]){
 	}
 	
 	int goods=0, bads=0;
+	printf("Og vs decomp round 0 : %d != %d\n", ogMsg[0], hc.out[0]);
 	for(int i=0; i<endTestSize; i++){
 		if(ogMsg[i] != hc.out[i]){
 			bads = i;
