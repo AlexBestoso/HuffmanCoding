@@ -1309,71 +1309,14 @@
 				return false;
 			}
 			this->body = new char[this->body_s];
-			this->codeTableSortByBitCount();
 			printf("unpackBody() - body_s : %ld\n", this->body_s);
-			// Determine smallest bit count in code table, and it's value.
-			int smallestCount = this->codeTable[0];
-			// determine largest bit count in code table, and it's value.
-			int largestCount = this->codeTable[this->frequencies_s-1];
-			int expectedContainerSize = largestCount <= 8 ? 1 : ( largestCount % 8 ) == 0 ? (largestCount/8) : (largestCount/8) + 1;
-			int largestMask =  ~((~(0)>>largestCount) << largestCount);
-			// Shift largest bit count of msb bits out of data and into a buffer variable.
-			int calcRegister = this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, largestCount, expectedContainerSize);
-			int calcBitCount = largestCount;
-			int calcMask = largestMask;
 
-			// allocate the output Buffer 
 			this->destroyOut();
 			this->out_s = this->treeData[0];
 			this->out = new char[this->out_s];
 
+			this->codeTableSortByBitCount();
 
-			int tbleOff = this->frequencies_s;
-			int restoreCalc = 0;
-			int restoreBitCount = 0;
-			bool error = true;
-			for(int i=0, tf=-1; i<this->out_s; i++){
-				if(calcBitCount < smallestCount){
-					this->setError(45345, "unpackBody() - calculated bits is less than smallest allowed.");
-					return false;
-				}
-				/*
-				 * TODO: Start Unpack decode algorithm.
-				 * */
-				restoreCalc = 0;
-				restoreBitCount = 0;
-				for(int f=this->frequencies_s - 1, prevCount=largestCount; f>=0; f--){
-					if(prevCount > this->codeTable[f]){
-						int diff = prevCount - this->codeTable[f];
-						restoreCalc += (calcRegister & (~( ((~(0)) >> diff) << diff)) ) << restoreBitCount;
-						restoreBitCount += diff;
-						calcRegister >>= diff;
-						calcBitCount -= diff;
-						calcMask >>= diff;
-					}
-
-					if(this->codeTable[f] > calcBitCount){
-						prevCount = this->codeTable[f];
-						continue;
-					}else if(this->codeTable[f] == calcBitCount){
-						if(this->codeTable[f+tbleOff] == calcRegister){
-							this->out[i] = this->treeLetters[f];
-							error = false;
-							break;
-						}
-					}
-					prevCount = this->codeTable[f];
-				}
-				if(error){
-					this->setError(345, "unpackBody() - failed to extract body char.");
-					return false;
-				}
-				int newCount = largestCount - restoreBitCount;
-				
-				calcRegister = this->getPackedBits(data, dataSize, &indexOffset, &bitOffset, newCount, expectedContainerSize);
-				calcRegister += (restoreCalc << newCount);
-				calcBitCount = largestCount;
-			}
 			
 			return true;
 		}
