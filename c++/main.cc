@@ -9,6 +9,25 @@
 
 clock_t timeStart, timeEnd;
 double cpuTime;
+struct element{
+	int count;
+	double sumation;
+	double quotant;
+};
+
+struct element initElement(struct element e){
+	e.count = 0;
+	e.sumation = 0.0;
+	e.quotant = 0.0;
+	return e;
+}
+void printElement(const char *elementName, struct element e){
+	printf("breakdown of element '%s'\n", elementName);
+	printf("\tcount: %d\n\tsumation: %lf\n\tquotant: %lf\n", e.count, e.sumation, e.quotant);
+}
+
+struct element compressElement;
+struct element decompressElement;
 
 void startTimer(void){
 	timeStart = clock();
@@ -24,8 +43,16 @@ void printTimer(const char *operationDescription){
 }
 
 int main(int argc, char *argv[]){
+	compressElement = initElement(compressElement);
+	decompressElement = initElement(decompressElement);
+	int rounds=1;
+	if(argc >= 2){
+		rounds = std::stoi(argv[1]);
+	}
+	for(int q=0; q < rounds; q++){
+	system("clear");
+	printf("===Round %d of %d\n", q, rounds);
 	printf("[*] Generating random data to compress.\n");
-	std::string dbg = argc > 1 ? argv[1] : "";
 	HuffmanCoding hc;
 	int counts[256];
 	size_t ogMsgSize = 0;
@@ -62,6 +89,9 @@ int main(int argc, char *argv[]){
 		exit(EXIT_FAILURE);
 	}
 	endTimer();
+	compressElement.count++;
+	compressElement.sumation += cpuTime;
+	compressElement.quotant = compressElement.sumation / compressElement.count;
 	printTimer("[*] Compression time: ");
 	printf("\n\n");
 	
@@ -88,6 +118,9 @@ int main(int argc, char *argv[]){
                 exit(EXIT_FAILURE);
 	}
 	endTimer();
+	decompressElement.count++;
+	decompressElement.sumation += cpuTime;
+	decompressElement.quotant = decompressElement.sumation / decompressElement.count;
 	printTimer("[*] Decompression time: ");
 	printf("\n\n");
 
@@ -122,5 +155,11 @@ int main(int argc, char *argv[]){
 	}else{
 		printf("[SUCCESS] Message passed compression AND decompression.\n");
 	}
+	}
+	printf("----------RESULTS----------\n");
+	printElement("Compress Element", compressElement);
+	printf("Average Compression time : %lf seconds.\n\n", compressElement.quotant);
+	printElement("Decompress Element", decompressElement);
+	printf("Average Decompression time : %lf seconds.\n", decompressElement.quotant);
 	exit(EXIT_SUCCESS);
 }
