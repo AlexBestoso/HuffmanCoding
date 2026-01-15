@@ -3,26 +3,40 @@
 #include <unistd.h>
 #include <string>
 #include <ctime>
+#include <time.h>
 
 #include "HuffmanCoding.class.h"
 
+clock_t timeStart, timeEnd;
+double cpuTime;
+
+void startTimer(void){
+	timeStart = clock();
+}
+
+void endTimer(void){
+	timeEnd = clock() - timeStart;
+	cpuTime = ((double)timeEnd) / CLOCKS_PER_SEC;
+}
+
+void printTimer(const char *operationDescription){
+	printf("%s took %lf to execute.\n", operationDescription, cpuTime);
+}
+
 int main(int argc, char *argv[]){
+	printf("[*] Generating random data to compress.\n");
 	std::string dbg = argc > 1 ? argv[1] : "";
-	printf("[*] Running Huffman Coding 256 Byte Test\n");
 	HuffmanCoding hc;
 	int counts[256];
 	size_t ogMsgSize = 0;
 	size_t endTestSize = 0;
 	std::srand(time(0));
 
-	printf("[*] Generating random byte frequencies...\n");
 	for(int i=0; i<256; i++){
 		counts[i] = rand() % (60-1+1)+1;
 		ogMsgSize += counts[i];
 	}
 	endTestSize = ogMsgSize;
-	printf("[*] Original Msg (size : %ld) : \n\033[0;32m", ogMsgSize);
-	if(dbg != "debug") printf("\tRun %s debug to view generated message.", argv[0]);
 	char *ogMsg = new char[ogMsgSize];
 	for(int i=0, midx=0; i<256 && midx < ogMsgSize; i++){
 		for(int j=0; j<counts[i] && midx < ogMsgSize; j++){
@@ -31,17 +45,9 @@ int main(int argc, char *argv[]){
 		}
 	}
 	
-	if(dbg == "debug"){
-		for(int i=0; i<ogMsgSize; i++){
-			if((i%16) == 0) printf("\n");
-			printf("%x ", ogMsg[i]&0xff);
-		}
-		printf("\n");
-	}
-	printf("\033[0m\n");
-		
-
-	printf("[*] Attempting Compression...");
+	printf("[*] Compressing %ld bytes of data at location %p\n", ogMsgSize, ogMsg);
+	printf("[^] Starting timer...\n");
+	startTimer();
 	if(!hc.compress(ogMsg, ogMsgSize)){
 		printf("Failed. %s\n", hc.getErrorMessage().c_str());
 		printf("\033[5mDATA DUMP\033[0;31m\n");
@@ -55,32 +61,19 @@ int main(int argc, char *argv[]){
 		printf("\033[0m");
 		exit(EXIT_FAILURE);
 	}
-	if(dbg == "debug"){
-		printf("\033[0;34m");
-		hc.printTreeLetters();
-                printf("\n\033[0;32m");
-                hc.printFrequencies();
-                printf("\n\033[0;33m");
-                hc.printCodeTable();
-
-	}
-	printf("successful!\n");
+	endTimer();
+	printTimer("[*] Compression time: ");
+	printf("\n\n");
 	
 	size_t compressedData_s = hc.out_s;
 	char *compressedData = new char[compressedData_s];
-	printf("[*] Generated Output (size : %ld):\n", hc.out_s);
-	if(dbg != "debug") printf("\t\033[0;32mRun %s debug to view generated message.\033[0m", argv[0]);
 	for(int i=0; i<hc.out_s; i++){
 		compressedData[i] = hc.out[i];
-		
-		if(dbg == "debug"){
-			if((i%16) == 0) printf("\n");
-			printf("%d]%d ", i, hc.out[i]&0xff);
-		}
 	}
-	printf("\n");
 
-	printf("[*] Attempting decompression...");
+	printf("[*] Decompressing %ld bytes of data at location %p\n", compressedData_s, compressedData);
+	printf("[^] Starting timer...\n");
+	startTimer();
 	if(!hc.decompress(compressedData, compressedData_s)){
 		printf("Failed %s\n", hc.getErrorMessage().c_str());
 		printf("\033[5mDATA DUMP\033[0;31m\n");
@@ -94,17 +87,10 @@ int main(int argc, char *argv[]){
                 printf("\033[0m");
                 exit(EXIT_FAILURE);
 	}
-	printf("success!\n");
+	endTimer();
+	printTimer("[*] Decompression time: ");
+	printf("\n\n");
 
-	printf("[*] Generated Output (size : %ld):\n", hc.out_s);
-	if(dbg != "debug") printf("\t\033[0;32mRun %s debug to view generated message.\033[0m", argv[0]);
-	for(int i=0; i<hc.out_s; i++){
-		if(dbg == "debug"){
-			if((i%16) == 0) printf("\n");
-			printf("%x ", hc.out[i]&0xff);
-		}
-	}
-	printf("\n");
 
 	if(endTestSize != hc.out_s){
 		printf("\n\033[5mDATA DUMP\033[0;31m\n");
