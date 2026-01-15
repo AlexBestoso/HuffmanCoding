@@ -337,6 +337,173 @@ class HuffmanCoding{
 			}
 			return true;
 		}
+			
+		/* QJ resize functions */
+		bool resizeTreeLetters(size_t size){
+			if(size < 0){
+				this->setError(0, "resizeTreeLetters() - size is negative.");
+				return false;
+			}else if(size == 0){
+				this->destroyTreeLetters();
+			}else if(this->treeLetters == NULL){
+				this->treeLetters = new (std::nothrow) char[size];
+				if(!this->treeLetters){
+					this->setError(1, "resizeTreeLetters() - failed to allocate treeLetters.");
+					return false;
+				}
+				this->treeLetters_s = size;
+			}else{
+				size_t oldSize = this->treeLetters_s;
+				char *transfer = new (std::nothrow) char[oldSize];
+				if(!transfer){
+					this->setError(2, "resizeTreeLetters() - failed to allocate transfer buffer.");
+					return false;
+				}
+
+				for(int i=0; i<oldSize; i++)
+					transfer[i] = this->treeLetters[i];
+				this->destroyTreeLetters();
+
+				this->treeLetters = new (std::nothrow) char[size];
+				if(!this->treeLetters){
+					this->setError(3, "resizeTreeLetters() - failed to allocate treeLetters.");
+					return false;
+				}
+
+				this->treeLetters_s = size;
+				for(int i=0; i<this->treeLetters_s; i++){
+					if(i<oldSize)
+						this->treeLetters[i] = transfer[i];
+					else
+						this->treeLetters[i] = 0;
+				}
+
+				delete[] transfer;
+			}
+			return true;
+		}
+
+		bool resizeFrequencies(size_t size){
+			if(size == 0){
+				this->destroyFrequencies();
+			}else if(this->frequencies == NULL){
+				this->frequencies = new (std::nothrow) int[size];
+				if(!this->frequencies){
+					this->setError(0, "resizeFrequencies() - failed to allocate frequencies.");
+					return false;
+				}
+				this->frequencies_s = size;
+			}else{
+				size_t oldSize = this->frequencies_s;
+				int *transfer = new (std::nothrow) int[oldSize];
+				if(!transfer){
+					this->setError(1, "resizeFrequencies() - failed to allocate transfer.");
+					return false;
+				}
+				for(int i=0; i<oldSize; i++)
+					transfer[i] = this->frequencies[i];
+				this->destroyFrequencies();
+				this->frequencies = new (std::nothrow) int[size];
+				if(!this->frequencies){
+					this->setError(2, "resizeFrequencies() - failed to allocate frequencies.");
+					return false;
+				}
+				this->frequencies_s = size;
+				for(int i=0; i<this->frequencies_s; i++){
+					if(i<oldSize)
+						this->frequencies[i] = transfer[i];
+					else
+						this->frequencies[i] = 0;
+				}
+				delete[] transfer;
+			}
+			return true;
+		}
+
+
+		/* QJ encode functions */
+		/* //
+			Algorithm breakdown:
+			1) make sure we have data
+			2) get index i from data until no more data.
+			3) 	check if data i is inside our tree letters array.
+			4)	if data i not in array, resize array by +1
+			5)		Append data i to the array
+		// */
+		bool createTreeLetters(char *data, size_t dataSize){
+			if(data == NULL){
+				this->setError(200, "createTreeLetters(char *data, size_t dataSize) - data is null.");
+				return false;
+			}
+			if(dataSize <= 0){
+				this->setError(201, "createTreeLetters(char *data, size_t dataSize) - dataSize is <= 0, treating data as null");
+				return false;
+			}
+
+			this->destroyTreeLetters();
+			for(int i=0; i<dataSize; i++){
+				char testChar = data[i];
+				bool matched = false;
+				for(int j=0; j<this->treeLetters_s; j++){
+					if(testChar == this->treeLetters[j]){
+						matched = true;
+						break;
+					}
+				}
+				if(!matched){
+					if(!this->resizeTreeLetters(this->treeLetters_s + 1)){
+						this->setError(4, "createTreeLetters() - Failed to resize tree letters.");
+						return false;
+					}
+					if(this->treeLetters - 1 <= 0){
+						this->setError(5, "createTreeLetters() - Unexpected underflow detected.");
+						return false;
+					}
+					this->treeLetters[this->treeLetters_s-1] = testChar;
+				}
+			}
+
+			return true;
+		}
+
+		bool createFrequency(char *data, size_t dataSize){
+			if(data == NULL){
+				this->setError(302, "createFrequency(char *data, size_t dataSize) - data is null.");
+				return false;
+			}
+			if(dataSize <= 0){
+				this->setError(303, "createFrequency(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+				return false;
+			}
+
+			if(!this->validateTreeLetters()){
+				this->setError(0, "createFrequency() - Invalid tree letters.");
+				return false;
+			}
+
+			this->destroyFrequencies();
+			this->frequencyMax=0;
+
+			for(int i=0; i<this->treeLetters_s; i++){
+				char targetChar = this->treeLetters[i];
+				int freq = 0;
+				for(int j=0; j<dataSize; j++){
+					if(targetChar == data[j])
+						freq++;
+				}
+				if(!this->resizeFrequencies(this->frequencies_s + 1)){
+					this->setError(1, "createFrequency() - failed to resize frequencies array.");
+					return false;
+				}
+				if(this->frequencies_s - 1 <= 0){
+					this->setError(2, "createFrequency() - Unexpected buffer underflow.");
+					return false;
+				}
+				this->frequencies[this->frequencies_s - 1] = freq;
+				this->frequencyMax += freq;
+			}
+			return true;
+		}
 
 
 		void resizeWorkTypeBuffer(size_t size){
@@ -516,110 +683,10 @@ class HuffmanCoding{
 		}
 		}
 		
-				void resizeTreeLetters(size_t size){
-		if(size == 0){
-		this->destroyTreeLetters();
-		}else if(this->treeLetters == NULL){
-		this->treeLetters = new char[size];
-		this->treeLetters_s = size;
-		}else{
-		size_t oldSize = this->treeLetters_s;
-		char *transfer = new char[oldSize];
-		for(int i=0; i<oldSize; i++)
-			transfer[i] = this->treeLetters[i];
-		this->destroyTreeLetters();
-		this->treeLetters = new char[size];
-		this->treeLetters_s = size;
-		for(int i=0; i<this->treeLetters_s && i<oldSize; i++){
-			this->treeLetters[i] = transfer[i];
-		}
-		delete[] transfer;
-		}
-		}
-				void resizeFrequencies(size_t size){
-		if(size == 0){
-		this->destroyFrequencies();
-		}else if(this->frequencies == NULL){
-		this->frequencies = new int[size];
-		this->frequencies_s = size;
-		}else{
-		size_t oldSize = this->frequencies_s;
-		int *transfer = new int[oldSize];
-		for(int i=0; i<oldSize; i++)
-			transfer[i] = this->frequencies[i];
-		this->destroyFrequencies();
-		this->frequencies = new int[size];
-		this->frequencies_s = size;
-		for(int i=0; i<this->frequencies_s && i<oldSize; i++){
-			this->frequencies[i] = transfer[i];
-		}
-		delete[] transfer;
-		}
-		}
 		
 		
-		bool createTreeLetters(char *data, size_t dataSize){
-		if(data == NULL){
-		this->setError(200, "createTreeLetters(char *data, size_t dataSize) - data is null.");
-		return false;
-		}
-		if(dataSize <= 0){
-		this->setError(201, "createTreeLetters(char *data, size_t dataSize) - dataSize is <= 0, treating data as null");
-		return false;
-		}
-		this->destroyTreeLetters();
-		for(int i=0; i<dataSize; i++){
-		char testChar = data[i];
-		bool matched = false;
-		for(int j=0; j<this->treeLetters_s; j++){
-			if(testChar == this->treeLetters[j]){
-				matched = true;
-				break;
-			}
-		}
-		if(!matched){
-			this->resizeTreeLetters(this->treeLetters_s + 1);
-			this->treeLetters[this->treeLetters_s-1] = testChar;
-		}
-		}
 
-		return true;	
-		}
-
-		bool createFrequency(char *data, size_t dataSize){
-		if(this->treeLetters == NULL){
-		this->setError(300, "createFrequency(char *data, size_t dataSize) - treeLetters is null.");
-		return false;
-		}
-		if(this->treeLetters_s <= 0){
-		this->setError(301, "createFrequency(char *data, size_t dataSize) - treeLetters_s is <= 0, treating treeLetters as null.");
-		return false;
-		}
-		if(data == NULL){
-		this->setError(302, "createFrequency(char *data, size_t dataSize) - data is null.");
-		return false;
-		}
-		if(dataSize <= 0){
-		this->setError(303, "createFrequency(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
-		return false;
-		}
-		this->destroyFrequencies();
-		this->frequencyMax=0;
-		for(int i=0; i<this->treeLetters_s; i++){
-		char targetChar = this->treeLetters[i];
-		int freq = 0;
-		for(int j=0; j<dataSize; j++){
-			if(targetChar == data[j])
-				freq++;
-		}
-		this->resizeFrequencies(this->frequencies_s + 1);
-		this->frequencies[this->frequencies_s - 1] = freq;
-		}
-		for(int i=0; i<this->frequencies_s; i++)
-		this->frequencyMax += this->frequencies[i];
-		return true;
-		}
-
+		
 		bool sortFreqencies(void){
 		if(!this->validateFrequencies()){
 		this->setError(400, "sortFreqencies(void) - failed to validate frequencies.");
@@ -1940,56 +2007,61 @@ pretty=0;
 printf("\n");
 }
 }
+		/* QJ compress main */
+		bool compress(char *data, size_t dataSize){
+			this->clearError();
+			this->destroyCodingTable();
+			this->destroyTreeLetters();
+			this->destroyFrequencies();
+			this->destroyOut();
+			this->tablesSorted = false;
+			if(data == NULL){
+				this->setError(0, "compress(char *data, size_t dataSize) - data is null.");
+				return false;
+			}
+			if(dataSize <= 0){
+				this->setError(1, "compress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+				return false;
+			}
 
-bool compress(char *data, size_t dataSize){
-this->clearError();
-this->destroyCodingTable();
-this->destroyTreeLetters();
-this->destroyFrequencies();
-this->destroyOut();
-this->tablesSorted = false;
-if(data == NULL){
-this->setError(0, "compress(char *data, size_t dataSize) - data is null.");
-return false;
-}
-if(dataSize <= 0){
-this->setError(1, "compress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
-return false;
-}
+			// NOTE: function only as secure as data and dataSize.
+			if(!this->createTreeLetters(data, dataSize)){
+				this->setError(2, "compress(char *data, size_t dataSize) - Failed to create tree letters.");
+				return false;
+			}
 
-if(!this->createTreeLetters(data, dataSize)){
-this->setError(2, "compress(char *data, size_t dataSize) - Failed to create tree letters.");
-return false;
-}
+			// NOTE: See above note. 
+			if(!this->createFrequency(data, dataSize)){
+				this->setError(3, "compress(char *data, size_t dataSize) - Failed to create frequency table");
+				return false;
+			}
 
-if(!this->createFrequency(data, dataSize)){
-this->setError(3, "compress(char *data, size_t dataSize) - Failed to create frequency table");
-return false;
-}
+			// TODO: Security Review 
+			if(!this->sortFreqencies()){
+				this->setError(4, "compress(char *data, size_t dataSize) - sortFreqencies failed.");
+				return false;
+			}
 
-if(!this->sortFreqencies()){
-this->setError(4, "compress(char *data, size_t dataSize) - sortFreqencies failed.");
-return false;
-}
+			// TODO: Security Review 
+			if(!this->plantTree()){
+				this->setError(545, "compress() - failed to plant tree.");
+				return false;
+			}
 
-if(!this->plantTree()){
-this->setError(545, "compress() - failed to plant tree.");
-return false;
-}
+			// TODO: Security Review 
+			if(!this->generateCodeTable()){
+				this->setError(5555, "compress() - failed to generate code table.");
+				return false;
+			}
 
-if(!this->generateCodeTable()){
-this->setError(5555, "compress() - failed to generate code table.");
-return false;
-}
+			// TODO: Security Review 
+			if(!this->encode(data, dataSize)){
+				this->setError(5, "compress(char *data, size_t dataSize) - Failed to encode data.");
+				return false;
+			}
 
-if(!this->encode(data, dataSize)){
-this->setError(5, "compress(char *data, size_t dataSize) - Failed to encode data.");
-return false;
-}
-
-
-return true;
-}
+			return true;
+		}
 
 bool decompress(char *data, size_t dataSize){
 this->clearError();
