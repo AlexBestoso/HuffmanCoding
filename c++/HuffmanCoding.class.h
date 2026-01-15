@@ -504,7 +504,43 @@ class HuffmanCoding{
 			}
 			return true;
 		}
+		
+		// most to least frequent.
+		bool sortFreqencies(void){
+			if(!this->validateFrequencies()){
+				this->setError(400, "sortFreqencies(void) - failed to validate frequencies.");
+				return false;
+			}
+			if(!this->validateTreeLetters()){
+				this->setError(1, "sortFrequencies() - failed to validate tree letters.");
+				return false;
+			}
+			if(this->treeLetters_s != this->frequencies_s){
+				this->setError(402, "sortFreqencies(void) - Table Corruption, treeLetters_s != frequencies_s.");
+				return false;
+			}
 
+			int reserve = this->frequencies[0];
+			for(int i=0; i<this->frequencies_s; i++){
+				if(reserve < this->frequencies[i]){
+					int a = this->frequencies[i];
+					int b = this->frequencies[i-1];
+					this->frequencies[i-1] = a;
+					this->frequencies[i] = b;
+
+					a = (int)this->treeLetters[i] & 0xff;
+					b = (int)this->treeLetters[i-1] & 0xff;
+					this->treeLetters[i-1] = (char)a;
+					this->treeLetters[i] = (char)b;
+
+					i = -1;
+					reserve = this->frequencies[0];
+					continue;
+				}
+				reserve = this->frequencies[i];
+			}
+			return true;
+		}
 
 		void resizeWorkTypeBuffer(size_t size){
 		if(size == 0){
@@ -687,95 +723,7 @@ class HuffmanCoding{
 		
 
 		
-		bool sortFreqencies(void){
-		if(!this->validateFrequencies()){
-		this->setError(400, "sortFreqencies(void) - failed to validate frequencies.");
-		return false;
-		}
-		if(this->treeLetters_s <= 0){
-		this->setError(401, "sortFreqencies(void) - treeLetters_s is 0, treating as null.");
-		return false;
-		}
-		if(this->treeLetters_s != this->frequencies_s){
-		this->setError(402, "sortFreqencies(void) - Table Corruption, treeLetters_s != frequencies_s.");
-		return false;
-		}
-		if(this->treeLetters == NULL){
-		this->setError(403, "sortFreqencies(void) - treeLetters is null.");
-		return false;
-		}
-
-		size_t sortList_s = this->frequencies_s;
-		int *sortList = new int[sortList_s];
-		int *indexList = new int[sortList_s];
-		int indexI = 0;
-		for(int i=0; i<sortList_s; i++){
-		sortList[i] = this->frequencies[i];
-		}
-
-		while(sortList_s > 0){
-		// Identify smallest value.
-		int biggest=sortList[0];
-		for(int i=0; i<sortList_s; i++){
-			if(sortList[i] > biggest)
-				biggest = sortList[i];
-		}
-
-		// Gather indecies of smallest values
-		int matchCount = 0;
-		for(int i=0; i<this->frequencies_s && indexI<this->frequencies_s; i++){
-			if(this->frequencies[i] == biggest){
-				indexList[indexI] = i;
-				indexI++;
-				matchCount++;
-			}
-		}
-
-		// strip sort list of the smallest value.
-		size_t transfer_s = sortList_s-matchCount;
-		int *transfer = new int[transfer_s];
-		for(int i=0, t=0; i<sortList_s && t<sortList_s-matchCount; i++){
-			if(sortList[i] != biggest){
-				transfer[t] = sortList[i];
-				t++;
-			}
-		}
-		delete[] sortList;
-		sortList = NULL;
-		sortList_s = transfer_s;
-		if(sortList_s > 0){
-			sortList = new int[sortList_s];
-			for(int i=0; i<sortList_s; i++){
-				sortList[i] = transfer[i];
-			}
-		}
-		delete[] transfer;
-		this->tablesSorted = true;
-		}
-
-		// Use index list to re-organize frequency and tree letter arrays.
-		if(sortList != NULL)
-		delete[] sortList;
-		sortList = new int[this->frequencies_s];
-		char *sortList2 = new char[this->frequencies_s];
-		for(int i=0; i<this->frequencies_s; i++){
-		int targetIndex = indexList[i];
-		if(targetIndex >= this->frequencies_s)
-			break;
-		sortList[i] = this->frequencies[targetIndex];
-		sortList2[i] = this->treeLetters[targetIndex];
-		}
-
-		for(int i=0; i<this->frequencies_s; i++){
-		this->frequencies[i] = sortList[i];
-		this->treeLetters[i] = sortList2[i];
-		}
-
-		delete[] sortList2;
-		delete[] sortList;
-		delete[] indexList;
-		return true;
-		}
+		
 
 		bool seedLayers(int *valueBuffer, size_t valueBuffer_s, int *typeBuffer, size_t typeBuffer_s){
 		if(!this->validateFrequencies()){
@@ -2024,19 +1972,17 @@ printf("\n");
 				return false;
 			}
 
-			// NOTE: function only as secure as data and dataSize.
 			if(!this->createTreeLetters(data, dataSize)){
 				this->setError(2, "compress(char *data, size_t dataSize) - Failed to create tree letters.");
 				return false;
 			}
 
-			// NOTE: See above note. 
 			if(!this->createFrequency(data, dataSize)){
 				this->setError(3, "compress(char *data, size_t dataSize) - Failed to create frequency table");
 				return false;
 			}
 
-			// TODO: Security Review 
+			 
 			if(!this->sortFreqencies()){
 				this->setError(4, "compress(char *data, size_t dataSize) - sortFreqencies failed.");
 				return false;
