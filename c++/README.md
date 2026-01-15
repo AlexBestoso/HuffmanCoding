@@ -1,8 +1,8 @@
 # Huffman Coding - c++
 
+documentation pending.
 ## Execution Statistics
 ```
-documentation pending.
 ===Round 99999 of 100000
 [*] Generating random data to compress.
 [*] Compressing 7824 bytes of data at location 0x556a547c7b30
