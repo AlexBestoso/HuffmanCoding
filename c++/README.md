@@ -1,5 +1,8 @@
 # Huffman Coding - c++
 
+We are currently conducting a security review of both `plantTree()` and `growLayer()`
+---- devnotes above ----
+
 You can use the provided vimrc to add line folds to the major sections of code via `vim -u ./huff.vimrc HuffmanCoding.class.h`
 
 documentation pending.
