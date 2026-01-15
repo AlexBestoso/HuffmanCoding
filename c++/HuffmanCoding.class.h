@@ -550,11 +550,30 @@ class HuffmanCoding{
 		}
 
 		bool growLayer(int *valueBuffer, size_t valueBuffer_s, int *typeBuffer, size_t typeBuffer_s){
+			if(valueBuffer == NULL){
+				this->setError(4545, "growLAyer() - valueBuffer is null.");
+				return false;
+			}
+			if(valueBuffer_s <= 0){
+				this->setError(2, "growLayer() - valueBuffer_s <= 0");
+				return false;
+			}
+			if(typeBuffer == NULL){
+				this->setError(46584, "growLayer() = typeBuffer is null.");
+				return false;
+			}
+			if(typeBuffer_s <= 0){
+				this->setError(54, "growLayer() - typeBuffer_s <= 0");
+				return false;
+			}
+
 			if(!this->validateFrequencies()){
 				this->setError(601, "growLayer(void) - invalid frequencies.");
 				return false;
 			}
+			// Check if buffers need to be seeded.
 			if(this->treeData == NULL){
+				// TODO: review this function.
 				if(!this->seedLayers(valueBuffer, valueBuffer_s, typeBuffer, typeBuffer_s)){
 					this->setError(602, "growLoayer(void) - failed to seed layers.");
 					return false;
@@ -566,23 +585,18 @@ class HuffmanCoding{
 				return false; // no more layers.
 			}
 
-			if(valueBuffer == NULL){
-				this->setError(4545, "growLAyer() - workBuffer is null.");
-				return false;
-			}
-			if(typeBuffer == NULL){
-				this->setError(46584, "growLayer() = workTypeBuffer is null.");
-				return false;
-			}
-
+			// TODO: review this function.
 			this->calculateLayerIndecies();
+
 			size_t layerCount = this->treeDataLayerCount;
-			if(layerCount == 0){
+			if(layerCount <= 0){
 				this->setError(5345, "growLayer() - Layer count buffer underflow.");
 				return false;
 			}
+
 			int topLayerStart = this->treeLayerIndecies[layerCount-1];
 			size_t topLayerSize = this->treeLayerSizes[layerCount-1];
+
 			if(topLayerSize <=0){
 				this->setError(4545, "growLayer() - invalid top size");
 				return false;
@@ -594,7 +608,6 @@ class HuffmanCoding{
 				this->setError(543, "growLayer() - invalid seed data.");
 				return false;
 			}
-
 
 			this->workBuffer_fill=0;
 
@@ -612,6 +625,7 @@ class HuffmanCoding{
 							return false;
 						}
 						sum = this->treeData[i] + sum;
+						// TODO: Validate workbuffer fill
 						valueBuffer[this->workBuffer_fill] = sum;
 						typeBuffer[this->workBuffer_fill] = 1;
 						int widx = this->workBuffer_fill-1;
@@ -625,6 +639,7 @@ class HuffmanCoding{
 				}
 				if(sum == -1){
 					sum = this->treeData[i] + tracer;
+					// TODO: Validate workbuffer fill
 					valueBuffer[this->workBuffer_fill] = sum;
 					typeBuffer[this->workBuffer_fill] = 1;
 					int widx=this->workBuffer_fill-1;
@@ -637,6 +652,7 @@ class HuffmanCoding{
 				if(this->treeData[i] == sum){
 					if(i==0){
 						sum = tracer + this->treeData[i];
+						// TODO: Validate workbuffer fill
 						valueBuffer[this->workBuffer_fill] = sum;
 						typeBuffer[this->workBuffer_fill] = 1;
 						int widx = this->workBuffer_fill-1;
@@ -646,6 +662,7 @@ class HuffmanCoding{
 						break;
 					}
 					sum = tracer + this->treeData[i];
+						// TODO: Validate workbuffer fill
 					valueBuffer[this->workBuffer_fill] = sum;
 					typeBuffer[this->workBuffer_fill] = 1;
 					int widx = this->workBuffer_fill-1;
@@ -658,6 +675,7 @@ class HuffmanCoding{
 				}
 				if(this->treeData[i] < sum){
 					sum = this->treeData[i] + tracer;
+						// TODO: Validate workbuffer fill
 					valueBuffer[this->workBuffer_fill] = sum;
 					typeBuffer[this->workBuffer_fill] = 1;
 					int widx = this->workBuffer_fill-1;
@@ -669,6 +687,7 @@ class HuffmanCoding{
 				if(this->treeData[i] > sum){
 					if(i==0){
 						sum = tracer + sum;
+						// TODO: Validate workbuffer fill
 						valueBuffer[this->workBuffer_fill] = sum;
 						typeBuffer[this->workBuffer_fill] = 0;
 						int widx = this->workBuffer_fill-1;
@@ -684,6 +703,7 @@ class HuffmanCoding{
 						break;
 					}
 					sum = tracer + sum;
+						// TODO: Validate workbuffer fill
 					valueBuffer[this->workBuffer_fill] = sum;
 					typeBuffer[this->workBuffer_fill] = 0;
 					int widx = this->workBuffer_fill - 1;
@@ -703,16 +723,20 @@ class HuffmanCoding{
 				this->setError(456, "growLayer() - workBuffer_fill out of bounds.");
 				return false;
 			}
+						// TODO: Validate workbuffer fill
 			if((this->workBuffer_fill - 1) >= 0)
 				typeBuffer[this->workBuffer_fill-1] = 1;
 
 
+						// TODO: check for resize error
 			this->resizeTreeLayers(this->treeDataLayerCount + 1);
 			this->treeLayerSizes[this->treeDataLayerCount - 1] = this->workBuffer_fill;
 					
 			// push original data to end of array
 			size_t originalSize = this->treeData_s;
+						// TODO: check for resize error
 			this->resizeTreeData(originalSize + this->workBuffer_fill);
+						// TODO: double check this loop
 			for(int i=this->treeData_s-1, track=0;  track<originalSize && i>=0; i--, track++){
 				if((i - this->workBuffer_fill) < 0 || (i - this->workBuffer_fill) >= this->treeData_s){
 					break;
@@ -722,6 +746,7 @@ class HuffmanCoding{
 			}
 
 			// populate front of array with new data
+						// TODO: Validate workbuffer fill
 			for(int i=0; i<this->workBuffer_fill && i<this->treeData_s; i++){
 				int workIdx = this->workBuffer_fill-1-i;
 				if(workIdx < 0 || workIdx >= valueBuffer_s){
