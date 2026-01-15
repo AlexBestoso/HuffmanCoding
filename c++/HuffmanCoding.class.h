@@ -455,7 +455,7 @@ class HuffmanCoding{
 						this->setError(4, "createTreeLetters() - Failed to resize tree letters.");
 						return false;
 					}
-					if(this->treeLetters - 1 <= 0){
+					if(this->treeLetters_s - 1 < 0){
 						this->setError(5, "createTreeLetters() - Unexpected underflow detected.");
 						return false;
 					}
@@ -495,7 +495,7 @@ class HuffmanCoding{
 					this->setError(1, "createFrequency() - failed to resize frequencies array.");
 					return false;
 				}
-				if(this->frequencies_s - 1 <= 0){
+				if(this->frequencies_s - 1 < 0){
 					this->setError(2, "createFrequency() - Unexpected buffer underflow.");
 					return false;
 				}
