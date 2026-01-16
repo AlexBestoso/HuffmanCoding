@@ -1,6 +1,7 @@
 # Huffman Coding - c++
 
-We are currently conducting a security review of both `plantTree()` and `growLayer()`
+Security review of the `encode()` function is next, which will complete the review of the compression progress,
+leaving only the decompress code left to review.
 ---- devnotes above ----
 
 To use vim as an IDE, run `vim -u ./huff.vimrc`, to open all the files with line folds.

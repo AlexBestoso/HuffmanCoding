@@ -618,6 +618,383 @@ class HuffmanCoding{
 			return true;
 		}
 
+		bool resizeCodeTable(size_t size){
+			if(size < 0){
+				this->setError(0, "resizeCodeTable() - size is negative.");
+				return false;
+			}else if(size == 0){
+				this->destroyCodingTable();
+			}else if(this->codeTable == NULL){
+				this->codeTable = new (std::nothrow) int[size];
+				if(!this->codeTable){
+					this->setError(1, "resizeCodeTable() - failed to allocate codeTable.");
+					return false;
+				}
+				this->codeTable_s = size;
+			}else{
+				size_t oldSize = this->codeTable_s;
+				int *transfer = new (std::nothrow) int[oldSize];
+				if(!transfer){
+					this->setError(2, "resizeCodeTable() - failed to allocate transfer buffer.");
+					return false;
+				}
+
+				for(int i=0; i<oldSize; i++)
+					transfer[i] = this->codeTable[i];
+				this->destroyCodingTable();
+
+				this->codeTable = new (std::nothrow) int[size];
+				if(!this->codeTable){
+					this->setError(3, "resizeCodeTable() - failed to allocate codeTable.");
+					return false;
+				}
+
+				this->codeTable_s = size;
+				for(int i=0; i<this->codeTable_s; i++){
+					if(i<oldSize)
+						this->codeTable[i] = transfer[i];
+					else
+						this->codeTable[i] = 0;
+				}
+
+				delete[] transfer;
+			}
+			return true;
+		}
+
+		bool resizeWorkQueue(size_t size){
+			if(size == 0){
+				this->destroyWorkQueue();
+			}else if(this->workQueue == NULL){
+				this->workQueue = new (std::nothrow) int[size];
+				if(!this->workQueue){
+					this->setError(0, "resizeWorkQueue() - failed to allocate workQueue.");
+					return false;
+				}
+				this->workQueue_s = size;
+			}else{
+				size_t oldSize = this->workQueue_s;
+				int *transfer = new (std::nothrow) int[oldSize];
+				if(!transfer){
+					this->setError(2, "resizeWorkQueue() - transfer failed to allocate.");
+					return false;
+				}
+				for(int i=0; i<oldSize; i++){
+					transfer[i] = this->treeData[i];
+				}
+				this->destroyWorkQueue();
+				this->workQueue = new (std::nothrow) int[size];
+				if(!this->workQueue){
+					this->setError(4, "resizeWorkQueue() - failed to allocate workQueue");
+					return false;
+				}
+				this->workQueue_s = size;
+				for(int i=0; i<this->workQueue_s && i<oldSize; i++){
+					this->treeData[i] = transfer[i];
+				}
+
+				delete[] transfer;
+			}
+			return true;
+		}
+
+
+		/* QJ misc buffer functions */
+		/*
+			allocates work queue, 
+			pushes the provided value relative to the provided number of items in the queue.
+			Returns the number of items int queue
+		*/
+		int pushWorkQueue(int val, int queueCount){
+			if(!this->validateFrequencies()){
+				this->setError(234, "pushWorkQueue() - invalid frequencies.");
+				return -1;
+			}
+			if(!this->validateWorkQueue()){
+				this->clearError();
+				if(!this->resizeWorkQueue(this->frequencies_s)){
+					this->setError(2, "pushWorkQueue() - failed to resize workqueue.");
+					return false;
+				}
+				for(int i=0; i<this->workQueue_s; i++)
+					this->workQueue[i] = -1; // init
+			}else if(this->workQueue[this->workQueue_s-1] != -1){
+				// if queue is full, expand by one element.
+				if(!this->resizeWorkQueue(this->workQueue_s+1)){
+					this->setError(3, "pushWorkQueue() - failed to resize workQueue.");
+					return false;
+				}
+				this->workQueue[this->workQueue_s-1] = -1;
+			}
+
+			int start = queueCount >= 0 && queueCount < workQueue_s ? queueCount : 0;
+			int newQueueCount = start;
+			bool failure=true;
+			for(int i=start; i<this->workQueue_s; i++){
+				if(this->workQueue[i] == -1){
+					failure=false;
+					this->workQueue[i] = val;
+					newQueueCount++;
+					break;
+				}
+				newQueueCount++;
+			}
+			if(failure){
+				this->setError(54355, "pushWorkQueue() - failed to push value.");
+				return -1;
+			}
+			return newQueueCount;
+		}
+
+		bool calculateLayerIndecies(void){
+			if(!this->validateTreeData()){
+				this->setError(0, "calculateLayerIndecies() - failed to valied treeData.");
+				return false;
+			}else if(!this->validateTreeLayers()){
+				this->setError(1, "calculateLayerIndecies() - failed to validate treeLayers");
+				return false;
+			}
+
+			int dataRemainder = this->treeData_s-1;
+			for(int i=0; i<this->treeDataLayerCount; i++){
+				this->treeLayerIndecies[i] = dataRemainder;
+				dataRemainder -= this->treeLayerSizes[i];
+			}
+			return true;
+		}
+		
+		bool isBaseIndex(int target){
+			if(!this->validateTreeData()){
+				this->setError(4444, "isBaseIndex() - invalid tree data.");
+				return false;
+			}else if(!this->validateTreeLayers()){
+				this->setError(2, "isBaseIndex() - invalid tree layers");
+				return false;
+			}
+
+			// 0 is the seeded layer, the actual index value of layer 0 is treeData_s - 1
+			int baseLayerStartIndex = this->treeLayerIndecies[0];
+			// index value minus the size of the layer positions us at the start of the next layer.
+			int baseLayerEndIndex = baseLayerStartIndex - this->treeLayerSizes[0];
+
+			// is in the base node range?
+			if(target <= baseLayerStartIndex && target > baseLayerEndIndex){
+				return true;
+			}
+			return false;
+		}
+		
+		int getBaseLayerIndex(int target){
+			if(!this->validateTreeLayers()){
+				this->setError(0, "getBaseLayerIndex() - invalid tree layer data");
+				return -1;
+			}
+			for(int i=0; i<this->treeDataLayerCount; i++){
+				int start = this->treeLayerIndecies[i];
+				int end = start-this->treeLayerSizes[i];
+				if(target <= start && target > end){
+					return i;
+				}
+			}
+			this->setError(1, "getBaseLayerIndex() - target isn't within layer range.");
+			return -1;
+		}
+
+		/*
+		 * This function is limited by sizeof(int)
+		 * */
+		bool addBitToCodeTable(int targetIndex, int bit){
+			if(!this->validateFrequencies()){
+				this->setError(45345, "addBitToCodeTable() - failed to validate frequencies.");
+				return false;
+			}else if(!this->validateCodeTable()){
+				this->setError(2, "addBitToCodeTable() - failed to validate code table.");
+				return false;
+			}else if(targetIndex < 0 || targetIndex >= this->codeTable_s){
+				this->setError(45454, "addBitToCodeTable() - targetIndex is out of bounds.");
+				return false;
+			}
+			
+			// increment bit count
+			this->codeTable[targetIndex]++;
+			
+			// left shift encoded entry by 1, and ad the lsb of bit. 
+			int codeIdx = targetIndex+this->frequencies_s;
+			this->codeTable[codeIdx] = (this->codeTable[codeIdx] << 1) + (bit&0x01);
+			if(this->codeTable[targetIndex] > 32){
+				this->setError(345, "addBitToCodeTable() - data loss detected, shifted more than sizeof int, 32 bits");
+				return false;
+			}
+			return true;
+		}
+
+
+		bool getSubIndecies(int targetIndex, int *zeroIndex, int *oneIndex){
+			if(!this->validateTreeData()){
+				this->setError(44442, "getSubIndecies() - invalid tree data.");
+				return false;
+			}else if(!this->validateFrequencies()){
+				this->setError(3542, "getSubIndecies() - invalid frequencies.");
+				return false;
+			}else if(!this->validateTreeLayers()){
+				this->setError(3, "getSubIndecies() - invalid tree layers.");
+				return false;
+			}else if(targetIndex < 0 || targetIndex >= this->treeData_s){
+				std::string message = "getSubIndecies() - targetIndex is out of bounds. target:"+std::to_string(targetIndex)+" | treeSize:"+std::to_string(this->treeData_s);
+				this->setError(44452, message.c_str());
+				return false;
+			}
+
+			// Determine which layer our targetIndex is a part of.
+			int targetLayer = this->getBaseLayerIndex(targetIndex);
+			if(this->failed()){
+				this->setError(5555, "getSubIndecies() - failed to get target layer.");
+				return false;
+			}else if(targetLayer >= this->treeDataLayerCount || targetLayer < 0){
+				this->setError(4, "getSubIndecies() - targetLayer is out of bounds.");
+				return false;
+			}
+
+			// What if the targetLayer is pointing to the base layer of the tree?
+			if(targetLayer == 0){
+				zeroIndex[0] = targetIndex;
+				oneIndex[0] = -1;
+				return true;
+			}
+
+
+			// identify the start and end of the target layer.
+			int targetLayerStart = this->treeLayerIndecies[targetLayer];
+			if(targetLayerStart < 0 || targetLayerStart >= this->treeData_s){
+				this->setError(545, "getSubIndecies() - targetLayerStart is out of bounds.");
+				return false;
+			}
+			int targetLayerEnd = targetLayerStart - this->treeLayerSizes[targetLayer];
+			if(!(targetLayerEnd >= -1) || targetLayerEnd >= (int)this->treeData_s){
+				this->setError(3445, "getSubIndecies() - targetLayerEnd is out of bounds.");
+				return  false;
+			}
+			
+			// Identify the source layer, and its start and end.
+			int sourceLayer = targetLayer - 1;
+			if(sourceLayer < 0 || sourceLayer >= this->treeDataLayerCount){
+				this->setError(453, "getSubIndecies() - sourceLayer is out of bounds.");
+			}
+			int sourceLayerStart = this->treeLayerIndecies[sourceLayer];
+			if(sourceLayerStart < 0 || sourceLayerStart >= (int)this->treeData_s){
+				this->setError(43, "getSubIndecies() - sourceLayerStart is out of bounds");
+				return false;
+			}
+			int sourceLayerEnd = sourceLayerStart - this->treeLayerSizes[sourceLayer];
+			if(sourceLayerEnd < 0 || sourceLayerStart > (int)this->treeData_s){
+				this->setError(654, "getSubIndecies() - sourceLayerEnd is out of bounds.");
+				return false;
+			}
+
+			if(this->treeLayerSizes[sourceLayer] <= this->treeLayerSizes[targetLayer]){
+				this->setError(545, "getSubIndecies() - source and target layers appear corrupted. source <= target.");
+				return false;
+			}
+			
+			// Extract the source indecies.
+			int tracerIdx = 0;
+			int tracer = -1;
+			int sum = -1;
+			for(int i=sourceLayerStart, t=targetLayerStart; i>sourceLayerEnd && t>targetLayerEnd; i--){
+				// Ensure we're not making calculations using bottom nodes.
+				if(this->treeDataTypes[i] == 0)
+					continue;
+				bool finalLoop = i == sourceLayerEnd + 1;
+				// Handle edge case for final loop/interation
+				if(finalLoop && tracer == -1){
+						if(sum == -1){
+							this->setError(777, "getSubIndecies() - Attempted to process for an undefined condition. Stopping.");
+							return false;
+						}
+						if(t == targetIndex){
+							zeroIndex[0] = i;
+							oneIndex[0] = t+1;
+							return true;
+						}
+						t--;
+						break;
+				}else if(finalLoop && this->treeData[i] > sum && sum != -1){
+					if(t == targetIndex){
+						zeroIndex[0] = tracerIdx;
+						oneIndex[0] = t+1;
+						return true;
+					}
+
+					t--;
+					if(!(t>targetLayerEnd)){
+						this->setError(4533, "getSubIndecies() - miss aligned tree.");
+						return false;
+					}
+
+					if(t == targetIndex){
+						zeroIndex[0] = i;
+						oneIndex[0] = t+1;
+						return true;
+					}
+
+					t--;
+					break;
+				}
+
+				// Ensure that we have a tracer
+				if(tracer == -1){
+					tracer = this->treeData[i];
+					tracerIdx=i;
+					continue;
+				}
+
+				// Determine source indecies and cycle.
+				if(this->treeData[i] <= sum || sum == -1){
+					sum = this->treeData[i] + tracer;
+					if(t==targetIndex){
+						zeroIndex[0] = i;
+						oneIndex[0] = tracerIdx;
+						return true;
+					}
+
+					t--;
+					tracer = -1;
+					tracerIdx=-1;
+					continue;
+				}else if(this->treeData[i] > sum){
+					sum = tracer + sum;
+					if(t == targetIndex){
+						zeroIndex[0] = tracerIdx;
+						oneIndex[0] = t+1;
+						return true;
+					}
+
+					t--;
+					tracer = this->treeData[i];
+					tracerIdx=i;
+					continue;
+				}
+			}
+			std::string msg = "getSubIndecies(target:"+std::to_string(targetIndex)+") - dbg : sourceLayer:"+std::to_string(sourceLayer)+" | targetLayer:"+std::to_string(targetLayer);
+			this->setError(4444, msg.c_str());
+			return false;
+		}
+
+		int popWorkQueue(void){
+			if(!this->validateWorkQueue()){
+				this->setError(5345, "popWorkQueue() - invalid work queue.");
+				return -1;
+			}
+			int ret = this->workQueue[0];
+			this->workQueue[0] = -1;
+			for(int i=1; i<this->workQueue_s; i++){
+				this->workQueue[i-1] = this->workQueue[i];
+				if(this->workQueue[i] == -1) break;
+				this->workQueue[i] = -1;
+			}
+			return ret;
+		}
+
 		/* QJ tree functions */
 		// seed function expects value and type buffers to be equal to frequencies_s
 		bool seedLayers(void){
@@ -647,23 +1024,7 @@ class HuffmanCoding{
 			return true;
 		}
 
-		bool calculateLayerIndecies(void){
-			if(!this->validateTreeData()){
-				this->setError(0, "calculateLayerIndecies() - failed to valied treeData.");
-				return false;
-			}else if(!this->validateTreeLayers()){
-				this->setError(1, "calculateLayerIndecies() - failed to validate treeLayers");
-				return false;
-			}
-
-			int dataRemainder = this->treeData_s-1;
-			for(int i=0; i<this->treeDataLayerCount; i++){
-				this->treeLayerIndecies[i] = dataRemainder;
-				dataRemainder -= this->treeLayerSizes[i];
-			}
-			return true;
-		}
-
+		
 		/* //
 			returns true when more layers can be grown, false when done growing, and false with the error set if there's an error.
 		// */
@@ -1052,116 +1413,89 @@ class HuffmanCoding{
 			return true;
 		}
 
-		
-				
-				void resizeWorkQueue(size_t size){
-		if(size == 0){
-		this->destroyWorkQueue();
-		}else if(this->workQueue == NULL){
-		this->workQueue = new int[size];
-		this->workQueue_s = size;
-		}else{
-		size_t oldSize = this->workQueue_s;
-		int *transfer = new int[oldSize];
-		for(int i=0; i<oldSize; i++){
-			transfer[i] = this->treeData[i];
-		}
-		this->destroyWorkQueue();
-		this->workQueue = new int[size];
-		this->workQueue_s = size;
-		for(int i=0; i<this->workQueue_s && i<oldSize; i++){
-			this->treeData[i] = transfer[i];
-		}
+		bool generateCodeTable(void){
+			if(!this->validateTreeData()){
+				this->setError(44456, "generateCodeTable() - failed to validate tree data.");
+				return false;
+			}else if(!this->validateFrequencies()){
+				this->setError(665434, "generateCodeTable() - failed to validate frequencies.");
+				return false;
+			}else if(!this->validateTreeLetters()){
+				this->setError(2, "generateCodeTable() - failed to validate tree letters.");
+				return false;
+			}else if(!this->validateTreeLayers()){
+				this->setError(3, "generateCodeTable() - failed to validate tree layers.");
+				return false;
+			}
 
-		delete[] transfer;
-		}
-		}
-				int pushWorkQueue(int val, int knownFill){
-		if(!this->validateFrequencies()){
-		this->setError(234, "pushWorkQueue() - invalid frequencies.");
-		return -1;
-		}
-		if(!this->validateWorkQueue()){
-		this->clearError();
-		this->resizeWorkQueue(this->frequencies_s);
-		for(int i=0; i<this->workQueue_s; i++)
-			this->workQueue[i] = -1;
-		}else if(this->workQueue[this->workQueue_s-1] != -1){
-		this->resizeWorkQueue(this->workQueue_s+1);
-		this->workQueue[this->workQueue_s-1] = -1;
-		}
+			this->destroyCodingTable();
+			if(!this->resizeCodeTable(this->frequencies_s*2)){
+				this->setError(5, "generateCodeTable() - failed to resize code table.");
+				return false;
+			}
+			for(int i=0; i<this->codeTable_s; i++)
+				this->codeTable[i] = 0; // init
 
-		int start = knownFill >= 0 && knownFill <workQueue_s ? knownFill : 0;
-		int fillSize = start;
-		bool failure=true;
-		for(int i=start; i<this->workQueue_s; i++){
-		if(this->workQueue[i] == -1){
-			failure=false;
-			this->workQueue[i] = val;
-			fillSize++;
-			break;
-		}
-		fillSize++;
-		}
-		if(failure){
-		this->setError(54355, "pushWorkQueue() - failed to push value.");
-		return -1;
-		}
-		return fillSize;
-		}
-		int popWorkQueue(void){
-		if(!this->validateWorkQueue()){
-		this->setError(5345, "popWorkQueue() - invalid work queue.");
-		return -1;
-		}
-		int ret = this->workQueue[0];
-		this->workQueue[0] = -1;
-		for(int i=1; i<this->workQueue_s; i++){
-		this->workQueue[i-1] = this->workQueue[i];
-		if(this->workQueue[i] == -1) break;
-		this->workQueue[i] = -1;
+			int converter = this->treeData_s - this->frequencies_s;
+			int zero=-1;
+			int one=-1;
+			int queueFill=0;
+			int start = this->treeLayerIndecies[1];
+			int bitArray[2] = {0};
+			for(int i=0; i<=start; i++){
+				if(this->isBaseIndex(i)){
+					this->setError(3234, "generateCodeTable() - huffman tree missaligned. Cannot start processing from base node.");
+					return false; 
+				}else if(!this->getSubIndecies(i, &zero, &one) && this->failed()){
+					this->setError(666, "generateCodeTable() - failed to get inital sub indecies.");
+					return false;
+				}
 
-		}
-		return ret;
-		}
+				bitArray[0] = zero;
+				bitArray[1] = one;
+				for(int bit=0; bit<2; bit++){
+					if(this->isBaseIndex(bitArray[bit])){
+						int newIndex = bitArray[bit] - converter; // convert to bitarray[x] into a value between 0 and frequencies_s
+						if(!this->addBitToCodeTable(newIndex, bit)){
+							this->setError(45423, "generateCodeTable() - failed to add bit to code table.");
+							return false;
+						}
+						continue;
+					}
+					queueFill = 0;
+					queueFill = this->pushWorkQueue(bitArray[bit], queueFill);
+					while(queueFill > 0){
+						int target = this->popWorkQueue();
+						queueFill--;
 
-		
-		
-		
+						if(!this->getSubIndecies(target, &zero, &one) && this->failed()){
+							this->setError(3333, "generateCodeTable() - failed to get sub node to add bit to.");
+							return false;
+						}
 
-		
-		
+						if(this->isBaseIndex(zero)){
+							int newIndex = zero - converter; // convert to 0 to frequencie_s
+							if(!this->addBitToCodeTable(newIndex, bit)){
+								this->setError(445, "generateCodeTable() - failed to add bit to zero index.");
+								return false;
+							}
+						}else{
+							queueFill = this->pushWorkQueue(zero, queueFill);
+						}
 
-		
-		
-		
-
-		bool isBaseIndex(int target){
-		if(!this->validateTreeData()){
-		this->setError(4444, "isBaseIndex() - invalid tree data.");
-		return false;
-		}
-		// TODO: validate tree layers.
-		if(target <= this->treeLayerIndecies[0] && target > (this->treeLayerIndecies[0]-this->treeLayerSizes[0])){
-		return true;
-		}
-		return false;
-		}
-
-		bool addBitToCodeTable(int targetIndex, int bit){
-		if(!this->validateFrequencies()){
-		this->setError(45345, "addBitToCodeTable() - failed to validate frequencies.");
-		return false;
-		}
-		// TODO validate code table.
-		if(targetIndex < 0 || targetIndex >= this->codeTable_s){
-		this->setError(45454, "addBitToCodeTable() - targetIndex is out of bounds.");
-		return false;
-		}
-		this->codeTable[targetIndex]++;
-		int codeIdx = targetIndex+this->frequencies_s;
-		this->codeTable[codeIdx] = (this->codeTable[codeIdx] << 1) + (bit&0x01);
-		return true;
+						if(this->isBaseIndex(one)){
+							int newIndex = one - converter; // convert to 0 to frequencie_s
+							if(!this->addBitToCodeTable(newIndex, bit)){
+								this->setError(435, "generateCodeTable() - failed to add bit to one index.");
+								return false;
+							}
+						}else{
+							queueFill = this->pushWorkQueue(one, queueFill);
+						}
+					}
+				}
+			}
+			return true;
 		}
 
 		bool codeTableSortByBitCount(void){
@@ -1219,90 +1553,7 @@ class HuffmanCoding{
 		this->destroyWorkBuffer();
 		return true;
 		}
-		bool generateCodeTable(void){
-		if(!this->validateTreeData()){
-		this->setError(44456, "generateCodeTable() - failed to validate tree data.");
-		return false;
-		}
-		if(!this->validateFrequencies()){
-		this->setError(665434, "generateCodeTable() - failed to validate frequencies.");
-		return false;
-		}
-		// TODO: Validate tree letters
-		// TODO: validate tree layers
-
-		// Calculate Layer Count, and top layer start index.
-		size_t layerCount = this->treeDataLayerCount;
-
-		// allocate the coding table.
-		this->destroyCodingTable();
-		this->codeTable_s = this->frequencies_s*2;
-		this->codeTable = new int[this->codeTable_s];
-		for(int i=0; i<this->codeTable_s; i++){
-		this->codeTable[i] = 0;
-		}
-		int converter = this->treeData_s - this->frequencies_s;
-		int zero=-1;
-		int one=-1;
-		int queueFill=0;
-		int start = this->treeLayerIndecies[1];
-		int bitArray[2] = {0};
-		for(int i=0; i<=start; i++){
-		if(this->isBaseIndex(i)){
-		this->setError(3234, "generateCodeTable() - huffman tree missaligned.");
-		return false; // we start one layer away from the leafs
-		}
-		if(!this->getSubIndecies(i, &zero, &one) && this->failed()){
-		this->setError(666, "generateCodeTable() - failed to get inital sub indecies.");
-		return false;
-		}
-		bitArray[0] = zero;
-		bitArray[1] = one;
-		for(int bit=0; bit<2; bit++){
-		if(this->isBaseIndex(bitArray[bit])){
-			int newIndex = bitArray[bit] - converter; // convert to 0 to frequencie_s
-			if(!this->addBitToCodeTable(newIndex, bit)){
-				this->setError(45423, "generateCodeTable() - failed to add bit to code table.");
-				return false;
-			}
-			continue;
-		}
-		queueFill = 0;
-		queueFill = this->pushWorkQueue(bitArray[bit], queueFill);
-		while(queueFill > 0){
-			int target = this->popWorkQueue();
-			queueFill--;
-
-			if(!this->getSubIndecies(target, &zero, &one) && this->failed()){
-				this->setError(3333, "generateCodeTable() - failed to get sub node to add bit to.");
-				return false;
-			}
-
-			if(this->isBaseIndex(zero)){
-				int newIndex = zero - converter; // convert to 0 to frequencie_s
-				if(!this->addBitToCodeTable(newIndex, bit)){
-					this->setError(445, "generateCodeTable() - failed to add bit to zero index.");
-					return false;
-				}
-			}else{
-				queueFill = this->pushWorkQueue(zero, queueFill);
-			}
-
-			if(this->isBaseIndex(one)){
-				int newIndex = one - converter; // convert to 0 to frequencie_s
-				if(!this->addBitToCodeTable(newIndex, bit)){
-					this->setError(435, "generateCodeTable() - failed to add bit to one index.");
-					return false;
-				}
-			}else{
-				queueFill = this->pushWorkQueue(one, queueFill);
-			}
-		}
-		}
-		}
-		return true;
-		}
-
+		
 		std::string getCodeBinary(int idx){
 		if(this->codeTable == NULL){
 		this->setError(800, "getCodeBinary(int idx) - codeTable is null.");
@@ -1795,162 +2046,7 @@ class HuffmanCoding{
 		this->error = c;
 		this->error_msg += "["+std::to_string(c)+"] " + m+"\n";
 		}
-		bool getSubIndecies(int targetIndex, int *zeroIndex, int *oneIndex){
-		if(!this->validateTreeData()){
-		this->setError(44442, "getSubIndecies() - invalid tree data.");
-		return false;
-		}
-		if(!this->validateFrequencies()){
-		this->setError(3542, "getSubIndecies() - invalid frequencies.");
-		return false;
-		}
-		if(targetIndex < 0 || targetIndex >= this->treeData_s){
-		std::string message = "getSubIndecies() - targetIndex is out of bounds. target:"+std::to_string(targetIndex)+" | treeSize:"+std::to_string(this->treeData_s);
-		this->setError(44452, message.c_str());
-		return false;
-		}
-		// TODO: validate layers
-
-		int targetLayer = -1;
-		for(int i=0; i<this->treeDataLayerCount; i++){
-		int start = this->treeLayerIndecies[i];
-		int end = this->treeLayerIndecies[i]-this->treeLayerSizes[i]+1;
-		if(targetIndex <= start && targetIndex >= end){
-		targetLayer = i;
-		break;
-		}
-		}
-		if(targetLayer == -1){
-		this->setError(5555, "getSubIndecies() - failed to get target layer.");
-		return false;
-		}
-		if(targetLayer == 0){
-		int pos = (this->frequencies_s%2) == 0 ? (1+targetIndex)%2 : (targetIndex == this->treeLayerIndecies[targetLayer]-this->treeLayerSizes[targetLayer]-1 ? 0 : (targetIndex)%2);
-		if(pos == 0){
-		zeroIndex[0] = targetIndex;
-		oneIndex[0] = -1;
-		}else{
-		zeroIndex[0] = -1;
-		oneIndex[0] = targetIndex;
-		}
-		return true;
-		}
-
-		int targetLayerStart = this->treeLayerIndecies[targetLayer];
-		int targetLayerEnd = targetLayerStart-this->treeLayerSizes[targetLayer];
-		int sourceLayer = targetLayer-1;
-		int sourceLayerStart = this->treeLayerIndecies[sourceLayer];
-		int sourceLayerEnd = sourceLayerStart - this->treeLayerSizes[sourceLayer];
-
-		for(int i=sourceLayerStart, t=targetLayerStart, tracerIdx=0,tracer=-1, sum=-1; i>sourceLayerEnd && t>targetLayerEnd; i--){
-		if(this->treeDataTypes[i] == 0){ // it's a bottom node, don't use it.
-		continue;
-		}
-		if(tracer == -1){
-		if(i == sourceLayerEnd+1){
-			if(sum == -1){
-				this->setError(777, "getSubIndecies() - this error should never happen, Ha!");
-				return false;
-			}
-			sum = this->treeData[i] + sum;
-			if(t == targetIndex){
-				zeroIndex[0] = i;
-				oneIndex[0] = t+1;
-				return true;
-			}
-			t--;
-			break;
-		}
-		tracer = this->treeData[i];
-		tracerIdx=i;
-		continue;
-		}
-		if(sum == -1){
-		sum = this->treeData[i] + tracer;
-		if(t == targetIndex){
-			zeroIndex[0] = i;
-			oneIndex[0] = tracerIdx;
-			return true;
-		}
-		t--;
-		tracer = -1;
-		tracerIdx=-1;
-		continue;
-		}
-		if(this->treeData[i] == sum){
-		if(i==sourceLayerEnd+1){
-			sum = tracer + this->treeData[i];
-			if(t==targetIndex){
-				zeroIndex[0] = i;
-				oneIndex[0] = tracerIdx;
-				return true;
-			}
-			t--;
-			break;
-		}
-		sum = tracer + this->treeData[i];
-		if(t==targetIndex){
-			zeroIndex[0] = i;
-			oneIndex[0] = tracerIdx;
-			return true;
-		}
-		t--;
-		tracer = -1;
-		tracerIdx=-1;
-		continue;
-		}
-		if(this->treeData[i] < sum){
-		sum = this->treeData[i] + tracer;
-		if(t==targetIndex){
-			zeroIndex[0] = i;
-			oneIndex[0] = tracerIdx;
-			return true;
-		}
-		t--;
-		tracer = -1;
-		tracerIdx=-1;
-		continue;
-		}
-		if(this->treeData[i] > sum){
-		if(i==sourceLayerEnd+1){
-			sum = tracer + sum;
-			if(t == targetIndex){
-				zeroIndex[0] = tracerIdx;
-				oneIndex[0] = t+1;
-				return true;
-			}
-			t--;
-			if(!(t>targetLayerEnd)){
-				this->setError(4533, "getSubIndecies() - miss a ligned tree.");
-				return false;
-			}
-			sum = this->treeData[i] + sum;
-			if(t == targetIndex){
-				zeroIndex[0] = i;
-				oneIndex[0] = t+1;
-				return true;
-			}
-			t--;
-			break;
-		}
-		sum = tracer + sum;
-		if(t == targetIndex){
-			zeroIndex[0] = tracerIdx;
-			oneIndex[0] = t+1;
-			return true;
-		}
-		t--;
-		tracer = this->treeData[i];
-		tracerIdx=i;
-		continue;
-		}
-		}
-
-		std::string msg = "getSubIndecies(target:"+std::to_string(targetIndex)+") - dbg : sourceLayer:"+std::to_string(sourceLayer)+" | targetLayer:"+std::to_string(targetLayer);
-		this->setError(4444, msg.c_str());
-		return false;
-		}
-
+		
 	public:
 		/* QJ public vars */
 		char *out;
@@ -2136,7 +2232,6 @@ printf("\n");
 				return false;
 			}
 
-			// TODO: Security Review 
 			if(!this->generateCodeTable()){
 				this->setError(5555, "compress() - failed to generate code table.");
 				return false;
