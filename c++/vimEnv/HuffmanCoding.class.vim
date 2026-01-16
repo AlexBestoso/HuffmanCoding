@@ -74,7 +74,7 @@ setlocal matchpairs=(:),{:},[:]
 setlocal nomodeline
 setlocal modifiable
 setlocal nrformats=bin,octal,hex
-setlocal nonumber
+setlocal number
 setlocal numberwidth=4
 setlocal omnifunc=
 setlocal path=
@@ -131,18 +131,18 @@ silent! normal! zE
 48,104fold
 107,187fold
 190,339fold
-342,500fold
-503,740fold
-743,861fold
-1862,1863fold
-1866,1892fold
-2008,2059fold
+342,619fold
+622,932fold
+935,1053fold
+1956,1957fold
+1960,1986fold
+2102,2152fold
 let &fdl = &fdl
-let s:l = 1922 - ((0 * winheight(0) + 14) / 29)
+let s:l = 1685 - ((0 * winheight(0) + 22) / 45)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 1922
+keepjumps 1685
 normal! 0
 let &g:so = s:so_save | let &g:siso = s:siso_save
 doautoall SessionLoadPost
