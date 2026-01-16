@@ -714,7 +714,7 @@ class HuffmanCoding{
 				this->clearError();
 				if(!this->resizeWorkQueue(this->frequencies_s)){
 					this->setError(2, "pushWorkQueue() - failed to resize workqueue.");
-					return false;
+					return -1;
 				}
 				for(int i=0; i<this->workQueue_s; i++)
 					this->workQueue[i] = -1; // init
@@ -722,7 +722,7 @@ class HuffmanCoding{
 				// if queue is full, expand by one element.
 				if(!this->resizeWorkQueue(this->workQueue_s+1)){
 					this->setError(3, "pushWorkQueue() - failed to resize workQueue.");
-					return false;
+					return -1;
 				}
 				this->workQueue[this->workQueue_s-1] = -1;
 			}
@@ -879,6 +879,7 @@ class HuffmanCoding{
 			int sourceLayer = targetLayer - 1;
 			if(sourceLayer < 0 || sourceLayer >= this->treeDataLayerCount){
 				this->setError(453, "getSubIndecies() - sourceLayer is out of bounds.");
+				return false;
 			}
 			int sourceLayerStart = this->treeLayerIndecies[sourceLayer];
 			if(sourceLayerStart < 0 || sourceLayerStart >= (int)this->treeData_s){
@@ -1414,7 +1415,7 @@ class HuffmanCoding{
 			// ensure bit count isn't less than the smallest expected count.
 			if(headerBitCount < (paddingBitCount + elementCountBitCount + containerSizeBitCount + (2 * byteBitCount))){
 				this->setError(45345, "packHeader() - invalid header bit count.");
-				return false;
+				return -1;
 			}
 
 			this->destroyHeader();
@@ -1424,33 +1425,33 @@ class HuffmanCoding{
 			this->header = new (std::nothrow) char[this->header_s];
 			if(!this->header){
 				this->setError(2, "packHeader() - failed to allocate header.");
-				return false;
+				return -1;
 			}
 
 			this->header[0] = 0x0;
 
 			if(!this->packByte(this->frequencies_s, 9, this->header, this->header_s, &headerIdx, &bitIdx)){
 				this->setError(3, "packHeader() - failed to pack element count byte.");
-				return false;
+				return -1;
 			}
 
 			for(int i=0; i<this->frequencies_s && headerIdx<this->header_s; i++){
 				int containerSize = (((this->frequencies[i]/0xff)) + 1); // rel to sizeof(int) data type
 				if(!this->packByte(containerSize, 3, this->header, this->header_s, &headerIdx, &bitIdx)){
 					this->setError(4, "packHeader() - failed to pack container size byte");
-					return false;
+					return -1;
 				}
 
 				int freq = this->frequencies[i];
 				if(!this->packByte(freq, 8, this->header, this->header_s, &headerIdx, &bitIdx)){
 					this->setError(6, "packHeader() - failed to pack freqiency byte.");
-					return false;
+					return -1;
 				}
 
 				char letter = this->treeLetters[i];
 				if(!this->packByte((int)letter&0xff, 8, this->header, this->header_s, &headerIdx, &bitIdx)){
 					this->setError(4, "packHeader() - failed to pack letter byte.");
-					return false;
+					return -1;
 				}
 			}
 			return bitIdx;
@@ -1550,16 +1551,16 @@ class HuffmanCoding{
 				return 0;
 			}else if(srcIndex[0] < 0 || srcIndex[0] >= (int)srcSize){
 				this->setError(354, "unpackByte() - srcIndex is out of bounds.");
-				return false;
+				return 0;
 			}else if(bitIndex == NULL){
 				this->setError(234, "unpackByte() - bitIndex is null.");
-				return false;
+				return 0;
 			}else if(bitIndex[0] < 0 || bitIndex[0] >= 8){
 				this->setError(324, "unpackByte() - bitIndex is out of bounds.");
-				return false;
+				return 0;
 			}else if(expectedBitCount <= 0){
 				this->setError(234, "unpackByte() - expectedBitCount is <= 0.");
-				return false;
+				return 0;
 			}
 
 			int ret = 0;
@@ -1641,6 +1642,7 @@ class HuffmanCoding{
 			elementCount = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 9);
 			if(this->failed()){
 				this->setError(435, "unpackHeader() - failed to unpack element count.");
+				return false;
 			}
 
 			if(!this->resizeTreeLetters(elementCount)){
@@ -1909,6 +1911,10 @@ class HuffmanCoding{
 					}
 					queueFill = 0;
 					queueFill = this->pushWorkQueue(bitArray[bit], queueFill);
+					if(this->failed()){
+						this->setError(3234, "generateCodeTable() - failed to push data to queue.");
+						return false;
+					}
 					while(queueFill > 0){
 						int target = this->popWorkQueue();
 						queueFill--;
@@ -1926,6 +1932,10 @@ class HuffmanCoding{
 							}
 						}else{
 							queueFill = this->pushWorkQueue(zero, queueFill);
+							if(this->failed()){
+								this->setError(234, "generateCodeTable() - failed to push data to queue.");
+								return false;
+							}
 						}
 
 						if(this->isBaseIndex(one)){
@@ -1936,6 +1946,10 @@ class HuffmanCoding{
 							}
 						}else{
 							queueFill = this->pushWorkQueue(one, queueFill);
+							if(this->failed()){
+								this->setError(234, "generateCodeTable() - failed to push data to queue.");
+								return false;
+							}
 						}
 					}
 				}
