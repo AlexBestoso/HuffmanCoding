@@ -726,7 +726,7 @@ class HuffmanCoding{
 			// Ready to grow the layer.
 			this->workBuffer_fill=0;
 			for(int i=topLayerStart, tracer=-1, sum=-1; i>=0 && i<this->treeData_s; i--){
-				if(this->workBuffer_fill <= 0 || this->workBuffer_fill >= valueBuffer_s || this->workBuffer_fill >= typeBuffer_s){
+				if(this->workBuffer_fill < 0 || this->workBuffer_fill >= valueBuffer_s || this->workBuffer_fill >= typeBuffer_s){
 					this->setError(6, "growLayer() - workBuffer_fill is out of bounds.");
 					return false;
 				}
