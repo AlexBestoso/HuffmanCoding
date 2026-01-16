@@ -1,7 +1,10 @@
 # Huffman Coding - c++
 
-Security review of the `encode()` function is next, which will complete the review of the compression progress,
-leaving only the decompress code left to review.
+All relevant compress and decompress functions have been reviewed.
+
+Next step is to review the debug code and the experimental code.
+this should also be wrapped inside an ifdef so that they can be removed from the compile easily.
+
 ---- devnotes above ----
 
 To use vim as an IDE, run `vim -u ./huff.vimrc`, to open all the files with line folds.

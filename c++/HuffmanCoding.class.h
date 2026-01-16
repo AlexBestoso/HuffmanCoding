@@ -1681,29 +1681,50 @@ class HuffmanCoding{
 			return true;
 		}
 
-		bool unpackBody(char *data, size_t dataSize, int indexOffset, int bitOffset, int endPadding){
-			//TODO: validate tree
-			this->destroyBody();
-			int body_i=0;
-			this->body_s = dataSize - indexOffset;
-			if(this->body_s <= 0){
-				this->setError(534, "unpackBody() - out_s is out of bounds.");
+		bool unpackBody(char *data, size_t dataSize, int bodyStart, int bitOffset, int endPadding){
+			if(data == NULL){
+				this->setError(234, "unpackBody() - data is null.");
+				return false;
+			}else if(dataSize <= 0){
+				this->setError(354, "unpackBody() - dataSize is <= 0.");
+				return false;
+			}else if(bodyStart < 0 || bodyStart >= dataSize){
+				this->setError(456, "unpackBody() - bodyStart is out of bounds.");
+				return false;
+			}else if(bitOffset < 0 || bitOffset >= 8){
+				this->setError(355, "unpackBody() - bitOffset is out of bounds.");
+				return false;
+			}else if(!this->validateTreeData()){
+				this->setError(222, "unpackBody() - failed to validate tree data.");
+				return false;
+			}else if(!this->validateFrequencies()){
+				this->setError(653, "unpackBody() - failed to validate frequencies.");
+				return false;
+			}else if(!this->validateCodeTable()){
+				this->setError(46, "unpackBody() - failed to validate code table.");
 				return false;
 			}
-			this->body = new char[this->body_s];
 
 			this->destroyOut();
-			this->out_s = this->treeData[0];
-			this->out = new char[this->out_s];
+			this->out_s = this->frequencyMax;
+			this->out = new (std::nothrow) char[this->out_s];
+			if(!this->out){
+				this->setError(424, "unpackBody() - failed to allocat out.");
+				return false;
+			}
 
-			this->codeTableSortByBitCount();
+			if(!this->codeTableSortByBitCount()){
+				this->setError(5345, "unpackBody() - failed to sort code table.");
+				return false;
+			}
 
 			for(int o=0; o<out_s; o++){
 				int maxBitCount = this->codeTable[this->frequencies_s-1];
-				int dbgC = maxBitCount;
-				int dbgA = indexOffset;
-				int dbgB = bitOffset;
-				int encoded = this->unpackByte(data, dataSize, &indexOffset, &bitOffset, maxBitCount);
+				int encoded = this->unpackByte(data, dataSize, &bodyStart, &bitOffset, maxBitCount);
+				if(this->failed()){
+					this->setError(2525, "unpackBody() - failed to unpack compressed chunk.");
+					return false;
+				}	
 				int tableCode = 0;
 				int bitBackTrack = 0;
 				bool success = false;
@@ -1713,19 +1734,19 @@ class HuffmanCoding{
 						int diff = maxBitCount - this->codeTable[f];
 						encoded >>= diff;
 						maxBitCount = this->codeTable[f];
-						bitBackTrack+= diff;
-						encoded &= ~((~(0) >> maxBitCount) << maxBitCount);
+						bitBackTrack += diff;
+						encoded &= ~(( ~(0) >> maxBitCount) << maxBitCount);
 					}
-					int mask = ~((~(0) >> maxBitCount) << maxBitCount);	
+					int mask = ~(( ~(0) >> maxBitCount) << maxBitCount);	
 					if((encoded & mask) == (tableCode & mask)){
 						this->out[o] = this->treeLetters[f];
 						bitOffset -= bitBackTrack;
 						if(bitOffset < 0){
 							bitOffset *= -1;
 							bitOffset = 8 - (bitOffset % 8);
-							indexOffset--;
+							bodyStart--;
 						}
-						//this->reduceFrequency(f);
+						// this->reduceFrequency(f); <-- could work to reduce decode time. but needs to be calculated.
 						success = true;
 						break;
 					}
@@ -1736,6 +1757,80 @@ class HuffmanCoding{
 					return false;
 				}
 			}
+			return true;
+		}
+
+		/* QJ sort functions */
+		bool codeTableSortByBitCount(void){
+			if(!this->validateTreeData()){
+				this->setError(44456, "generateCodeTable() - failed to validate tree data.");
+				return false;
+			}else if(!this->validateFrequencies()){
+				this->setError(665434, "generateCodeTable() - failed to validate frequencies.");
+				return false;
+			}else if(!this->validateCodeTable()){
+				this->setError(2342, "codeTableSortByBitCount() - failed to validate code table.");
+				return false;
+			}
+
+			this->destroyWorkBuffer();
+			if(!this->resizeWorkBuffer(this->frequencies_s)){
+				this->setError(324, "codeTableSortByBitCount() - failed to resize workbuffer.");
+				return false;
+			}
+
+			for(int i=0, grab=this->codeTable[0], grabIdx=0; i<this->workBuffer_s && i<this->codeTable_s; i++){
+				if(grab > this->codeTable[i]){
+					// get the index of grab, 
+					int biggerIdx = grabIdx;
+					if((biggerIdx+this->frequencies_s < 0 || biggerIdx+this->frequencies_s >= this->codeTable_s) ||
+					   (biggerIdx < 0 || biggerIdx >= this->codeTable_s)){
+						this->setError(234, "codeTableSortByBitCount() - biggerIdx is out of bounds.");
+						return false;
+					}
+
+					// get the index of code table.
+					int smallerIdx = i;
+					if((smallerIdx+this->frequencies_s < 0 || smallerIdx+this->frequencies_s >= this->codeTable_s) || 
+					   (smallerIdx < 0 || smallerIdx >= this->codeTable_s)){ // insanity check
+						this->setError(234, "codeTableSortByBitCount() - smallerIdx is out of bounds.");
+						return false;
+					}
+
+					// swap grabI and codeTableI,
+					int tmpG = grab;
+					int tmpT = this->codeTable[i];
+					this->codeTable[biggerIdx] = tmpT;
+					this->codeTable[smallerIdx] = tmpG;
+
+					// swap grabI+freq and codeTableI + freq
+					tmpG = this->codeTable[biggerIdx+this->frequencies_s];
+					tmpT = this->codeTable[smallerIdx+this->frequencies_s];
+					this->codeTable[biggerIdx+this->frequencies_s] = tmpT;
+					this->codeTable[smallerIdx+this->frequencies_s] = tmpG;
+
+					// swap grabI and treeLetterI
+					tmpG = (int)this->treeLetters[biggerIdx] & 0xff;
+					tmpT = (int)this->treeLetters[smallerIdx] & 0xff;
+					this->treeLetters[biggerIdx] = ((char)tmpT) & 0xff;
+					this->treeLetters[smallerIdx] = ((char)tmpG) & 0xff;
+
+					// swap grabI and freqeuncieI
+					tmpG = this->frequencies[biggerIdx];
+					tmpT = this->frequencies[smallerIdx];
+					this->frequencies[biggerIdx] = tmpT;
+					this->frequencies[smallerIdx] = tmpG;
+
+					i = 0;
+					grab = this->codeTable[0];
+					grabIdx = 0;
+				}else{
+					grab = this->codeTable[i];
+					grabIdx = i;
+				}
+			}
+
+			this->destroyWorkBuffer();
 			return true;
 		}
 
@@ -2012,218 +2107,10 @@ class HuffmanCoding{
 			return true;
 		}
 
-
-		bool codeTableSortByBitCount(void){
-		if(!this->validateTreeData()){
-		this->setError(44456, "generateCodeTable() - failed to validate tree data.");
-		return false;
-		}
-		if(!this->validateFrequencies()){
-		this->setError(665434, "generateCodeTable() - failed to validate frequencies.");
-		return false;
-		}
-		// TODO: validate code table
-		this->destroyWorkBuffer();
-		this->resizeWorkBuffer(this->frequencies_s);
-		for(int i=0, grab=this->codeTable[0], grabIdx=0; i<this->workBuffer_s; i++){
-		if(grab > this->codeTable[i]){
-		// get the index of grab, 
-		int biggerIdx = grabIdx;
-		// get the index of code table.
-		int smallerIdx = i;
-		// swap grabI and codeTableI,
-		int tmpG = grab;
-		int tmpT = this->codeTable[i];
-		this->codeTable[biggerIdx] = tmpT;
-		this->codeTable[smallerIdx] = tmpG;
-		// swap grabI+freq and codeTableI + freq
-		tmpG = this->codeTable[biggerIdx+this->frequencies_s];
-		tmpT = this->codeTable[smallerIdx+this->frequencies_s];
-		this->codeTable[biggerIdx+this->frequencies_s] = tmpT;
-		this->codeTable[smallerIdx+this->frequencies_s] = tmpG;
-		// swap grabI and treeLetterI
-		tmpG = (int)this->treeLetters[biggerIdx] & 0xff;
-		tmpT = (int)this->treeLetters[smallerIdx] & 0xff;
-		this->treeLetters[biggerIdx] = ((char)tmpT) & 0xff;
-		this->treeLetters[smallerIdx] = ((char)tmpG) & 0xff;
-
-		// swap grabI and freqeuncieI
-		tmpG = this->frequencies[biggerIdx];
-		tmpT = this->frequencies[smallerIdx];
-		this->frequencies[biggerIdx] = tmpT;
-		this->frequencies[smallerIdx] = tmpG;
-
-		// set I = 0,
-		i = 0;
-		// set grab = codeTable[0]
-		grab = this->codeTable[0];
-		grabIdx = 0;
-		}else{
-		grab = this->codeTable[i];
-		grabIdx = i;
-		}
-		}
-
-
-		this->destroyWorkBuffer();
-		return true;
-		}
-		
-		std::string getCodeBinary(int idx){
-		if(this->codeTable == NULL){
-		this->setError(800, "getCodeBinary(int idx) - codeTable is null.");
-		return "";
-		}
-		if(idx < 0 || idx >= this->codeTable_s){
-		this->setError(801, "getCodeBinary(int idx) - idx is out of bounds.");
-		return "";
-		}
-		if(this->frequencies_s+idx < 0 || this->frequencies_s+idx >= this->codeTable_s){
-		this->setError(802, "getCodeBinary(int idx) - frequencies_s+idx is out of bounds.");
-		return "";
-		}
-		std::string ret = "";
-		int codeSize = this->codeTable[idx];
-		int code = this->codeTable[this->frequencies_s+idx];
-		for(int i=codeSize-1;i>=0; i--){
-		int bit = 1 & (code>>i);
-		ret += std::to_string(bit);
-		}
-		return ret;
-		}
-
-		int codeToTableIndex(std::string code){
-		for(int i=0; i<this->frequencies_s; i++){
-		std::string comp = this->getCodeBinary(i);
-		if(this->failed()){
-		this->setError(900, "codeToTableIndex(std::string code) - failed to get binary code.");
-		return -1;
-		}
-		if(comp == code){
-		return i;
-		}
-		}
-		return -1;
-		}
-
-		int charToTableIndex(char val){
-		for(int i=0; i<this->treeLetters_s; i++){
-		if(val == this->treeLetters[i])
-		return i;
-		}
-		return -1;
-		}
-
-		/* Header Structure: we can use what we got to calculate padding in the body.
-		*  3 bits to store final bit index
-		*  9 bits to store freqiency count
-		*  entry(
-		3 bits to store container size
-		1 to 4 bytes containing frequency variable.
-		1 byte for the char.
-		)
-		* Int is stored big endian
-		* */
-		void dbg_pb(const char *msg, int val, int bits, int highlight){
-		this->dbg_pb(msg, val, bits, highlight, 1);
-		}
-
-		void dbg_pb(const char *msg, int val, int bits, int highlight, int bitCount){
-		printf("%s", msg); 
-		for(int i=0; i<bits; i++){
-		if((i>=highlight && i<highlight+bitCount && bitCount >= 0)){
-		printf("\033[0;42m%d\033[0m", (val >> (bits-1-i))&1);
-
-		}else if(i<highlight && bitCount < 0){
-		printf("\033[0;41m%d\033[0m", (val >> (bits-1-i))&1);
-		}else{
-		printf("%d", (val >> (bits-1-i))&1);
-		}
-		}printf(" (%d)\n", val);
-		}
-		std::string dbg_getBin(int val, int bits, int highlight, int bitCount){
-		std::string ret = "";
-		for(int i=0; i<bits; i++){
-		if((i>=highlight && i<highlight+bitCount && bitCount >= 0)){
-		ret += "\033[0;42m"+std::to_string((val >> (bits-1-i))&1)+"\033[0m";
-
-		}else if(i<highlight && bitCount < 0){
-		ret += "\033[0;41m"+std::to_string((val >> (bits-1-i))&1)+"\033[0m";
-		}else{
-		ret += std::to_string((val >> (bits-1-i))&1);
-		}
-		}
-		return ret;
-		}
-
-				
-		
-		int countBits(int val){
-		int ret = 0;
-		int math = val;
-		while(math >= 1){
-		ret++;
-		math /= 2;
-		}
-		return ret;
-		}
-
-		
-		
-			
-
-
-		bool popTables(int freqIndex){
-		if(!this->validateFrequencies()){
-		this->setError(4345, "reduceFrequency()- frequencies table is invalid.");
-		return false;
-		}
-		if(!(freqIndex < this->frequencies_s) || freqIndex < 0){
-		this->setError(345, "reduceFrequency() - freqIndex out of bounds.");
-		return false;
-		}
-
-		for(int i=freqIndex+1; i<this->frequencies_s; i++){
-		// remove index from frequencies
-		this->frequencies[i-1] = this->frequencies[i];
-		// remove index from treeLetters
-		this->treeLetters[i-1] = this->treeLetters[i];
-		// remove index from codeTable
-		this->codeTable[i-1] = this->codeTable[i];
-		this->codeTable[this->frequencies_s + i - 1] = this->codeTable[this->frequencies_s + i];
-		}
-		for(int i=this->frequencies_s+1; i<this->codeTable_s; i++){
-		this->codeTable[i-1] = this->codeTable[i];
-		}
-		this->codeTable_s -= 2;
-		this->frequencies_s -= 1;
-		return true;
-		}
-		bool reduceFrequency(int freqIndex){
-		if(!this->validateFrequencies()){
-		this->setError(4345, "reduceFrequency()- frequencies table is invalid.");
-		return false;
-		}
-		if(!(freqIndex < this->frequencies_s) || freqIndex < 0){
-		this->setError(345, "reduceFrequency() - freqIndex out of bounds.");
-		return false;
-		}
-		this->frequencies[freqIndex]--;
-		if(this->frequencies[freqIndex] < 0)
-		return this->popTables(freqIndex);
-		return true;
-		}
-		
-
-
-		void clearError(void){
-			this->error = -1;
-			this->error_msg = "";
-		}
-
+		/* QJ error functions private */
 		void setError(int c, std::string m){
-		this->error = c;
-		this->error_msg += "["+std::to_string(c)+"] " + m+"\n";
+			this->error = c;
+			this->error_msg += "["+std::to_string(c)+"] " + m+"\n";
 		}
 		
 	public:
@@ -2260,18 +2147,163 @@ class HuffmanCoding{
 			this->destroyOut();
 		}
 
-bool failed(void){
-return this->error != -1 ? true : false;
-}
+		/* QJ error functions public */
+		bool failed(void){
+			return this->error != -1 ? true : false;
+		}
 
-int getError(void){
-return this->error;
-}
-std::string getErrorMessage(void){
-return this->error_msg;
-}
+		int getError(void){
+			return this->error;
+		}
+		std::string getErrorMessage(void){
+			return this->error_msg;
+		}
+		void clearError(void){
+			this->error = -1;
+			this->error_msg = "";
+		}
 
-void printTreeLetters(void){
+		/* QJ compress main */
+		bool compress(char *data, size_t dataSize){
+			this->clearError();
+			this->destroyCodingTable();
+			this->destroyTreeLetters();
+			this->destroyFrequencies();
+			this->destroyOut();
+			this->tablesSorted = false;
+			if(data == NULL){
+				this->setError(0, "compress(char *data, size_t dataSize) - data is null.");
+				return false;
+			}
+			if(dataSize <= 0){
+				this->setError(1, "compress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+				return false;
+			}
+
+			if(!this->createTreeLetters(data, dataSize)){
+				this->setError(2, "compress(char *data, size_t dataSize) - Failed to create tree letters.");
+				return false;
+			}
+
+			if(!this->createFrequency(data, dataSize)){
+				this->setError(3, "compress(char *data, size_t dataSize) - Failed to create frequency table");
+				return false;
+			}
+
+			 
+			if(!this->sortFreqencies()){
+				this->setError(4, "compress(char *data, size_t dataSize) - sortFreqencies failed.");
+				return false;
+			}
+
+			if(!this->plantTree()){
+				this->setError(545, "compress() - failed to plant tree.");
+				return false;
+			}
+
+			if(!this->generateCodeTable()){
+				this->setError(5555, "compress() - failed to generate code table.");
+				return false;
+			}
+
+			if(!this->encode(data, dataSize)){
+				this->setError(5, "compress(char *data, size_t dataSize) - Failed to encode data.");
+				return false;
+			}
+
+			return true;
+		}
+
+		/* QJ decompress main */
+		bool decompress(char *data, size_t dataSize){
+			this->clearError();
+			this->destroyCodingTable();
+			this->destroyTreeLetters();
+			this->destroyTreeLayers();
+			this->destroyFrequencies();
+			this->destroyOut();
+
+			this->tablesSorted = false; // possibley deprecated variable
+
+			if(data == NULL){
+				this->setError(100, "decompress(char *data, size_t dataSize) - data is null.");
+				return false;
+			}else if(dataSize <= 0){
+				this->setError(101, "decompress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+				return false;
+			}
+
+			int bodyStart = 0;
+			int bodyPadding = 0;
+			int headerPadding = 0;
+			if(!this->unpackHeader(data, dataSize, &bodyStart, &bodyPadding, &headerPadding)){
+				this->setError(102, "decompress(char *data, size_t dataSize) - faiiled to unpack header.");
+				return false;
+			}
+
+			if(!this->plantTree()){
+				this->setError(103, "decompress(char *data, size_t dataSize) - failed to plant tree.");
+				return false;
+			}
+
+			if(!this->generateCodeTable()){
+				this->setError(1304, "decompress() - failed to generate code table.");
+				return false;
+			}
+
+			if(!this->unpackBody(data, dataSize, bodyStart, headerPadding, bodyPadding)){
+				this->setError(4535, "decompress() - failed to unpack body.");
+				return false;
+			}
+
+			return true;
+		}
+
+		/* QJ experimental functions */
+		bool popTables(int freqIndex){
+		if(!this->validateFrequencies()){
+		this->setError(4345, "reduceFrequency()- frequencies table is invalid.");
+		return false;
+		}
+		if(!(freqIndex < this->frequencies_s) || freqIndex < 0){
+		this->setError(345, "reduceFrequency() - freqIndex out of bounds.");
+		return false;
+		}
+
+		for(int i=freqIndex+1; i<this->frequencies_s; i++){
+		// remove index from frequencies
+		this->frequencies[i-1] = this->frequencies[i];
+		// remove index from treeLetters
+		this->treeLetters[i-1] = this->treeLetters[i];
+		// remove index from codeTable
+		this->codeTable[i-1] = this->codeTable[i];
+		this->codeTable[this->frequencies_s + i - 1] = this->codeTable[this->frequencies_s + i];
+		}
+		for(int i=this->frequencies_s+1; i<this->codeTable_s; i++){
+		this->codeTable[i-1] = this->codeTable[i];
+		}
+		this->codeTable_s -= 2;
+		this->frequencies_s -= 1;
+		return true;
+		}
+
+		bool reduceFrequency(int freqIndex){
+		if(!this->validateFrequencies()){
+		this->setError(4345, "reduceFrequency()- frequencies table is invalid.");
+		return false;
+		}
+		if(!(freqIndex < this->frequencies_s) || freqIndex < 0){
+		this->setError(345, "reduceFrequency() - freqIndex out of bounds.");
+		return false;
+		}
+		this->frequencies[freqIndex]--;
+		if(this->frequencies[freqIndex] < 0)
+		return this->popTables(freqIndex);
+		return true;
+		}
+
+		/* QJ debug functions */
+		void printTreeLetters(void){
 printf("Tree Letters : ");
 if(this->treeLetters == NULL || this->treeLetters_s <=0){
 printf("NULL\n");
@@ -2373,100 +2405,70 @@ pretty=0;
 printf("\n");
 }
 }
-		/* QJ compress main */
-		bool compress(char *data, size_t dataSize){
-			this->clearError();
-			this->destroyCodingTable();
-			this->destroyTreeLetters();
-			this->destroyFrequencies();
-			this->destroyOut();
-			this->tablesSorted = false;
-			if(data == NULL){
-				this->setError(0, "compress(char *data, size_t dataSize) - data is null.");
-				return false;
-			}
-			if(dataSize <= 0){
-				this->setError(1, "compress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
-				return false;
-			}
 
-			if(!this->createTreeLetters(data, dataSize)){
-				this->setError(2, "compress(char *data, size_t dataSize) - Failed to create tree letters.");
-				return false;
-			}
-
-			if(!this->createFrequency(data, dataSize)){
-				this->setError(3, "compress(char *data, size_t dataSize) - Failed to create frequency table");
-				return false;
-			}
-
-			 
-			if(!this->sortFreqencies()){
-				this->setError(4, "compress(char *data, size_t dataSize) - sortFreqencies failed.");
-				return false;
-			}
-
-			if(!this->plantTree()){
-				this->setError(545, "compress() - failed to plant tree.");
-				return false;
-			}
-
-			if(!this->generateCodeTable()){
-				this->setError(5555, "compress() - failed to generate code table.");
-				return false;
-			}
-
-			if(!this->encode(data, dataSize)){
-				this->setError(5, "compress(char *data, size_t dataSize) - Failed to encode data.");
-				return false;
-			}
-
-			return true;
+std::string getCodeBinary(int idx){
+		if(this->codeTable == NULL){
+		this->setError(800, "getCodeBinary(int idx) - codeTable is null.");
+		return "";
+		}
+		if(idx < 0 || idx >= this->codeTable_s){
+		this->setError(801, "getCodeBinary(int idx) - idx is out of bounds.");
+		return "";
+		}
+		if(this->frequencies_s+idx < 0 || this->frequencies_s+idx >= this->codeTable_s){
+		this->setError(802, "getCodeBinary(int idx) - frequencies_s+idx is out of bounds.");
+		return "";
+		}
+		std::string ret = "";
+		int codeSize = this->codeTable[idx];
+		int code = this->codeTable[this->frequencies_s+idx];
+		for(int i=codeSize-1;i>=0; i--){
+		int bit = 1 & (code>>i);
+		ret += std::to_string(bit);
+		}
+		return ret;
+		}
+		
+		void dbg_pb(const char *msg, int val, int bits, int highlight){
+		this->dbg_pb(msg, val, bits, highlight, 1);
 		}
 
-		/* QJ decompress main */
-		bool decompress(char *data, size_t dataSize){
-			this->clearError();
-			this->destroyCodingTable();
-			this->destroyTreeLetters();
-			this->destroyTreeLayers();
-			this->destroyFrequencies();
-			this->destroyOut();
+		void dbg_pb(const char *msg, int val, int bits, int highlight, int bitCount){
+		printf("%s", msg); 
+		for(int i=0; i<bits; i++){
+		if((i>=highlight && i<highlight+bitCount && bitCount >= 0)){
+		printf("\033[0;42m%d\033[0m", (val >> (bits-1-i))&1);
 
-			this->tablesSorted = false; // possibley deprecated variable
-
-			if(data == NULL){
-				this->setError(100, "decompress(char *data, size_t dataSize) - data is null.");
-				return false;
-			}else if(dataSize <= 0){
-				this->setError(101, "decompress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
-				return false;
-			}
-
-			int bodyStart = 0;
-			int bodyPadding = 0;
-			int headerPadding = 0;
-			if(!this->unpackHeader(data, dataSize, &bodyStart, &bodyPadding, &headerPadding)){
-				this->setError(102, "decompress(char *data, size_t dataSize) - faiiled to unpack header.");
-				return false;
-			}
-
-			if(!this->plantTree()){
-				this->setError(103, "decompress(char *data, size_t dataSize) - failed to plant tree.");
-				return false;
-			}
-
-			if(!this->generateCodeTable()){
-				this->setError(1304, "decompress() - failed to generate code table.");
-				return false;
-			}
-
-			// TODO: security review;
-			if(!this->unpackBody(data, dataSize, bodyStart, headerPadding, bodyPadding)){
-				this->setError(4535, "decompress() - failed to unpack body.");
-				return false;
-			}
-
-			return true;
+		}else if(i<highlight && bitCount < 0){
+		printf("\033[0;41m%d\033[0m", (val >> (bits-1-i))&1);
+		}else{
+		printf("%d", (val >> (bits-1-i))&1);
 		}
+		}printf(" (%d)\n", val);
+		}
+		std::string dbg_getBin(int val, int bits, int highlight, int bitCount){
+		std::string ret = "";
+		for(int i=0; i<bits; i++){
+		if((i>=highlight && i<highlight+bitCount && bitCount >= 0)){
+		ret += "\033[0;42m"+std::to_string((val >> (bits-1-i))&1)+"\033[0m";
+
+		}else if(i<highlight && bitCount < 0){
+		ret += "\033[0;41m"+std::to_string((val >> (bits-1-i))&1)+"\033[0m";
+		}else{
+		ret += std::to_string((val >> (bits-1-i))&1);
+		}
+		}
+		return ret;
+		}		
+		
+		int countBits(int val){
+		int ret = 0;
+		int math = val;
+		while(math >= 1){
+		ret++;
+		math /= 2;
+		}
+		return ret;
+		}
+
 };
