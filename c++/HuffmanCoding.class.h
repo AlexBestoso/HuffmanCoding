@@ -1537,6 +1537,206 @@ class HuffmanCoding{
 			return bitIdx;
 		}
 
+		/* QJ bit unpacking functions */
+		int unpackByte(char *src, size_t srcSize, int *srcIndex, int *bitIndex, int expectedBitCount){
+			if(src == NULL){
+				this->setError(342, "unpackByte() - src is null.");
+				return 0;
+			}else if(srcSize <= 0){
+				this->setError(54, "unpackByte() - srcSize is <= 0");
+				return 0;
+			}else if(srcIndex == NULL){
+				this->setError(45, "unpackByte() - srcIndex is null.");
+				return 0;
+			}else if(srcIndex[0] < 0 || srcIndex[0] >= (int)srcSize){
+				this->setError(354, "unpackByte() - srcIndex is out of bounds.");
+				return false;
+			}else if(bitIndex == NULL){
+				this->setError(234, "unpackByte() - bitIndex is null.");
+				return false;
+			}else if(bitIndex[0] < 0 || bitIndex[0] >= 8){
+				this->setError(324, "unpackByte() - bitIndex is out of bounds.");
+				return false;
+			}else if(expectedBitCount <= 0){
+				this->setError(234, "unpackByte() - expectedBitCount is <= 0.");
+				return false;
+			}
+
+			int ret = 0;
+			int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
+			int bitsRemaining = expectedBitCount;
+			for(int i=this->deriveChunkIndex(binaryMax, bitsRemaining); i >= 0 && srcIndex[0] < srcSize; i=this->deriveChunkIndex(binaryMax, bitsRemaining)){
+				if(bitsRemaining <= 0) break;
+
+				int bitsUsed = 0;
+
+				int msb = bitsRemaining % binaryMax;
+				msb = msb == 0 ? binaryMax - 1 : msb - 1;
+
+				int lsb = 0;
+				int data = ((int)src[srcIndex[0]] & 0xff);
+
+				int sherrection = (7 - bitIndex[0]) - msb;
+				if(sherrection < 0){
+					// Negative, right Shift, preserve lost bits.
+					sherrection *= -1;
+					int mask = ~((~(0) >> (msb - lsb + 1)) << (msb - lsb + 1));
+					data = (data & (mask >> sherrection)) << sherrection;
+					lsb += sherrection;
+				}else if(sherrection > 0){
+					// Positive, Left shift, fetch extra bits
+					int mask = ~((~(0) >> (msb - lsb + 1)) << (msb - lsb + 1));
+					data = (data & (mask << sherrection)) >> sherrection;
+				}
+
+				bitsUsed = (msb - lsb) + 1;
+				bitsRemaining -= bitsUsed;
+				ret += (data & ( ~(( ~(0) >> expectedBitCount) << expectedBitCount) )) << (i * 8);
+
+				bitIndex[0] += bitsUsed;
+				if(bitIndex[0] >= binaryMax){
+					bitIndex[0] = bitIndex[0] % binaryMax;
+					srcIndex[0]++;
+				}
+			}
+			if(this->failed()){
+				this->setError(345, "unpackByte() - failed to derive chunk index.");
+				return 0;
+			}
+			return ret;
+		}
+
+		bool unpackHeader(char *data, size_t dataSize, int *bodyStart, int *bodyPadding, int *headerPadding){
+			if(data == NULL){
+				this->setError(1100, "unpackHeader(char *data, size_t dataSize) - data is null.");
+				return false;
+			}else if(dataSize <= 2){
+				this->setError(1101, "unpackHeader(char *data, size_t dataSize) - dataSize <= 2, which is invalid, treating as null.");
+				return false;
+			}else if(bodyStart == NULL){
+				this->setError(234, "unpackHeader() - bodyStart is null.");
+				return false;
+			}else if(bodyPadding == NULL){
+				this->setError(345, "unpackHeader() - bodyPadding is null.");
+				return false;
+			}else if(headerPadding == NULL){
+				this->setError(111, "unpackHeader() - headerPadding is null.");
+				return false;
+			}
+
+			this->destroyTreeLetters();
+			this->destroyFrequencies();
+
+			int byteIdx = 0;
+			int bitIdx = 0;
+			int elementCount = 0;
+
+			// NOTE: are we even actually using body padding?
+			bodyPadding[0] = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 4);
+			if(this->failed()){
+				this->setError(234, "unpackHeader() - failed to unpack body padding.");
+				return false;
+			}
+			
+			elementCount = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 9);
+			if(this->failed()){
+				this->setError(435, "unpackHeader() - failed to unpack element count.");
+			}
+
+			if(!this->resizeTreeLetters(elementCount)){
+				this->setError(234, "unpackHeader() - failed to resize tree letters.");
+				return false;
+			}else if(!this->resizeFrequencies(elementCount)){
+				this->setError(54, "unpackHeader() - failed to resize frequencies.");
+				return false;
+			}
+
+			for(int i=0; i<this->frequencies_s; i++){
+				int containerSize = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 3);
+				if(this->failed()){
+					this->setError(32354, "unpackHeader() - failed to unpack container size.");
+					return false;
+				}
+
+				int freqValue = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, containerSize * 8);
+				if(this->failed()){
+					this->setError(345, "unpackHeader() - failed to unpack frequency value.");
+					return false;
+				}
+
+				int freqLetter = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 8);
+				if(this->failed()){
+					this->setError(3425, "unpackHeader() - failed to unpack frequency letter.");
+					return false;
+				}
+
+				this->frequencies[i] = freqValue;
+				this->treeLetters[i] = (char)freqLetter&0xff;
+			}
+
+			headerPadding[0] = bitIdx;
+			bodyStart[0] = byteIdx;
+			return true;
+		}
+
+		bool unpackBody(char *data, size_t dataSize, int indexOffset, int bitOffset, int endPadding){
+			//TODO: validate tree
+			this->destroyBody();
+			int body_i=0;
+			this->body_s = dataSize - indexOffset;
+			if(this->body_s <= 0){
+				this->setError(534, "unpackBody() - out_s is out of bounds.");
+				return false;
+			}
+			this->body = new char[this->body_s];
+
+			this->destroyOut();
+			this->out_s = this->treeData[0];
+			this->out = new char[this->out_s];
+
+			this->codeTableSortByBitCount();
+
+			for(int o=0; o<out_s; o++){
+				int maxBitCount = this->codeTable[this->frequencies_s-1];
+				int dbgC = maxBitCount;
+				int dbgA = indexOffset;
+				int dbgB = bitOffset;
+				int encoded = this->unpackByte(data, dataSize, &indexOffset, &bitOffset, maxBitCount);
+				int tableCode = 0;
+				int bitBackTrack = 0;
+				bool success = false;
+				for(int f=this->frequencies_s-1; f>=0; f--){
+					tableCode = this->codeTable[f+this->frequencies_s];
+					if(maxBitCount != this->codeTable[f]){
+						int diff = maxBitCount - this->codeTable[f];
+						encoded >>= diff;
+						maxBitCount = this->codeTable[f];
+						bitBackTrack+= diff;
+						encoded &= ~((~(0) >> maxBitCount) << maxBitCount);
+					}
+					int mask = ~((~(0) >> maxBitCount) << maxBitCount);	
+					if((encoded & mask) == (tableCode & mask)){
+						this->out[o] = this->treeLetters[f];
+						bitOffset -= bitBackTrack;
+						if(bitOffset < 0){
+							bitOffset *= -1;
+							bitOffset = 8 - (bitOffset % 8);
+							indexOffset--;
+						}
+						//this->reduceFrequency(f);
+						success = true;
+						break;
+					}
+				}
+				if(!success){
+					std::string msg = "Failure index : "+std::to_string(o);
+					this->setError(34544, "unpackBody() - failed to decode data. "+msg);
+					return false;
+				}
+			}
+			return true;
+		}
+
 		/* QJ encode functions */
 		/* //
 			Algorithm breakdown:
@@ -1943,43 +2143,7 @@ class HuffmanCoding{
 		}
 
 				
-		int unpackByte(char *src, size_t srcSize, int *srcIndex, int *bitIndex, int expectedBitCount){
-		int ret = 0;
-		int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
-		int bitsRemaining = expectedBitCount;
-		for(int i=this->deriveChunkIndex(binaryMax, bitsRemaining); i >= 0 && srcIndex[0] < srcSize; i=this->deriveChunkIndex(binaryMax, bitsRemaining)){
-		if(bitsRemaining <= 0) break;
-		int msb = bitsRemaining % binaryMax;
-		msb = msb == 0 ? binaryMax - 1 : msb - 1;
-		int lsb = 0;
-		int data = ((int)src[srcIndex[0]] & 0xff);
-		int sherrection = (7 - bitIndex[0]) - msb;
-		int bitsUsed = 0;
-		if(sherrection < 0){
-		// Negative, right Shift, preserve lost bits.
-		sherrection *= -1;
-		int mask = ~((~(0) >> (msb - lsb + 1)) << (msb - lsb + 1));
-		data = (data & (mask >> sherrection)) << sherrection;
-		lsb += sherrection;
-		}else if(sherrection > 0){
-		// Positive, Left shift, fetch extra bits
-		int mask = ~((~(0) >> (msb - lsb + 1)) << (msb - lsb + 1));
-		data = (data & (mask << sherrection)) >> sherrection;
-		} // Else no modification needed.
-		bitsUsed = (msb - lsb) + 1;
-		bitsRemaining -= bitsUsed;
-		ret += (data & (~((~(0)>>expectedBitCount)<<expectedBitCount))) << (i*8);
-
-		bitIndex[0] += bitsUsed;
-		if(bitIndex[0] >= binaryMax){
-		bitIndex[0] = bitIndex[0] % binaryMax;
-		srcIndex[0]++;
-		}
-		}
-
-		return ret;
-		}
-
+		
 		int countBits(int val){
 		int ret = 0;
 		int math = val;
@@ -1991,36 +2155,7 @@ class HuffmanCoding{
 		}
 
 		
-		bool unpackHeader(char *data, size_t dataSize, int *bodyStart, int *bodyPadding, int *headerPadding){
-		if(data == NULL){
-		this->setError(1100, "unpackHeader(char *data, size_t dataSize) - data is null.");
-		return false;
-		}
-		if(dataSize <= 2){
-		this->setError(1101, "unpackHeader(char *data, size_t dataSize) - dataSize <= 2, which is invalid, treating as null.");
-		return false;
-		}
-
-		this->destroyTreeLetters();
-		this->destroyFrequencies();
-		int byteIdx=0, bitIdx=0;
-
-		bodyPadding[0] = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 4);
-		int elementCount = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 9);
-		this->resizeTreeLetters(elementCount);
-		this->resizeFrequencies(elementCount);
-		for(int i=0; i<this->frequencies_s; i++){
-		int containerSize = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 3);
-		int freqValue = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, containerSize * 8);
-		int freqLetter = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 8);
-		this->frequencies[i] = freqValue;
-		this->treeLetters[i] = (char)freqLetter&0xff;
-		}
-		headerPadding[0] = bitIdx;
-		bodyStart[0] = byteIdx;
-		return true;
-		}
-
+		
 			
 
 
@@ -2064,64 +2199,7 @@ class HuffmanCoding{
 		return this->popTables(freqIndex);
 		return true;
 		}
-		bool unpackBody(char *data, size_t dataSize, int indexOffset, int bitOffset, int endPadding){
-		//TODO: validate tree
-		this->destroyBody();
-		int body_i=0;
-		this->body_s = dataSize - indexOffset;
-		if(this->body_s <= 0){
-		this->setError(534, "unpackBody() - out_s is out of bounds.");
-		return false;
-		}
-		this->body = new char[this->body_s];
-
-		this->destroyOut();
-		this->out_s = this->treeData[0];
-		this->out = new char[this->out_s];
-
-		this->codeTableSortByBitCount();
-
-		for(int o=0; o<out_s; o++){
-		int maxBitCount = this->codeTable[this->frequencies_s-1];
-		int dbgC = maxBitCount;
-		int dbgA = indexOffset;
-		int dbgB = bitOffset;
-		int encoded = this->unpackByte(data, dataSize, &indexOffset, &bitOffset, maxBitCount);
-		int tableCode = 0;
-		int bitBackTrack = 0;
-		bool success = false;
-		for(int f=this->frequencies_s-1; f>=0; f--){
-		tableCode = this->codeTable[f+this->frequencies_s];
-		if(maxBitCount != this->codeTable[f]){
-			int diff = maxBitCount - this->codeTable[f];
-			encoded >>= diff;
-			maxBitCount = this->codeTable[f];
-			bitBackTrack+= diff;
-			encoded &= ~((~(0) >> maxBitCount) << maxBitCount);
-		}
-		int mask = ~((~(0) >> maxBitCount) << maxBitCount);	
-		if((encoded & mask) == (tableCode & mask)){
-			this->out[o] = this->treeLetters[f];
-			bitOffset -= bitBackTrack;
-			if(bitOffset < 0){
-				bitOffset *= -1;
-				bitOffset = 8 - (bitOffset % 8);
-				indexOffset--;
-			}
-			//this->reduceFrequency(f);
-			success = true;
-			break;
-		}
-		}
-		if(!success){
-		std::string msg = "Failure index : "+std::to_string(o);
-		this->setError(34544, "unpackBody() - failed to decode data. "+msg);
-		return false;
-		}
-		}
-		return true;
-		}
-
+		
 
 
 		void clearError(void){
@@ -2332,47 +2410,49 @@ printf("\n");
 			return true;
 		}
 
-bool decompress(char *data, size_t dataSize){
-this->clearError();
-this->clearError();
-this->destroyCodingTable();
-this->destroyTreeLetters();
-this->destroyFrequencies();
-this->destroyOut();
-this->tablesSorted = false;
-if(data == NULL){
-this->setError(100, "decompress(char *data, size_t dataSize) - data is null.");
-return false;
-}
-if(dataSize <= 0){
-this->setError(101, "decompress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
-return false;
-}
+		/* QJ decompress main */
+		bool decompress(char *data, size_t dataSize){
+			this->clearError();
+			this->destroyCodingTable();
+			this->destroyTreeLetters();
+			this->destroyTreeLayers();
+			this->destroyFrequencies();
+			this->destroyOut();
 
-int bodyStart = 0;
-int bodyPadding = 0;
-int headerPadding = 0;
-if(!this->unpackHeader(data, dataSize, &bodyStart, &bodyPadding, &headerPadding)){
-this->setError(102, "decompress(char *data, size_t dataSize) - faiiled to unpack header.");
-return false;
-}
+			this->tablesSorted = false; // possibley deprecated variable
 
+			if(data == NULL){
+				this->setError(100, "decompress(char *data, size_t dataSize) - data is null.");
+				return false;
+			}else if(dataSize <= 0){
+				this->setError(101, "decompress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+				return false;
+			}
 
-if(!this->plantTree()){
-this->setError(103, "decompress(char *data, size_t dataSize) - failed to plant tree.");
-return false;
-}
+			int bodyStart = 0;
+			int bodyPadding = 0;
+			int headerPadding = 0;
+			if(!this->unpackHeader(data, dataSize, &bodyStart, &bodyPadding, &headerPadding)){
+				this->setError(102, "decompress(char *data, size_t dataSize) - faiiled to unpack header.");
+				return false;
+			}
 
-if(!this->generateCodeTable()){
-this->setError(1304, "decompress() - failed to generate code table.");
-return false;
-}
+			if(!this->plantTree()){
+				this->setError(103, "decompress(char *data, size_t dataSize) - failed to plant tree.");
+				return false;
+			}
 
-if(!this->unpackBody(data, dataSize, bodyStart, headerPadding, bodyPadding)){
-this->setError(4535, "decompress() - failed to unpack body.");
-return false;
-}
+			if(!this->generateCodeTable()){
+				this->setError(1304, "decompress() - failed to generate code table.");
+				return false;
+			}
 
-return true;
-}
+			// TODO: security review;
+			if(!this->unpackBody(data, dataSize, bodyStart, headerPadding, bodyPadding)){
+				this->setError(4535, "decompress() - failed to unpack body.");
+				return false;
+			}
+
+			return true;
+		}
 };
