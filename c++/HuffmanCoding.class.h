@@ -1292,6 +1292,251 @@ class HuffmanCoding{
 			return true;
 		}
 
+		/* QJ bit packing functions */
+		int deriveChunkIndex(int maxChunkBitCount, int bitsLeft){
+			if(maxChunkBitCount <= 0){
+				this->setError(345, "deriveChunkIndex() - maxChunkBitCount must be > than 0.");
+				return -1;
+			}else if(bitsLeft <= 0){
+				return -1;
+			}
+
+			int ret = bitsLeft / maxChunkBitCount;
+
+			if((bitsLeft % maxChunkBitCount) == 0) ret--;
+
+			return ret;
+		}
+
+		/* * packByte Parameter Breakdown
+		* 1) The value that we want to pack into a location.
+		* 2) From lsb; number of bits within arg 1 that we care about.
+		* 3) Mask of an arg2 number of binary ones, 9 bit requires 0x1ff, or 0b1,1111,1111
+		* 4) the place to pack argument 1 into.
+		* 5) size of argument 4's location.
+		* 6) Starting element offset into argument 4's location.
+		* 7) Starting binary offset of argument 6's elemental location.
+		*  \
+		*  |_-> 6 to which byte in array of bytes, 7 points to which bit in selected byte.
+		* */
+		bool packByte(int packingTarget, int targetBitCount, char *dstBuffer, size_t dstBufferSize, int *dstIndex, int *bitIndex){
+			int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
+			if(targetBitCount <= 0){
+				this->setError(234, "packByte() - targetBitCount <= 0");
+				return false;
+			}else if(dstBuffer == NULL){
+				this->setError(23, "packByte() - dstBuffer is null,");
+				return false;
+			}else if(dstBufferSize <= 0){
+				this->setError(43, "packByte() - dstBufferSize is <= 0");
+				return false;
+			}else if(dstIndex == NULL){
+				this->setError(33, "packByte() - dstIndex is null.");
+				return false;
+			}else if(dstIndex[0] >= dstBufferSize || dstIndex[0] < 0){
+				this->setError(34, "packByte() - dstIndex is out of bounds.");
+				return false;
+			}else if(bitIndex == NULL){
+				this->setError(345345, "packByte() - bitIndex is null.");
+				return false;
+			}else if(bitIndex[0] >= binaryMax || bitIndex[0] < 0){
+				this->setError(345345, "packByte() - bitIndex is out of bounds, max hardcoded to 8");
+				return false;
+			}
+
+			int bitsRemaining = targetBitCount;
+			for(int i=this->deriveChunkIndex(binaryMax, bitsRemaining); i>=0 && dstIndex[0] < dstBufferSize; i=this->deriveChunkIndex(binaryMax, bitsRemaining)){
+				int chunk = (packingTarget >> (i*binaryMax)) & 0xff;
+				
+				int msbPos = (bitsRemaining % binaryMax);
+				msbPos = msbPos == 0 ? binaryMax - 1 : msbPos - 1;
+				int lsbPos = 0;
+
+				int sherrection = (7 - bitIndex[0]) - msbPos;
+				if(sherrection < 0){
+					// Negative, right Shift, preserve lost bits.
+					sherrection *= -1;
+					chunk = chunk >> sherrection;
+					msbPos -= sherrection;
+					lsbPos = 0;
+				}else if(sherrection > 0){
+					// Positive, Left shift, fetch extra bits
+					chunk = chunk << sherrection;
+					msbPos += sherrection;
+					lsbPos += sherrection;	
+				} 
+
+				int bitsUsed = (msbPos - lsbPos) + 1;
+
+				bitsRemaining -= bitsUsed;
+				dstBuffer[dstIndex[0]] += chunk;
+				bitIndex[0] = (bitIndex[0] + bitsUsed);
+				
+				if(bitIndex[0] >= binaryMax){
+					bitIndex[0] = bitIndex[0] % binaryMax;
+					dstIndex[0]++;
+
+					if(!(dstIndex[0] < dstBufferSize)) return true;
+					
+					dstBuffer[dstIndex[0]] = 0x00;
+				}
+
+				if(bitsRemaining <= 0) return true;
+			}
+			return true;
+		}
+
+		int packHeader(void){
+			if(!this->validateFrequencies()){
+				this->setError(1000, "packHeader(void) - failed to validate frequencies.");
+				return -1;
+			}else if(!this->validateTreeLetters()){
+				this->setError(34, "packHeader() - failed to validate tree letters.");
+				return -1;
+			}else if(this->frequencies_s != this->treeLetters_s){
+				this->setError(12323, "packHeader() - frequency and tree letter arrays are missaligned.");
+				return -1;
+			}
+
+			int paddingBitCount = 4; // only 4 bits needed to represent : TODO shrink to 3
+			int elementCountBitCount = 9; // max of 9 bits required to represent
+			int headerBitCount = paddingBitCount + elementCountBitCount;
+			int containerSizeBitCount = 3; // only 3 bits required to rep int's byte usage.
+			int byteBitCount = 8; // a byte is 8 bits
+			int bitIdx = 4; // index to a byte's binary diget. where 0 is the MSB 2⁷, left side of the binary number.
+			int headerIdx = 0; // literal array index.
+
+			for(int i=0; i<this->frequencies_s; i++){
+				int freqBitCount = byteBitCount * ((this->frequencies[i] / 0xff) + 1);
+				headerBitCount += byteBitCount + freqBitCount + containerSizeBitCount;
+			}
+
+			// ensure bit count isn't less than the smallest expected count.
+			if(headerBitCount < (paddingBitCount + elementCountBitCount + containerSizeBitCount + (2 * byteBitCount))){
+				this->setError(45345, "packHeader() - invalid header bit count.");
+				return false;
+			}
+
+			this->destroyHeader();
+			this->header_s = headerBitCount / 8;
+			if ((headerBitCount % 8) != 0) this->header_s++;
+
+			this->header = new (std::nothrow) char[this->header_s];
+			if(!this->header){
+				this->setError(2, "packHeader() - failed to allocate header.");
+				return false;
+			}
+
+			this->header[0] = 0x0;
+
+			if(!this->packByte(this->frequencies_s, 9, this->header, this->header_s, &headerIdx, &bitIdx)){
+				this->setError(3, "packHeader() - failed to pack element count byte.");
+				return false;
+			}
+
+			for(int i=0; i<this->frequencies_s && headerIdx<this->header_s; i++){
+				int containerSize = (((this->frequencies[i]/0xff)) + 1); // rel to sizeof(int) data type
+				if(!this->packByte(containerSize, 3, this->header, this->header_s, &headerIdx, &bitIdx)){
+					this->setError(4, "packHeader() - failed to pack container size byte");
+					return false;
+				}
+
+				int freq = this->frequencies[i];
+				if(!this->packByte(freq, 8, this->header, this->header_s, &headerIdx, &bitIdx)){
+					this->setError(6, "packHeader() - failed to pack freqiency byte.");
+					return false;
+				}
+
+				char letter = this->treeLetters[i];
+				if(!this->packByte((int)letter&0xff, 8, this->header, this->header_s, &headerIdx, &bitIdx)){
+					this->setError(4, "packHeader() - failed to pack letter byte.");
+					return false;
+				}
+			}
+			return bitIdx;
+		}
+		
+		int getCodeTableIndex(char target){
+			if(!this->validateTreeLetters()){
+				this->setError(345, "getCodeTableIndex() - failed to validate tree letters.");
+				return -1;
+			}
+			for(int i=0; i<this->treeLetters_s; i++){
+				if(this->treeLetters[i] == target) return i;
+			}
+
+			return -1;
+		}
+
+		int packBody(int startingBitIndex, char *data, size_t dataSize){
+			if(!this->validateFrequencies()){
+				this->setError(345, "packBody() - failed to validate frequencies.");
+				return -1;
+			}else if(!this->validateCodeTable()){
+				this->setError(32, "packBody() - failed to validate code table.");
+				return -1;
+			}else if(!this->validateHeader()){
+				this->setError(33, "packBody() - failed to validate header data.");
+				return -1;
+			}else if(startingBitIndex < 0 || startingBitIndex >= 8){
+				this->setError(354, "packBody() - starting bit index is out of bounds.");
+				return -1;
+			}else if(data == NULL){
+				this->setError(234, "packBody() - data is null.");
+				return -1;
+			}else if(dataSize <= 0){
+				this->setError(345, "packBody() - dataSize is <= 0");
+				return -1;
+			}
+
+			this->destroyBody();
+
+			// Calculate the number of bits in the encouded result.
+			for(int i=0; i<this->frequencies_s; i++)
+				this->body_s += this->codeTable[i] * this->frequencies[i];
+
+			// add extra byte if there's a remainder from our conversion
+			if((this->body_s % 8) != 0) 
+				this->body_s = (this->body_s / 8) + 1;
+			else
+				this->body_s = this->body_s / 8;
+
+			// Add extra byte to account for the shifted start location of body bytes.
+			if(startingBitIndex > 0) this->body_s++;
+
+			if(this->body_s <= 0){
+				this->setError(32, "packBody() - body_s has underflowed.");
+				return -1;
+			}
+
+			this->body = new (std::nothrow) char[this->body_s];
+			if(!this->body){
+				this->setError(43, "packBody() - failed to allocate body.");
+				return -1;
+			}
+			this->body[0] = 0;
+
+			int bitIdx = startingBitIndex % 8;
+			int bi=0;
+			for(int i=0; i<dataSize && bi<this->body_s; i++){
+				int tableIdx = this->getCodeTableIndex(data[i]);
+				if(tableIdx <= -1){
+					this->setError(453445, "packBody() - failed to get char index.");
+					return -1;
+				}else if(tableIdx >= this->frequencies_s){
+					this->setError(432, "packBody() - tableIdx is out of bounds.");
+					return -1;
+				}
+				int bitCount = this->codeTable[tableIdx];
+				int encodedChar = this->codeTable[tableIdx + this->frequencies_s];
+				if(!this->packByte(encodedChar, bitCount, this->body, this->body_s, &bi, &bitIdx)){
+					this->setError(342, "packBody() - failed to pack body byte.");
+					return -1;
+				}
+			}
+			return bitIdx;
+		}
+
 		/* QJ encode functions */
 		/* //
 			Algorithm breakdown:
@@ -1497,6 +1742,62 @@ class HuffmanCoding{
 			}
 			return true;
 		}
+		
+		bool encode(char *data, size_t dataSize){
+
+			int headerPadding = this->packHeader();
+			if(headerPadding <= -1){
+				this->setError(1201, "encode() - failed to pack header.");
+				return false;
+			}
+
+			int bodyPadding = this->packBody(headerPadding, data, dataSize);
+			if(bodyPadding <= -1 || this->failed()){
+				this->setError(4324, "encode() - failed to pack body.");
+				return false;
+			}
+
+			int a=0, b=0;
+			// TODO: change padding to 3 bits.
+			if(!this->packByte(bodyPadding, 4, this->header, this->header_s, &a, &b)){
+				this->setError(234, "encode() - failed to pack body padding.");
+			}
+
+			this->destroyOut();
+
+			// Add in the header size
+			this->out_s = this->header_s;
+
+			// If the header didn't use the full byte, total size minus 1 consolidates empty space.
+			if(headerPadding != 0) this->out_s--;
+			
+			this->out_s += this->body_s;
+
+			this->out = new (std::nothrow) char[this->out_s];
+			if(!this->out){
+				this->setError(3, "encode() = failed to allocate out.");
+				return false;
+			}
+
+			for(int o=0, h=0, b=0; o<this->out_s && (h<this->header_s || b<this->body_s); o++){
+				if(h<this->header_s){
+					this->out[o] = this->header[h];
+					h++;
+					if(!(h<this->header_s) && headerPadding != 0){
+						// add body[0] directly to the out[o] we just occupied, which reduces total size by 1
+						this->out[o] += this->body[b];
+						b++;
+					}
+				}else if(b<this->body_s){
+					this->out[o] = this->body[b];
+					b++;
+				}else{
+					break;
+				}
+			}
+			return true;
+		}
+
 
 		bool codeTableSortByBitCount(void){
 		if(!this->validateTreeData()){
@@ -1641,87 +1942,7 @@ class HuffmanCoding{
 		return ret;
 		}
 
-		int deriveChunkIndex(int maxChunkBitCount, int bitsLeft){
-		if(maxChunkBitCount <= 0){
-		this->setError(345, "deriveChunkIndex() - maxChunkBitCount must be > than 0.");
-		return -1;
-		}
-		if(bitsLeft <= 0) return -1;
-		int ret = bitsLeft / maxChunkBitCount;
-		if((bitsLeft % maxChunkBitCount) == 0) ret--;
-		return ret;
-		}
-		/* * packByte Parameter Breakdown
-		* 1) The value that we want to pack into a location.
-		* 2) From lsb; number of bits within arg 1 that we care about.
-		* 3) Mask of an arg2 number of binary ones, 9 bit requires 0x1ff, or 0b1,1111,1111
-		* 4) the place to pack argument 1 into.
-		* 5) size of argument 4's location.
-		* 6) Starting element offset into argument 4's location.
-		* 7) Starting binary offset of argument 6's elemental location.
-		*  \
-		*  |_-> 6 to which byte in array of bytes, 7 points to which bit in selected byte.
-		* */
-		bool packByte(int packingTarget, int targetBitCount, char *dstBuffer, size_t dstBufferSize, int *dstIndex, int *bitIndex){
-		int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
-		if(bitIndex == NULL){
-		this->setError(345345, "packByte() - bitIndex is null.");
-		return false;
-		}else if(bitIndex[0] >= binaryMax){
-		this->setError(345345, "packByte() - bitIndex overflows the 8 bit max. Ensure MOD 8.");
-		return false;
-		}
-
-		if(targetBitCount <= 0){
-		this->setError(3423, "packByte() - targetBitCount <= 0. It's not allowed to be.");
-		return false;
-		}
-
-		int bitsRemaining = targetBitCount;
-
-		for(int i=this->deriveChunkIndex(binaryMax, bitsRemaining); i>=0 && dstIndex[0] < dstBufferSize; i=this->deriveChunkIndex(binaryMax, bitsRemaining)){
-		int chunk = (packingTarget >> (i*binaryMax)) & 0xff;
-		int msbPos = (bitsRemaining % binaryMax);
-		msbPos = msbPos == 0 ? binaryMax - 1 : msbPos - 1;
-		int lsbPos = 0;
-
-		int sherrection = (7 - bitIndex[0]) - msbPos;
-		int bitsUsed = 0;
-		if(sherrection < 0){
-		// Negative, right Shift, preserve lost bits.
-		sherrection *= -1;
-		chunk = chunk >> sherrection;
-		msbPos -= sherrection;
-		lsbPos = 0;
-		}else if(sherrection > 0){
-		// Positive, Left shift, fetch extra bits
-		chunk = chunk << sherrection;
-		msbPos += sherrection;
-		lsbPos += sherrection;	
-		} // Else no modification needed.
-		bitsUsed = (msbPos - lsbPos) + 1;
-		bitsRemaining -= bitsUsed;
-
-		dstBuffer[dstIndex[0]] += chunk;
-		bitIndex[0] = (bitIndex[0] + bitsUsed);
-		if(bitIndex[0] >= binaryMax){
-		dstIndex[0]++;
-		bitIndex[0] = bitIndex[0] % binaryMax;
-		if(!(dstIndex[0] < dstBufferSize)){
-			// nothing more we can do.
-			return true;
-		}
-		dstBuffer[dstIndex[0]] = 0x00;
-		}
-		if(bitsRemaining <= 0){
-		// nothing more we can do.
-		return true;
-		}
-		}
-
-		return true;
-		}
-
+				
 		int unpackByte(char *src, size_t srcSize, int *srcIndex, int *bitIndex, int expectedBitCount){
 		int ret = 0;
 		int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
@@ -1769,59 +1990,7 @@ class HuffmanCoding{
 		return ret;
 		}
 
-		int packHeader(void){
-		if(!this->validateFrequencies()){
-		this->setError(1000, "packHeader(void) - failed to validate frequencies.");
-		return -1;
-		}
-		// TODO: validate letters.
-		if(this->frequencies_s != this->treeLetters_s){
-		this->setError(12323, "packHeader() - frequency and tree letter arrays are missaligned.");
-		return -1;
-		}
-
-		this->destroyHeader();
-		int paddingBitCount = 4; // only 4 bits needed to represent
-		int elementCountBitCount = 9; // max of 9 bits required to represent
-		int headerBitCount = paddingBitCount + elementCountBitCount;
-		int containerSizeBitCount = 3; // only 3 bits required to rep int's byte usage.
-		int byteBitCount = 8; // a byte is 8 bits
-		for(int i=0; i<this->frequencies_s; i++){
-		/*
-		[3bit : number of bytes to read]
-		[8bit * bytes to read  : bits representing frequency vale]
-		[8bit : bits representing letter value]
-		*/
-		int freqBitCount = byteBitCount * ((this->frequencies[i] / 0xff) + 1);
-		headerBitCount += byteBitCount + freqBitCount + containerSizeBitCount;
-		}
-		if(headerBitCount < paddingBitCount + elementCountBitCount + containerSizeBitCount + (2 * byteBitCount)){
-		this->setError(45345, "packHeader() - invalid header bit count.");
-		return false;
-		}
-		this->header_s = (headerBitCount % 8) == 0 ? headerBitCount / 8 : (headerBitCount / 8) + 1; 
-		this->header = new char[this->header_s];
-		this->header[0] = 0x0;
-
-		int bitIdx = 4; // index to a byte's binary diget. where 0 is the MSB 2⁷, left side of the binary number.
-		int headerIdx = 0; // literal array index.
-
-		// pack element count
-		this->packByte(this->frequencies_s, 9, this->header, this->header_s, &headerIdx, &bitIdx);
-
-		for(int i=0; i<this->frequencies_s && headerIdx<this->header_s; i++){
-		int containerSize = (((this->frequencies[i]/0xff)) + 1); // rel to sizeof(int) data type
-		this->packByte(containerSize, 3, this->header, this->header_s, &headerIdx, &bitIdx);
-
-		int freq = this->frequencies[i];
-		this->packByte(freq, 8, this->header, this->header_s, &headerIdx, &bitIdx);
-
-		char letter = this->treeLetters[i];
-		this->packByte((int)letter&0xff, 8, this->header, this->header_s, &headerIdx, &bitIdx);
-		}
-		return bitIdx;
-		}
-
+		
 		bool unpackHeader(char *data, size_t dataSize, int *bodyStart, int *bodyPadding, int *headerPadding){
 		if(data == NULL){
 		this->setError(1100, "unpackHeader(char *data, size_t dataSize) - data is null.");
@@ -1852,49 +2021,8 @@ class HuffmanCoding{
 		return true;
 		}
 
-		int getEncodeCharIndex(char target){
-		// validate tree letters.
-		for(int i=0; i<this->treeLetters_s; i++){
-		if(this->treeLetters[i] == target) return i;
-		}
+			
 
-		return -1;
-		}	
-
-		int packBody(int startingBitIndex, char *data, size_t dataSize){
-		if(!this->validateFrequencies()){
-		this->setError(345, "packBody() - failed to validate frequencies.");
-		return -1;
-		}
-		// validate code table.
-		// validate header.
-
-		// calculate body size using the code table
-		this->destroyBody();
-		for(int i=0; i<this->frequencies_s; i++)
-		this->body_s += this->codeTable[i] * this->frequencies[i];
-
-		this->body_s = (this->body_s % 8) == 0 ? this->body_s/8 : (this->body_s/8)+1;
-		if(startingBitIndex > 0)
-		this->body_s++; // adjust for header's binary offset
-
-		this->body = new char[this->body_s];
-
-		int bitIdx=startingBitIndex % 8;
-		int bi=0;
-		this->body[bi] = 0;
-		for(int i=0; i<dataSize && bi<this->body_s; i++){
-		int tableIdx = this->getEncodeCharIndex(data[i]);
-		if(tableIdx == -1){
-		this->setError(453445, "packBody() - failed to get char index.");
-		return -1;
-		}
-		int bitCount = this->codeTable[tableIdx];
-		int encodedChar = this->codeTable[tableIdx+this->frequencies_s];
-		this->packByte(encodedChar, bitCount, this->body, this->body_s, &bi, &bitIdx);
-		}
-		return bitIdx;
-		}
 
 		bool popTables(int freqIndex){
 		if(!this->validateFrequencies()){
@@ -1995,47 +2123,6 @@ class HuffmanCoding{
 		}
 
 
-		bool encode(char *data, size_t dataSize){
-		this->destroyOut();
-
-		int headerPadding = this->packHeader();
-		if(headerPadding <= -1){
-		this->setError(1201, "encode() - failed to pack header.");
-		return false;
-		}
-
-		int bodyPadding = this->packBody(headerPadding, data, dataSize);
-		if(bodyPadding <= -1){
-		this->setError(4324, "encode() - failed to pack body.");
-		return false;
-		}
-
-		int a=0, b=0;
-		this->packByte(bodyPadding, 4, this->header, this->header_s, &a, &b);
-
-		this->out_s = this->header_s;
-		if(headerPadding != 0)
-		this->out_s--;
-		this->out_s += this->body_s;
-		this->out = new char[this->out_s];
-
-		for(int o=0,h=0,b=0; o<this->out_s && (h<this->header_s || b<this->body_s); o++){
-		if(h<this->header_s){
-		this->out[o] = this->header[h];
-		h++;
-		if(!(h<this->header_s) && headerPadding != 0){
-			this->out[o] += this->body[b];
-			b++;
-		}
-		}else if(b<this->body_s){
-		this->out[o] = this->body[b];
-		b++;
-		}else{
-		break;
-		}
-		}
-		return true;
-		}
 
 		void clearError(void){
 			this->error = -1;
@@ -2237,7 +2324,6 @@ printf("\n");
 				return false;
 			}
 
-			// TODO: Security Review 
 			if(!this->encode(data, dataSize)){
 				this->setError(5, "compress(char *data, size_t dataSize) - Failed to encode data.");
 				return false;

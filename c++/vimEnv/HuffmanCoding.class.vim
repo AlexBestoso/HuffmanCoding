@@ -134,17 +134,18 @@ silent! normal! zE
 342,700fold
 703,996fold
 999,1293fold
-1296,1499fold
-2052,2053fold
-2056,2082fold
-2198,2247fold
+1296,1538fold
+1541,1799fold
+2139,2140fold
+2143,2169fold
+2285,2333fold
 let &fdl = &fdl
-let s:l = 2198 - ((30 * winheight(0) + 22) / 45)
+let s:l = 1810 - ((1809 * winheight(0) + 22) / 45)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 2198
-normal! 0
+keepjumps 1810
+normal! 017|
 let &g:so = s:so_save | let &g:siso = s:siso_save
 doautoall SessionLoadPost
 " vim: set ft=vim :
