@@ -1,5 +1,7 @@
 # Huffman Coding - c++
 
+To use vim as an IDE, run `vim -u ./huff.vimrc`, to open all the files with line folds.
+
 documentation pending.
 ## Execution Statistics
 ```
@@ -29,3 +31,5 @@ breakdown of element 'Decompress Element'
 	quotant: 0.008742
 Average Decompression time : 0.008742 seconds.
 ```
+### Security Info
+[first security review : jan 16 2026] - alex b audited the class file.
