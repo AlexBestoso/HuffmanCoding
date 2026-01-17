@@ -357,15 +357,16 @@ class HuffmanCoding{
 			
 		/* QJ resize functions */
 		bool resizeTreeLetters(size_t size){
+			this->errorCurrent = "resizeTreeLetters() - ";
 			if(size < 0){
-				this->setError(0, "resizeTreeLetters() - size is negative.");
+				this->setError(0, this->errorCurrent+"size:"+std::to_string(size)+" is negative.");
 				return false;
 			}else if(size == 0){
 				this->destroyTreeLetters();
 			}else if(this->treeLetters == NULL){
 				this->treeLetters = new (std::nothrow) char[size];
 				if(!this->treeLetters){
-					this->setError(1, "resizeTreeLetters() - failed to allocate treeLetters.");
+					this->setError(1, this->errorCurrent+"failed to allocate treeLetters.");
 					return false;
 				}
 				this->treeLetters_s = size;
@@ -373,7 +374,7 @@ class HuffmanCoding{
 				size_t oldSize = this->treeLetters_s;
 				char *transfer = new (std::nothrow) char[oldSize];
 				if(!transfer){
-					this->setError(2, "resizeTreeLetters() - failed to allocate transfer buffer.");
+					this->setError(2, this->errorCurrent+"failed to allocate transfer.");
 					return false;
 				}
 
@@ -383,7 +384,7 @@ class HuffmanCoding{
 
 				this->treeLetters = new (std::nothrow) char[size];
 				if(!this->treeLetters){
-					this->setError(3, "resizeTreeLetters() - failed to allocate treeLetters.");
+					this->setError(3, this->errorCurrent+"failed to allocate treeLetters.");
 					return false;
 				}
 
@@ -401,12 +402,13 @@ class HuffmanCoding{
 		}
 
 		bool resizeFrequencies(size_t size){
+			this->errorCurrent = "resizeFrequencies() - ";
 			if(size == 0){
 				this->destroyFrequencies();
 			}else if(this->frequencies == NULL){
 				this->frequencies = new (std::nothrow) int[size];
 				if(!this->frequencies){
-					this->setError(0, "resizeFrequencies() - failed to allocate frequencies.");
+					this->setError(0, this->errorCurrent+"failed to allocate frequencies.");
 					return false;
 				}
 				this->frequencies_s = size;
@@ -414,7 +416,7 @@ class HuffmanCoding{
 				size_t oldSize = this->frequencies_s;
 				int *transfer = new (std::nothrow) int[oldSize];
 				if(!transfer){
-					this->setError(1, "resizeFrequencies() - failed to allocate transfer.");
+					this->setError(1, this->errorCurrent+"failed to allocate transfer.");
 					return false;
 				}
 				for(int i=0; i<oldSize; i++)
@@ -422,7 +424,7 @@ class HuffmanCoding{
 				this->destroyFrequencies();
 				this->frequencies = new (std::nothrow) int[size];
 				if(!this->frequencies){
-					this->setError(2, "resizeFrequencies() - failed to allocate frequencies.");
+					this->setError(2, this->errorCurrent+"failed to allocate frequencies.");
 					return false;
 				}
 				this->frequencies_s = size;
@@ -438,13 +440,14 @@ class HuffmanCoding{
 		}
 
 		bool resizeWorkBuffer(size_t size){
+			this->errorCurrent = "resizeWorkBuffer() - ";
 			if(size == 0){
 				this->destroyWorkBuffer();
 			}else if(this->workBuffer == NULL || this->workBuffer_s <= 0){
 				this->destroyWorkBuffer();
 				this->workBuffer = new (std::nothrow) int[size];
 				if(!this->workBuffer){
-					this->setError(0, "resizeWorkBuffer() - failed to allocate workBuffer");
+					this->setError(0, this->errorCurrent+"failed to allocate workBuffer");
 					return false;
 				}
 				this->workBuffer_s = size;
@@ -452,7 +455,7 @@ class HuffmanCoding{
 				size_t oldSize = this->workBuffer_s;
 				int *transfer = new (std::nothrow) int[oldSize];
 				if(!transfer){
-					this->setError(1, "resizeWorkBuffer() - failed to allocate transfer buffer");
+					this->setError(1, this->errorCurrent+"failed to allocate transfer buffer");
 					return false;
 				}
 				for(int i=0; i<oldSize; i++){
@@ -461,7 +464,7 @@ class HuffmanCoding{
 				this->destroyWorkBuffer();
 				this->workBuffer = new (std::nothrow) int[size];
 				if(!this->workBuffer){
-					this->setError(2, "resizeWorkBuffer() - failed to allocate workBuffer.");
+					this->setError(2, this->errorCurrent+"failed to allocate workBuffer.");
 					return false;
 				}
 				this->workBuffer_s = size;
@@ -477,13 +480,14 @@ class HuffmanCoding{
 		}
 
 		bool resizeWorkTypeBuffer(size_t size){
+			this->errorCurrent = "resizeWorkTypeBuffer() - ";
 			if(size == 0){
 				this->destroyWorkTypeBuffer();
 			}else if(this->workTypeBuffer == NULL || this->workTypeBuffer_s <= 0){
 				this->destroyWorkTypeBuffer();
 				this->workTypeBuffer = new (std::nothrow) int[size];
 				if(!this->workTypeBuffer){
-					this->setError(0, "resizeWorkTypeBuffer() - failed to allocate workTypeBuffer.");
+					this->setError(0, this->errorCurrent+"failed to allocate workTypeBuffer.");
 					return false;
 				}
 				this->workTypeBuffer_s = size;
@@ -491,7 +495,7 @@ class HuffmanCoding{
 				size_t oldSize = this->workTypeBuffer_s;
 				int *transfer = new (std::nothrow) int[oldSize];
 				if(!transfer){
-					this->setError(1, "resizeWorkTypeBuffer() - failed to allocate transfer.");
+					this->setError(1, this->errorCurrent+"failed to allocate transfer.");
 					return false;
 				}
 				for(int i=0; i<oldSize; i++){
@@ -500,7 +504,7 @@ class HuffmanCoding{
 				this->destroyWorkTypeBuffer();
 				this->workTypeBuffer = new (std::nothrow) int[size];
 				if(!this->workTypeBuffer){
-					this->setError(2, "resizeWorkTypeBuffer() - failed to allocate workTypeBuffer.");
+					this->setError(2, this->errorCurrent+"failed to allocate workTypeBuffer.");
 					return false;
 				}
 				this->workTypeBuffer_s = size;
@@ -517,17 +521,18 @@ class HuffmanCoding{
 		}
 		
 		bool resizeTreeData(size_t size){
+			this->errorCurrent = "resizeTreeData() - ";
 			if(size == 0){
 				this->destroyTreeData();
 			}else if(this->treeData == NULL){
 				this->treeData = new (std::nothrow) int[size];
 				if(!this->treeData){
-					this->setError(0, "resizeTreeData() -  treedata failed to allocate.");
+					this->setError(0, this->errorCurrent+"treeData failed to allocate.");
 					return false;
 				}
 				this->treeDataTypes = new (std::nothrow) int[size];
 				if(!this->treeDataTypes){
-					this->setError(1, "resizeTreeData() - treeDataTypes failed to allocate.");
+					this->setError(1, this->errorCurrent+"treeDataTypes failed to allocate.");
 					return false;
 				}
 				this->treeData_s = size;
@@ -535,12 +540,12 @@ class HuffmanCoding{
 				size_t oldSize = this->treeData_s;
 				int *transfer = new (std::nothrow) int[oldSize];
 				if(!transfer){
-					this->setError(2, "resizeTreeData() - failed to allocate transfer.");
+					this->setError(2, this->errorCurrent+"failed to allocate transfer.");
 					return false;
 				}
 				int *transferTwo = new (std::nothrow) int[oldSize];
 				if(!transferTwo){
-					this->setError(3, "resizeTreeData() - failed to allocate transferTwo.");
+					this->setError(3, this->errorCurrent+"failed to allocate transferTwo.");
 					return false;
 				}
 				for(int i=0; i<oldSize; i++){
@@ -550,12 +555,12 @@ class HuffmanCoding{
 				this->destroyTreeData();
 				this->treeData = new (std::nothrow) int[size];
 				if(!this->treeData){
-					this->setError(4, "resizeTreeData() - failed to allocate treeData.");
+					this->setError(4, this->errorCurrent+"failed to allocate treeData.");
 					return false;
 				}
 				this->treeDataTypes = new (std::nothrow) int[size];
 				if(!this->treeDataTypes){
-					this->setError(5, "resizeTreeData() - failed to allocate treeDataTypes.");
+					this->setError(5, this->errorCurrent+"failed to allocate treeDataTypes.");
 					return false;
 				}
 				this->treeData_s = size;
@@ -576,18 +581,19 @@ class HuffmanCoding{
 		}
 
 		bool resizeTreeLayers(size_t size){
+			this->errorCurrent = "resizeTreeLayers() - ";
 			if(size == 0){
 				this->destroyTreeLayers();
 			}else if(this->treeLayerIndecies == NULL || this->treeLayerSizes == NULL){
 				this->destroyTreeLayers();
 				this->treeLayerIndecies = new (std::nothrow) int[size];
 				if(!this->treeLayerIndecies){
-					this->setError(0, "resizeTreeLayers() - failed to allocate treeLayerIndecies");
+					this->setError(0, this->errorCurrent+"failed to allocate treeLayerIndecies.");
 					return false;
 				}
 				this->treeLayerSizes = new (std::nothrow) int[size];
 				if(!this->treeLayerSizes){
-					this->setError(1, "resizeTreeLayers() - failed to allocate treeLayerSizes.");
+					this->setError(1, this->errorCurrent+"failed to allocate treeLayerSizes.");
 					return false;
 				}
 				this->treeDataLayerCount = size;
@@ -595,12 +601,12 @@ class HuffmanCoding{
 				size_t oldSize = this->treeDataLayerCount;
 				int *transfer = new (std::nothrow) int[oldSize];
 				if(!transfer){
-					this->setError(2, "resizeTreeLayers() - failed to allocate transfer.");
+					this->setError(2, this->errorCurrent+"failed to allocate transfer.");
 					return false;
 				}
 				int *transferTwo = new (std::nothrow) int[oldSize];
 				if(!transferTwo){
-					this->setError(3, "resizeTreeLayers() - failed to allocate transferTwo.");
+					this->setError(3, this->errorCurrent+"failed to allocate transferTwo.");
 					return false;
 				}
 				for(int i=0; i<oldSize; i++){
@@ -610,12 +616,12 @@ class HuffmanCoding{
 				this->destroyTreeLayers();
 				this->treeLayerIndecies = new (std::nothrow) int[size];
 				if(!this->treeLayerIndecies){
-					this->setError(4, "resizeTreeLayers() - failed to allocate treeLayerIndecies.");
+					this->setError(4, this->errorCurrent+"failed to allocate treeLayerIndecies.");
 					return false;
 				}
 				this->treeLayerSizes = new (std::nothrow) int[size];
 				if(!this->treeLayerSizes){
-					this->setError(5, "resizeTreeLayers() - failed to allocate treeLayerSizes.");
+					this->setError(5, this->errorCurrent+"failed to allocate treeLayerSizes.");
 					return false;
 				}
 				this->treeDataLayerCount = size;
@@ -636,15 +642,16 @@ class HuffmanCoding{
 		}
 
 		bool resizeCodeTable(size_t size){
+			this->errorCurrent = "resizeCodeTable() - ";
 			if(size < 0){
-				this->setError(0, "resizeCodeTable() - size is negative.");
+				this->setError(0, this->errorCurrent+"size:"+std::to_string(size)+" is negative.");
 				return false;
 			}else if(size == 0){
 				this->destroyCodingTable();
 			}else if(this->codeTable == NULL){
 				this->codeTable = new (std::nothrow) int[size];
 				if(!this->codeTable){
-					this->setError(1, "resizeCodeTable() - failed to allocate codeTable.");
+					this->setError(1, this->errorCurrent+"failed to allocate codeTable.");
 					return false;
 				}
 				this->codeTable_s = size;
@@ -652,7 +659,7 @@ class HuffmanCoding{
 				size_t oldSize = this->codeTable_s;
 				int *transfer = new (std::nothrow) int[oldSize];
 				if(!transfer){
-					this->setError(2, "resizeCodeTable() - failed to allocate transfer buffer.");
+					this->setError(2, this->errorCurrent+"failed to allocate transfer.");
 					return false;
 				}
 
@@ -662,7 +669,7 @@ class HuffmanCoding{
 
 				this->codeTable = new (std::nothrow) int[size];
 				if(!this->codeTable){
-					this->setError(3, "resizeCodeTable() - failed to allocate codeTable.");
+					this->setError(3, this->errorCurrent+"failed to allocate codeTable.");
 					return false;
 				}
 
@@ -680,12 +687,13 @@ class HuffmanCoding{
 		}
 
 		bool resizeWorkQueue(size_t size){
+			this->errorCurrent = "resizeWorkQueue() - ";
 			if(size == 0){
 				this->destroyWorkQueue();
 			}else if(this->workQueue == NULL){
 				this->workQueue = new (std::nothrow) int[size];
 				if(!this->workQueue){
-					this->setError(0, "resizeWorkQueue() - failed to allocate workQueue.");
+					this->setError(0, this->errorCurrent+"failed to allocate workQueue.");
 					return false;
 				}
 				this->workQueue_s = size;
@@ -693,7 +701,7 @@ class HuffmanCoding{
 				size_t oldSize = this->workQueue_s;
 				int *transfer = new (std::nothrow) int[oldSize];
 				if(!transfer){
-					this->setError(2, "resizeWorkQueue() - transfer failed to allocate.");
+					this->setError(1, this->errorCurrent+"transfer failed to allocate.");
 					return false;
 				}
 				for(int i=0; i<oldSize; i++){
@@ -702,7 +710,7 @@ class HuffmanCoding{
 				this->destroyWorkQueue();
 				this->workQueue = new (std::nothrow) int[size];
 				if(!this->workQueue){
-					this->setError(4, "resizeWorkQueue() - failed to allocate workQueue");
+					his->setError(2, this->errorCurrent+"failed to allocate workQueue");
 					return false;
 				}
 				this->workQueue_s = size;
