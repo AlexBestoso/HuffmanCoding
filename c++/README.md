@@ -1,12 +1,5 @@
 # Huffman Coding - c++
 
-All relevant compress and decompress functions have been reviewed.
-
-Next step is to review the debug code and the experimental code.
-this should also be wrapped inside an ifdef so that they can be removed from the compile easily.
-
----- devnotes above ----
-
 To use vim as an IDE, run `vim -u ./huff.vimrc`, to open all the files with line folds.
 
 documentation pending.
@@ -38,3 +31,5 @@ breakdown of element 'Decompress Element'
 	quotant: 0.008742
 Average Decompression time : 0.008742 seconds.
 ```
+### Security Info
+[first security review : jan 16 2026] - alex b audited the class file.

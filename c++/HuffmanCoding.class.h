@@ -1,9 +1,14 @@
-#define HUFFMAN_DEBUGGING 1
 /*
- * This class was organized using the quick jump system.
- * all areas of importance are labeled via comment like so : QJ "the label"
- * Use ctrl-f or ? to find the quick jump labels
- * */
+ * The Bestoso Free License
+ * - You may use this file as you like.
+ * - You may modify it and keep it For yourself.
+ * - For it to be free, you shall be thankful :)
+ *  - - - 
+ **/
+
+// Set these to 0 to remove debug and experiemental code from the compile.
+#define HUFFMAN_DEBUGGING 1
+#define HUFFMAN_EXPERIMENTAL 1
 class HuffmanCoding{
 	private:
 		/* QJ private vars */
@@ -2259,216 +2264,220 @@ class HuffmanCoding{
 			return true;
 		}
 
+#if HUFFMAN_EXPERIMENTAL == 1
 		/* QJ experimental functions */
 		bool popTables(int freqIndex){
-		if(!this->validateFrequencies()){
-		this->setError(4345, "reduceFrequency()- frequencies table is invalid.");
-		return false;
-		}
-		if(!(freqIndex < this->frequencies_s) || freqIndex < 0){
-		this->setError(345, "reduceFrequency() - freqIndex out of bounds.");
-		return false;
-		}
+			if(!this->validateFrequencies()){
+				this->setError(4345, "reduceFrequency()- frequencies table is invalid.");
+				return false;
+			}else if(!this->validateTreeLetters()){
+				this->setError(366, "popTables() - failed to validate tree letters.");
+				return false;
+			}else if(!this->validateCodeTable()){
+				this->setError(222, "popTables() - failed to validate code table.");
+				return false;
+			}else if(!(freqIndex < this->frequencies_s) || freqIndex < 0){
+				this->setError(345, "reduceFrequency() - freqIndex out of bounds.");
+				return false;
+			}
 
-		for(int i=freqIndex+1; i<this->frequencies_s; i++){
-		// remove index from frequencies
-		this->frequencies[i-1] = this->frequencies[i];
-		// remove index from treeLetters
-		this->treeLetters[i-1] = this->treeLetters[i];
-		// remove index from codeTable
-		this->codeTable[i-1] = this->codeTable[i];
-		this->codeTable[this->frequencies_s + i - 1] = this->codeTable[this->frequencies_s + i];
-		}
-		for(int i=this->frequencies_s+1; i<this->codeTable_s; i++){
-		this->codeTable[i-1] = this->codeTable[i];
-		}
-		this->codeTable_s -= 2;
-		this->frequencies_s -= 1;
-		return true;
+			for(int i=freqIndex+1; i<this->frequencies_s; i++){
+				// remove index from frequencies
+				this->frequencies[i-1] = this->frequencies[i];
+				// remove index from treeLetters
+				this->treeLetters[i-1] = this->treeLetters[i];
+				// remove index from codeTable
+				this->codeTable[i-1] = this->codeTable[i];
+				this->codeTable[this->frequencies_s + i - 1] = this->codeTable[this->frequencies_s + i];
+			}
+
+			for(int i=this->frequencies_s+1; i<this->codeTable_s; i++)
+				this->codeTable[i-1] = this->codeTable[i];
+			
+			this->codeTable_s -= 2;
+			this->frequencies_s -= 1;
+			return true;
 		}
 
 		bool reduceFrequency(int freqIndex){
-		if(!this->validateFrequencies()){
-		this->setError(4345, "reduceFrequency()- frequencies table is invalid.");
-		return false;
-		}
-		if(!(freqIndex < this->frequencies_s) || freqIndex < 0){
-		this->setError(345, "reduceFrequency() - freqIndex out of bounds.");
-		return false;
-		}
-		this->frequencies[freqIndex]--;
-		if(this->frequencies[freqIndex] < 0)
-		return this->popTables(freqIndex);
-		return true;
-		}
+			if(!this->validateFrequencies()){
+				this->setError(4345, "reduceFrequency()- frequencies table is invalid.");
+				return false;
+			}else if(!(freqIndex < this->frequencies_s) || freqIndex < 0){
+				this->setError(345, "reduceFrequency() - freqIndex out of bounds.");
+				return false;
+			}
 
+			this->frequencies[freqIndex]--;
+			if(this->frequencies[freqIndex] < 0)
+				return this->popTables(freqIndex); // devnote: this doesn't seem right.
+			return true;
+		}
+#endif
+
+#if HUFFMAN_DEBUGGING == 1
 		/* QJ debug functions */
 		void printTreeLetters(void){
-printf("Tree Letters : ");
-if(this->treeLetters == NULL || this->treeLetters_s <=0){
-printf("NULL\n");
-return;
-}
-for(int i=0; i<treeLetters_s; i++){
-printf("[%d]%c ", i, this->treeLetters[i]);
-}printf("\n");
-}
-
-void printFrequencies(void){
-printf("Frequencies (mex:%d): ", this->frequencyMax);
-if(this->frequencies == NULL || this->frequencies_s <= 0){
-printf("NULL\n");
-return;
-}
-for(int i=0; i<this->frequencies_s; i++){
-printf("[%d]%d ", i, this->frequencies[i]);
-}printf("\n");
-}
-
-bool printCodeTable(void){
-printf("\nCode Table : \nduplicate\tindex(translated)\tbit count\tcode\tchar\tfrequency\n");
-if(this->frequencies == NULL || this->frequencies_s <= 0 || this->codeTable == NULL || this->codeTable_s <= 0 || this->treeLetters == NULL || this->treeLetters_s <=0){
-printf("NULL\n");
-return false;
-}
-bool ret = true;
-for(int i=0; i<this->frequencies_s; i++){
-int entryCount = this->codeTable[i];
-std::string entryString = this->getCodeBinary(i);
-char entryLetter = this->treeLetters[i];
-int entryFrequency = this->frequencies[i];
-std::string duplicate = "\033[0;32m  valid\033[0m";
-for(int j=0; j<this->frequencies_s; j++){
-if(j==i) continue;
-if(entryCount == this->codeTable[j] && entryString == this->getCodeBinary(j)){
-	duplicate = "\033[0;31minvalid\033[0m";
-	ret = false;
-}
-}
-printf("%s - %d(%ld)\t%d\t%s\t%d\t%d\n", duplicate.c_str(), i, i+(this->treeData_s-this->frequencies_s), entryCount, entryString.c_str(), (int)entryLetter&0xff, entryFrequency);
-}printf("\n");
-return ret;
-}
-
-void printTreeOrigins(void){
-printf("\n\tTree Origins\n");
-if(!this->validateTreeData()){
-printf("NULL\n");
-return;
-}
-for(int t=this->treeDataLayerCount-1, i=0; t>=0; t--){
-printf("\n\tLayer %d\n", t);
-for(int j=0; j<this->treeLayerSizes[t]; j++){
-int zero=-1, one=-1;
-std::string topNode = this->treeDataTypes[i] == 1 ? "\033[30;43mtop node\033[0m" : "\033[30;47mbottom node\033[0m";
-if(this->getSubIndecies(i, &zero, &one)){
-	int tz = zero == -1 ? -1 : this->treeData[zero];
-	int to = one == -1 ? -1 : this->treeData[one];
-	printf("%s \033[0;33mTree Idx:[%d]%d\t\033[0;35mZero:[%d]%d\t\033[0;36mOne:[%d]%d\033[0m\t%s\n", (this->treeData[i] == tz+to || (tz == -1 || to == -1)) ? "\033[0;32mvalid\033[0m" : "\033[0;31minvalid\033[0m", i, this->treeData[i], zero, tz, one, to, topNode.c_str());
-}else{
-	int tz = zero == -1 ? -1 : this->treeData[zero];
-	int to = one == -1 ? -1 : this->treeData[one];
-	printf("%s \033[0;33mTree Idx:[%d]%d\t\033[0;35mZero:[%d]%d\t\033[0;36mOne:[%d]%d\033[0m\t%s\n", (this->treeData[i] == tz+to || (tz == -1 || to == -1)) ? "\033[0;32mvalid\033[0m" : "\033[0;31minvalid\033[0m", i, this->treeData[i], zero, tz, one, to, topNode.c_str());
-}
-i++;
-}
-}
-}
-
-void printTree(void){
-if(this->treeData == NULL || this->treeData_s <= 0){
-printf("NULL\n");
-return;
-}
-
-size_t layerCount = this->treeDataLayerCount;
-int *layerIndecies = this->treeLayerIndecies;
-
-printf("\nTree Layers Count : %ld\n", layerCount);
-printf("Expected 0 value : %d\n", this->frequencyMax);
-int t=0;
-int pretty=0;
-int count=0;
-for(int i=this->treeDataLayerCount-1; i>=0; i--){
-printf("Tree Layer %d, size %d, start %d, end %d", i, this->treeLayerSizes[i], this->treeLayerIndecies[i], this->treeLayerIndecies[i]-this->treeLayerSizes[i]);
-count=0;
-for(int j=0; j<this->treeLayerSizes[i]; j++){
-if((pretty%7) == 0){
-	count+=7;
-	printf("\n%d >) ",count );
-}
-printf("[%d|%s]%d\t", t, this->treeDataTypes[t] == 0 ? "\033[0;31mbottom\033[0m" : "\033[0;32mtop\033[0m", this->treeData[t]);
-t++;
-pretty++;
-}
-pretty=0;
-printf("\n");
-}
-}
-
-std::string getCodeBinary(int idx){
-		if(this->codeTable == NULL){
-		this->setError(800, "getCodeBinary(int idx) - codeTable is null.");
-		return "";
+			printf("Tree Letters : ");
+			if(this->treeLetters == NULL || this->treeLetters_s <=0){
+				printf("NULL\n");
+				return;
+			}
+			for(int i=0; i<treeLetters_s; i++){
+				printf("[%d]%c ", i, this->treeLetters[i]);
+			}
+			printf("\n");
 		}
-		if(idx < 0 || idx >= this->codeTable_s){
-		this->setError(801, "getCodeBinary(int idx) - idx is out of bounds.");
-		return "";
+
+		void printFrequencies(void){
+			printf("Frequencies (mex:%d): ", this->frequencyMax);
+			if(this->frequencies == NULL || this->frequencies_s <= 0){
+				printf("NULL\n");
+				return;
+			}
+			for(int i=0; i<this->frequencies_s; i++){
+				printf("[%d]%d ", i, this->frequencies[i]);
+			}
+			printf("\n");
 		}
-		if(this->frequencies_s+idx < 0 || this->frequencies_s+idx >= this->codeTable_s){
-		this->setError(802, "getCodeBinary(int idx) - frequencies_s+idx is out of bounds.");
-		return "";
+
+		bool printCodeTable(void){
+			printf("\nCode Table : \nduplicate\tindex(translated)\tbit count\tcode\tchar\tfrequency\n");
+			if(this->frequencies == NULL || this->frequencies_s <= 0 || this->codeTable == NULL || this->codeTable_s <= 0 || this->treeLetters == NULL || this->treeLetters_s <=0){
+				printf("NULL\n");
+				return false;
+			}
+			bool ret = true;
+			for(int i=0; i<this->frequencies_s; i++){
+				int entryCount = this->codeTable[i];
+				std::string entryString = this->getCodeBinary(i);
+				char entryLetter = this->treeLetters[i];
+				int entryFrequency = this->frequencies[i];
+				std::string duplicate = "\033[0;32m  valid\033[0m";
+				for(int j=0; j<this->frequencies_s; j++){
+					if(j==i) continue;
+					if(entryCount == this->codeTable[j] && entryString == this->getCodeBinary(j)){
+						duplicate = "\033[0;31minvalid\033[0m";
+						ret = false;
+					}
+				}
+				printf("%s - %d(%ld)\t%d\t%s\t%d\t%d\n", duplicate.c_str(), i, i+(this->treeData_s-this->frequencies_s), entryCount, entryString.c_str(), (int)entryLetter&0xff, entryFrequency);
+			}
+			printf("\n");
+			return ret;
 		}
-		std::string ret = "";
-		int codeSize = this->codeTable[idx];
-		int code = this->codeTable[this->frequencies_s+idx];
-		for(int i=codeSize-1;i>=0; i--){
-		int bit = 1 & (code>>i);
-		ret += std::to_string(bit);
+
+		void printTreeOrigins(void){
+			printf("\n\tTree Origins\n");
+			if(!this->validateTreeData() || !this->validateTreeLayers()){
+				printf("NULL\n");
+				return;
+			}
+			for(int t=this->treeDataLayerCount-1, i=0; t>=0; t--){
+				printf("\n\tLayer %d\n", t);
+				for(int j=0; j<this->treeLayerSizes[t]; j++){
+					int zero=-1, one=-1;
+					std::string topNode = this->treeDataTypes[i] == 1 ? "\033[30;43mtop node\033[0m" : "\033[30;47mbottom node\033[0m";
+					if(this->getSubIndecies(i, &zero, &one)){
+						int tz = zero == -1 ? -1 : this->treeData[zero];
+						int to = one == -1 ? -1 : this->treeData[one];
+						printf("%s \033[0;33mTree Idx:[%d]%d\t\033[0;35mZero:[%d]%d\t\033[0;36mOne:[%d]%d\033[0m\t%s\n", (this->treeData[i] == tz+to || (tz == -1 || to == -1)) ? "\033[0;32mvalid\033[0m" : "\033[0;31minvalid\033[0m", i, this->treeData[i], zero, tz, one, to, topNode.c_str());
+					}else{
+						int tz = zero == -1 ? -1 : this->treeData[zero];
+						int to = one == -1 ? -1 : this->treeData[one];
+						printf("%s \033[0;33mTree Idx:[%d]%d\t\033[0;35mZero:[%d]%d\t\033[0;36mOne:[%d]%d\033[0m\t%s\n", (this->treeData[i] == tz+to || (tz == -1 || to == -1)) ? "\033[0;32mvalid\033[0m" : "\033[0;31minvalid\033[0m", i, this->treeData[i], zero, tz, one, to, topNode.c_str());
+					}
+					i++;
+				}
+			}
 		}
-		return ret;
+
+		void printTree(void){
+			if(this->treeData == NULL || this->treeData_s <= 0 || !this->validateTreeLayers()){
+				printf("NULL\n");
+				return;
+			}
+
+			size_t layerCount = this->treeDataLayerCount;
+			int *layerIndecies = this->treeLayerIndecies;
+
+			printf("\nTree Layers Count : %ld\n", layerCount);
+			printf("Expected 0 value : %d\n", this->frequencyMax);
+			int t=0;
+			int pretty=0;
+			int count=0;
+			for(int i=this->treeDataLayerCount-1; i>=0; i--){
+				printf("Tree Layer %d, size %d, start %d, end %d", i, this->treeLayerSizes[i], this->treeLayerIndecies[i], this->treeLayerIndecies[i]-this->treeLayerSizes[i]);
+				count=0;
+				for(int j=0; j<this->treeLayerSizes[i]; j++){
+					if((pretty%7) == 0){
+						count+=7;
+						printf("\n%d >) ",count );
+					}
+					printf("[%d|%s]%d\t", t, this->treeDataTypes[t] == 0 ? "\033[0;31mbottom\033[0m" : "\033[0;32mtop\033[0m", this->treeData[t]);
+					t++;
+					pretty++;
+				}
+				pretty=0;
+				printf("\n");
+			}
+		}
+
+		std::string getCodeBinary(int idx){
+			if(this->codeTable == NULL){
+				this->setError(800, "getCodeBinary(int idx) - codeTable is null.");
+				return "";
+			}
+			if(idx < 0 || idx >= this->codeTable_s){
+				this->setError(801, "getCodeBinary(int idx) - idx is out of bounds.");
+				return "";
+			}
+			if(this->frequencies_s+idx < 0 || this->frequencies_s+idx >= this->codeTable_s){
+				this->setError(802, "getCodeBinary(int idx) - frequencies_s+idx is out of bounds.");
+				return "";
+			}
+			std::string ret = "";
+			int codeSize = this->codeTable[idx];
+			int code = this->codeTable[this->frequencies_s+idx];
+			for(int i=codeSize-1;i>=0; i--){
+				int bit = 1 & (code>>i);
+				ret += std::to_string(bit);
+			}
+			return ret;
 		}
 		
 		void dbg_pb(const char *msg, int val, int bits, int highlight){
-		this->dbg_pb(msg, val, bits, highlight, 1);
+			this->dbg_pb(msg, val, bits, highlight, 1);
 		}
 
 		void dbg_pb(const char *msg, int val, int bits, int highlight, int bitCount){
-		printf("%s", msg); 
-		for(int i=0; i<bits; i++){
-		if((i>=highlight && i<highlight+bitCount && bitCount >= 0)){
-		printf("\033[0;42m%d\033[0m", (val >> (bits-1-i))&1);
+			printf("%s", msg); 
+			for(int i=0; i<bits; i++){
+				if((i>=highlight && i<highlight+bitCount && bitCount >= 0)){
+				printf("\033[0;42m%d\033[0m", (val >> (bits-1-i))&1);
 
-		}else if(i<highlight && bitCount < 0){
-		printf("\033[0;41m%d\033[0m", (val >> (bits-1-i))&1);
-		}else{
-		printf("%d", (val >> (bits-1-i))&1);
+				}else if(i<highlight && bitCount < 0){
+					printf("\033[0;41m%d\033[0m", (val >> (bits-1-i))&1);
+				}else{
+					printf("%d", (val >> (bits-1-i))&1);
+				}
+			}
+			printf(" (%d)\n", val);
 		}
-		}printf(" (%d)\n", val);
-		}
-		std::string dbg_getBin(int val, int bits, int highlight, int bitCount){
-		std::string ret = "";
-		for(int i=0; i<bits; i++){
-		if((i>=highlight && i<highlight+bitCount && bitCount >= 0)){
-		ret += "\033[0;42m"+std::to_string((val >> (bits-1-i))&1)+"\033[0m";
-
-		}else if(i<highlight && bitCount < 0){
-		ret += "\033[0;41m"+std::to_string((val >> (bits-1-i))&1)+"\033[0m";
-		}else{
-		ret += std::to_string((val >> (bits-1-i))&1);
-		}
-		}
-		return ret;
-		}		
 		
-		int countBits(int val){
-		int ret = 0;
-		int math = val;
-		while(math >= 1){
-		ret++;
-		math /= 2;
-		}
-		return ret;
-		}
+		std::string dbg_getBin(int val, int bits, int highlight, int bitCount){
+			std::string ret = "";
+			for(int i=0; i<bits; i++){
+				if((i>=highlight && i<highlight+bitCount && bitCount >= 0)){
+					ret += "\033[0;42m"+std::to_string((val >> (bits-1-i))&1)+"\033[0m";
 
+				}else if(i<highlight && bitCount < 0){
+					ret += "\033[0;41m"+std::to_string((val >> (bits-1-i))&1)+"\033[0m";
+				}else{
+					ret += std::to_string((val >> (bits-1-i))&1);
+				}
+			}
+			return ret;
+		}		
+#endif
 };
