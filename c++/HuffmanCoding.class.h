@@ -6,7 +6,7 @@
  *  - - - 
  **/
 
-// Set these to 0 to remove debug and experiemental code from the compile.
+// Set these to 0 if you want to exclude them from the compile.
 #define HUFFMAN_DEBUGGING 1
 #define HUFFMAN_EXPERIMENTAL 1
 class HuffmanCoding{
@@ -46,6 +46,7 @@ class HuffmanCoding{
 
 		int error;
 		std::string error_msg;
+		std::string errorCurrent;
 
 		bool tablesSorted; // deprecated
 
@@ -193,151 +194,162 @@ class HuffmanCoding{
 
 		/* QJ validate functions */
 		bool validateBody(void){
+			this->errorCurrent = "validateBody() - ";
 			if(this->body == NULL){
-				this->setError(0, "validateBody() - body is null.");
+				this->setError(0, this->errorCurrent + "body is null.");
 				return false;
 			}
 			if(this->body_s <= 0){
-				std::string msg = "validateBody() - body_s is <= 0, || "+std::to_string(this->body_s);
-				this->setError(1, msg);
+				this->errorCurrent += "body_s:"+std::to_string(this->body_s)+" is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateHeader(void){
+			this->errorCurrent = "validateHeader() - ";
 			if(this->header == NULL){
-				this->setError(0, "validateHeader() - header is null.");
+				this->setError(0, this->errorCurrent+"header is null.");
 				return false;
 			}
 			if(this->header_s <= 0){
-				std::string msg = "validateHeader() - header_s is <= 0, || "+std::to_string(this->header_s);
-				this->setError(1, msg);
+				this->errorCurrent = "header_s:"+std::to_string(this->header_s)+" is empty";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateCodeTable(void){
+			this->errorCurrent = "validateCodeTable() - ";
 			if(this->codeTable == NULL){
-				this->setError(0, "validateCodeTable() - code table is null.");
+				this->setError(0, this->errorCurrent+"codeTable is null.");
 				return false;
 			}
 			if(this->codeTable_s <= 0){
-				std::string msg = "validateCodeTable() - code table size <= 0, || "+std::to_string(this->codeTable_s);
-				this->setError(1, msg);
+				this->errorCurrent += "codeTableSize:"+std::to_string(this->codeTable_s)+" is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateTreeData(void){
+			this->errorCurrent = "validateTreeData() - ";
 			if(this->treeData == NULL){
-				this->setError(0, "validateTreeData(void) - treeData is null.");
+				this->setError(0, this->errorCurrent + "treeData is null.");
 				return false;
 			}
 			if(this->treeDataTypes == NULL){
-				this->setError(1, "validateTreeData() - treeDataTypes is null.");
+				this->setError(1, this->errorCurrent + "treeDataTypes is null.");
 				return false;
 			}	
 			if(this->treeData_s <= 0){
-				std::string msg = "validateTreeData() - tree data size <= 0, || "+std::to_string(this->treeData_s);
-				this->setError(2, msg);
+				this->errorCurrent += "treeData_s:"+std::to_string(this->treeData_s) + "is empty.";
+				this->setError(2, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateTreeLayers(void){
+			this->errorCurrent = "validateTreeLayers() - ";
 			if(this->treeLayerIndecies == NULL){
-				this->setError(0, "validateTreeLayers() - tree layer indecies is null.");
+				this->setError(0, this->errorCurrent + "treeLayerIndecies is null.");
 				return false;
 			}
 			if(this->treeLayerSizes == NULL){
-				this->setError(1, "validateTreeLayers() - tree layer sizes is null.");
+				this->setError(1, this->errorCurrent + "treeLayerSizes is null.");
 				return false;
 			}
 			if(this->treeDataLayerCount <= 0){
-				std::string msg = "validateTreeLayers() - tree data layer count is <= 0, || "+std::to_string(this->treeDataLayerCount);
-				this->setError(2, msg);
+				this->errorCurrent += "treeDataLayerCount:"+std::to_string(this->treeDataLayerCount)+" is empty";
+				this->setError(2, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateTreeLetters(void){
+			this->errorCurrent = "validateTreeLetters";
 			if(this->treeLetters == NULL){
-				this->setError(0, "validateTreeLetters() - tree letters is null.");
+				this->setError(0, this->errorCurrent+ "treeLetters is null.");
 				return false;
 			}
 			if(this->treeLetters_s <= 0){
-				std::string msg = "validateTreeLetters() - treeLetters_s <= 0, || "+std::to_string(this->treeLetters_s);
-				this->setError(1, msg);
+				this->errorCurrent += "treeLetters_s:"+std::to_string(this->treeLetters_s)+" is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}	
 
 		bool validateFrequencies(void){
+			this->errorCurrent = "validateFrequencies() - ";
 			if(this->frequencies == NULL){
-				this->setError(0, "validateFrequencies(void) - frequencies is null.");
+				this->setError(0, this->errorCurrent + "frequencies is null.");
 				return false;
 			}
 			if(this->frequencies_s <= 0){
-				std::string msg = "validateFrequencies(void) - frequencies_s <= 0, ||" + std::to_string(this->frequencies_s);
-				this->setError(1, msg);
+				this->errorCurrent += "frequencies_s:" + std::to_string(this->frequencies_s) + " is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateWorkQueue(void){
+			this->errorCurrent = "validateWorkQueue";
 			if(this->workQueue == NULL){
-				this->setError(0, "validateWorkQueue() - workQueue is null.");
+				this->setError(0, this->errorCurrent+"workQueue is null.");
 				return false;
 			}
 			if(this->workQueue_s <= 0){
-				std::string msg = "validateWorkQueue() - workQueue_s <= 0, ||" + std::to_string(this->workQueue_s);
-				this->setError(1, "validateWorkQueue() - workQueue_s <= 0, treating as null.");
+				this->errorCurrent += "workQueue_s:" + std::to_string(this->workQueue_s)+" is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateWorkBuffer(void){
+			this->errorCurrent = "validateWorkBuffer - ";
 			if(this->workBuffer == NULL){
-				this->setError(0, "validateWorkBuffer() - workBuffer is null.");
+				this->setError(0, this->errorCurrent + "workBuffer is null.");
 				return false;
 			}
 			if(this->workBuffer_s <= 0){
-				std::string msg = "validateWorkBuffer() - workBuffer_s <= 0, ||" + std::to_string(this->workBuffer_s);
-				this->setError(1, "validateWorkBuffer() - workBuffer_s <= 0, treating as null.");
+				this->errorCurrent += "workBuffer_s:" + std::to_string(this->workBuffer_s)+" is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateWorkTypeBuffer(void){
+			this->errorCurrent = "validateWorkTypeBuffer() - ";
 			if(this->workTypeBuffer == NULL){
-				this->setError(0, "validateWorkTypeBuffer() - workTypeBuffer is null.");
+				this->setError(0, this->errorCurrent+"workTypeBuffer is null.");
 				return false;
 			}
 			if(this->workTypeBuffer_s <= 0){
-				std::string msg = "validateWorkTypeBuffer() - workTypeBuffer_s <= 0, ||" + std::to_string(this->workTypeBuffer_s);
-				this->setError(1, "validateWorkTypeBuffer() - workTypeBuffer_s <= 0, treating as null.");
+				this->errorCurrent += "workTypeBuffer_s:" + std::to_string(this->workTypeBuffer_s)+" is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateOut(void){
+			this->errorCurrent = "validateOut() - ";
 			if(this->out == NULL){
-				this->setError(0, "validateOut() - out is null.");
+				this->setError(0, this->errorCurrent + "out is null.");
 				return false;
 			}
 			if(this->out_s <= 0){
-				std::string msg = "validateOut() - out_s <= 0, ||" + std::to_string(this->out_s);
-				this->setError(1, "validateOut() - out_s <= 0, treating as null.");
+				this->errorCurrent += "out_s:" + std::to_string(this->out_s)+" is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
