@@ -1916,103 +1916,20 @@ class HuffmanCoding{
 			this->destroyWorkBuffer();
 			return true;
 		}
-
-		/* QJ encode functions */
-		/* //
-			Algorithm breakdown:
-			1) make sure we have data
-			2) get index i from data until no more data.
-			3) 	check if data i is inside our tree letters array.
-			4)	if data i not in array, resize array by +1
-			5)		Append data i to the array
-		// */
-		bool createTreeLetters(char *data, size_t dataSize){
-			if(data == NULL){
-				this->setError(200, "createTreeLetters(char *data, size_t dataSize) - data is null.");
-				return false;
-			}
-			if(dataSize <= 0){
-				this->setError(201, "createTreeLetters(char *data, size_t dataSize) - dataSize is <= 0, treating data as null");
-				return false;
-			}
-
-			this->destroyTreeLetters();
-			for(int i=0; i<dataSize; i++){
-				char testChar = data[i];
-				bool matched = false;
-				for(int j=0; j<this->treeLetters_s; j++){
-					if(testChar == this->treeLetters[j]){
-						matched = true;
-						break;
-					}
-				}
-				if(!matched){
-					if(!this->resizeTreeLetters(this->treeLetters_s + 1)){
-						this->setError(4, "createTreeLetters() - Failed to resize tree letters.");
-						return false;
-					}
-					if(this->treeLetters_s - 1 < 0){
-						this->setError(5, "createTreeLetters() - Unexpected underflow detected.");
-						return false;
-					}
-					this->treeLetters[this->treeLetters_s-1] = testChar;
-				}
-			}
-
-			return true;
-		}
-
-		bool createFrequency(char *data, size_t dataSize){
-			if(data == NULL){
-				this->setError(302, "createFrequency(char *data, size_t dataSize) - data is null.");
-				return false;
-			}
-			if(dataSize <= 0){
-				this->setError(303, "createFrequency(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
-				return false;
-			}
-
-			if(!this->validateTreeLetters()){
-				this->setError(0, "createFrequency() - Invalid tree letters.");
-				return false;
-			}
-
-			this->destroyFrequencies();
-			this->frequencyMax=0;
-
-			for(int i=0; i<this->treeLetters_s; i++){
-				char targetChar = this->treeLetters[i];
-				int freq = 0;
-				for(int j=0; j<dataSize; j++){
-					if(targetChar == data[j])
-						freq++;
-				}
-				if(!this->resizeFrequencies(this->frequencies_s + 1)){
-					this->setError(1, "createFrequency() - failed to resize frequencies array.");
-					return false;
-				}
-				if(this->frequencies_s - 1 < 0){
-					this->setError(2, "createFrequency() - Unexpected buffer underflow.");
-					return false;
-				}
-				this->frequencies[this->frequencies_s - 1] = freq;
-				this->frequencyMax += freq;
-			}
-			return true;
-		}
 		
 		// most to least frequent.
 		bool sortFreqencies(void){
+			this->errorCurrent = "sortFreqencies() - ";
 			if(!this->validateFrequencies()){
-				this->setError(400, "sortFreqencies(void) - failed to validate frequencies.");
+				this->setError(0, this->errorCurrent+"failed to validate frequencies.");
 				return false;
-			}
-			if(!this->validateTreeLetters()){
-				this->setError(1, "sortFrequencies() - failed to validate tree letters.");
+			}else if(!this->validateTreeLetters()){
+				this->setError(1, this->errorCurrent+"failed to validate tree letters.");
 				return false;
-			}
-			if(this->treeLetters_s != this->frequencies_s){
-				this->setError(402, "sortFreqencies(void) - Table Corruption, treeLetters_s != frequencies_s.");
+			}else if(this->treeLetters_s != this->frequencies_s){
+				this->errorCurrent += "table corruption, treeLetters_s:"+std::to_string(this->treeLetters_s)+" != ";
+				this->errorCurrent += "frequencies_s:"+std::to_string(this->frequencies_s);
+				this->setError(2, this->errorCurrent);
 				return false;
 			}
 
@@ -2038,24 +1955,107 @@ class HuffmanCoding{
 			return true;
 		}
 
-		bool generateCodeTable(void){
-			if(!this->validateTreeData()){
-				this->setError(44456, "generateCodeTable() - failed to validate tree data.");
+
+		/* QJ encode functions */
+		/* //
+			Algorithm breakdown:
+			1) make sure we have data
+			2) get index i from data until no more data.
+			3) 	check if data i is inside our tree letters array.
+			4)	if data i not in array, resize array by +1
+			5)		Append data i to the array
+		// */
+		bool createTreeLetters(char *data, size_t dataSize){
+			this->errorCurrent = "createTreeLetters() - ";
+			if(data == NULL){
+				this->setError(0, this->errorCurrent+"data is null.");
 				return false;
-			}else if(!this->validateFrequencies()){
-				this->setError(665434, "generateCodeTable() - failed to validate frequencies.");
+			}else if(dataSize <= 0){
+				this->setError(1, this->errorCurrent+"dataSize:"+std::to_string(dataSize)+" is empty.");
+				return false;
+			}
+
+			this->destroyTreeLetters();
+			for(int i=0; i<dataSize; i++){
+				char testChar = data[i];
+				bool matched = false;
+				for(int j=0; j<this->treeLetters_s; j++){
+					if(testChar == this->treeLetters[j]){
+						matched = true;
+						break;
+					}
+				}
+				if(!matched){
+					if(!this->resizeTreeLetters(this->treeLetters_s + 1)){
+						this->setError(3, this->errorCurrent+"Failed to resize tree letters.");
+						return false;
+					}
+					if(this->treeLetters_s - 1 < 0){
+						this->setError(4, this->errorCurrent+"treeLetters_s:"+std::to_string(this->treeLetters_s)+" - 1 underflows array.");
+						return false;
+					}
+					this->treeLetters[this->treeLetters_s-1] = testChar;
+				}
+			}
+
+			return true;
+		}
+
+		bool createFrequency(char *data, size_t dataSize){
+			this->errorCurrent = "createFrequency() - ";
+			if(data == NULL){
+				this->setError(0, this->errorCurrent+"data is null.");
+				return false;
+			}else if(dataSize <= 0){
+				this->setError(1, this->errorCurrent+"dataSize:"+std::to_string(dataSize)+" is empty.");
 				return false;
 			}else if(!this->validateTreeLetters()){
-				this->setError(2, "generateCodeTable() - failed to validate tree letters.");
+				this->setError(2, this->errorCurrent+"Invalid tree letters.");
+				return false;
+			}
+
+			this->destroyFrequencies();
+			this->frequencyMax=0;
+
+			for(int i=0; i<this->treeLetters_s; i++){
+				char targetChar = this->treeLetters[i];
+				int freq = 0;
+				for(int j=0; j<dataSize; j++){
+					if(targetChar == data[j])
+						freq++;
+				}
+				if(!this->resizeFrequencies(this->frequencies_s + 1)){
+					this->setError(3, this->errorCurrent+"failed to resize frequencies array.");
+					return false;
+				}else if(this->frequencies_s - 1 < 0){
+					this->setError(4, this->errorCurrent+"frequencies_s:"+std::to_string(this->frequencies_s)+" - 1 induceds an underflow.");
+					return false;
+				}
+				this->frequencies[this->frequencies_s - 1] = freq;
+				this->frequencyMax += freq;
+			}
+			return true;
+		}
+		
+		bool generateCodeTable(void){
+			this->errorCurrent = "generateCodeTable() - ";
+			if(!this->validateTreeData()){
+				this->setError(0, this->errorCurrent+"failed to validate tree data.");
+				return false;
+			}else if(!this->validateFrequencies()){
+				this->setError(1, this->errorCurrent+"failed to validate frequencies.");
+				return false;
+			}else if(!this->validateTreeLetters()){
+				this->setError(2, this->errorCurrent+"failed to validate tree letters.");
 				return false;
 			}else if(!this->validateTreeLayers()){
-				this->setError(3, "generateCodeTable() - failed to validate tree layers.");
+				this->setError(3, this->errorCurrent+"failed to validate tree layers.");
 				return false;
 			}
 
 			this->destroyCodingTable();
 			if(!this->resizeCodeTable(this->frequencies_s*2)){
-				this->setError(5, "generateCodeTable() - failed to resize code table.");
+				this->setError(4, this->errorCurrent+"failed to resize code table.");
 				return false;
 			}
 			for(int i=0; i<this->codeTable_s; i++)
@@ -2069,10 +2069,10 @@ class HuffmanCoding{
 			int bitArray[2] = {0};
 			for(int i=0; i<=start; i++){
 				if(this->isBaseIndex(i)){
-					this->setError(3234, "generateCodeTable() - huffman tree missaligned. Cannot start processing from base node.");
+					this->setError(5, this->errorCurrent+"huffman tree missaligned, index i:"+std::to_string(i)+" is a base node.");
 					return false; 
 				}else if(!this->getSubIndecies(i, &zero, &one) && this->failed()){
-					this->setError(666, "generateCodeTable() - failed to get inital sub indecies.");
+					this->setError(6, this->errorCurrent+"failed to get inital sub indecies.");
 					return false;
 				}
 
@@ -2082,7 +2082,7 @@ class HuffmanCoding{
 					if(this->isBaseIndex(bitArray[bit])){
 						int newIndex = bitArray[bit] - converter; // convert to bitarray[x] into a value between 0 and frequencies_s
 						if(!this->addBitToCodeTable(newIndex, bit)){
-							this->setError(45423, "generateCodeTable() - failed to add bit to code table.");
+							this->setError(7, this->errorCurrent+"failed to add bit to code table.");
 							return false;
 						}
 						continue;
@@ -2090,7 +2090,7 @@ class HuffmanCoding{
 					queueFill = 0;
 					queueFill = this->pushWorkQueue(bitArray[bit], queueFill);
 					if(this->failed()){
-						this->setError(3234, "generateCodeTable() - failed to push data to queue.");
+						this->setError(8, this->errorCurrent+"failed to push data to queue.");
 						return false;
 					}
 					while(queueFill > 0){
@@ -2098,20 +2098,20 @@ class HuffmanCoding{
 						queueFill--;
 
 						if(!this->getSubIndecies(target, &zero, &one) && this->failed()){
-							this->setError(3333, "generateCodeTable() - failed to get sub node to add bit to.");
+							this->setError(9, this->errorCurrent+"failed to get sub indecies.");
 							return false;
 						}
 
 						if(this->isBaseIndex(zero)){
 							int newIndex = zero - converter; // convert to 0 to frequencie_s
 							if(!this->addBitToCodeTable(newIndex, bit)){
-								this->setError(445, "generateCodeTable() - failed to add bit to zero index.");
+								this->setError(10, this->errorCurrent+"ailed to add bit to zero index.");
 								return false;
 							}
 						}else{
 							queueFill = this->pushWorkQueue(zero, queueFill);
 							if(this->failed()){
-								this->setError(234, "generateCodeTable() - failed to push data to queue.");
+								this->setError(11, this->errorCurrent+"failed to push data to queue.");
 								return false;
 							}
 						}
@@ -2119,13 +2119,13 @@ class HuffmanCoding{
 						if(this->isBaseIndex(one)){
 							int newIndex = one - converter; // convert to 0 to frequencie_s
 							if(!this->addBitToCodeTable(newIndex, bit)){
-								this->setError(435, "generateCodeTable() - failed to add bit to one index.");
+								this->setError(12, this->errorCurrent+"failed to add bit to one index.");
 								return false;
 							}
 						}else{
 							queueFill = this->pushWorkQueue(one, queueFill);
 							if(this->failed()){
-								this->setError(234, "generateCodeTable() - failed to push data to queue.");
+								this->setError(13, this->errorCurrent+"failed to push data to queue.");
 								return false;
 							}
 						}
@@ -2136,23 +2136,23 @@ class HuffmanCoding{
 		}
 		
 		bool encode(char *data, size_t dataSize){
-
+			this->errorCurrent = "encode() - ";
 			int headerPadding = this->packHeader();
 			if(headerPadding <= -1){
-				this->setError(1201, "encode() - failed to pack header.");
+				this->setError(0, this->errorCurrent+"failed to pack header.");
 				return false;
 			}
 
 			int bodyPadding = this->packBody(headerPadding, data, dataSize);
 			if(bodyPadding <= -1 || this->failed()){
-				this->setError(4324, "encode() - failed to pack body.");
+				this->setError(1, this->errorCurrent + "failed to pack body.");
 				return false;
 			}
 
 			int a=0, b=0;
 			// TODO: change padding to 3 bits.
 			if(!this->packByte(bodyPadding, 4, this->header, this->header_s, &a, &b)){
-				this->setError(234, "encode() - failed to pack body padding.");
+				this->setError(2, this->errorCurrent+"failed to pack body padding.");
 			}
 
 			this->destroyOut();
@@ -2167,7 +2167,7 @@ class HuffmanCoding{
 
 			this->out = new (std::nothrow) char[this->out_s];
 			if(!this->out){
-				this->setError(3, "encode() = failed to allocate out.");
+				this->setError(3, this->errorCurrent+"failed to allocate out.");
 				return false;
 			}
 
