@@ -1352,7 +1352,7 @@ class HuffmanCoding{
 		/* QJ bit packing functions */
 		int deriveChunkIndex(int maxChunkBitCount, int bitsLeft){
 			if(maxChunkBitCount <= 0){
-				this->setError(345, "deriveChunkIndex() - maxChunkBitCount must be > than 0.");
+				this->setError(0, "deriveChunkIndex() - maxChunkBitCount must be > than 0.");
 				return -1;
 			}else if(bitsLeft <= 0){
 				return -1;
@@ -1377,27 +1377,32 @@ class HuffmanCoding{
 		*  |_-> 6 to which byte in array of bytes, 7 points to which bit in selected byte.
 		* */
 		bool packByte(int packingTarget, int targetBitCount, char *dstBuffer, size_t dstBufferSize, int *dstIndex, int *bitIndex){
+			this->errorCurrent = "packByte() - ";
 			int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
 			if(targetBitCount <= 0){
-				this->setError(234, "packByte() - targetBitCount <= 0");
+				this->setError(0, this->errorCurrent+"targetBitCount:"+std::to_string(targetBitCount)+" is empty.");
 				return false;
 			}else if(dstBuffer == NULL){
-				this->setError(23, "packByte() - dstBuffer is null,");
+				this->setError(1, this->errorCurrent+"dstBuffer is null,");
 				return false;
 			}else if(dstBufferSize <= 0){
-				this->setError(43, "packByte() - dstBufferSize is <= 0");
+				this->setError(2, this->errorCurrent+"dstBufferSize:"+std::to_string(dstBufferSize)+" is empty.");
 				return false;
 			}else if(dstIndex == NULL){
-				this->setError(33, "packByte() - dstIndex is null.");
+				this->setError(3, this->errorCurrent+"dstIndex is null.");
 				return false;
 			}else if(dstIndex[0] >= dstBufferSize || dstIndex[0] < 0){
-				this->setError(34, "packByte() - dstIndex is out of bounds.");
+				this->errorCurrent += "dstIndex:"+std::to_string(dstIndex[0])+" is out of bounds, ";
+				this->errorCurrent += "dstBufferSize:"+std::to_string(dstBufferSize);
+				this->setError(4, this->errorCurrent);
 				return false;
 			}else if(bitIndex == NULL){
-				this->setError(345345, "packByte() - bitIndex is null.");
+				this->setError(5, this->errorCurrent+"bitIndex is null.");
 				return false;
 			}else if(bitIndex[0] >= binaryMax || bitIndex[0] < 0){
-				this->setError(345345, "packByte() - bitIndex is out of bounds, max hardcoded to 8");
+				this->errorCurrent += "bitIndex:"+std::to_string(bitIndex[0])+" is out of bounds, ";
+				this->errorCurrent += "binaryMax:"+std::to_string(binaryMax);
+				this->setError(6, this->errorCurrent);
 				return false;
 			}
 
@@ -1444,14 +1449,17 @@ class HuffmanCoding{
 		}
 
 		int packHeader(void){
+			this->errorCurrent = "packHeader() - ";
 			if(!this->validateFrequencies()){
-				this->setError(1000, "packHeader(void) - failed to validate frequencies.");
+				this->setError(0, this->errorCurrent+"failed to validate frequencies.");
 				return -1;
 			}else if(!this->validateTreeLetters()){
-				this->setError(34, "packHeader() - failed to validate tree letters.");
+				this->setError(1, this->errorCurrent+"failed to validate tree letters.");
 				return -1;
 			}else if(this->frequencies_s != this->treeLetters_s){
-				this->setError(12323, "packHeader() - frequency and tree letter arrays are missaligned.");
+				this->errorCurrent += "frequencies_s:"+std::to_string(this->frequencies_s)+" != ";
+				this->errorCurrent += "treeLetters_s:"+std::to_string(this->treeLetters_s);
+				this->setError(2, this->errorCurrent);
 				return -1;
 			}
 
@@ -1469,8 +1477,11 @@ class HuffmanCoding{
 			}
 
 			// ensure bit count isn't less than the smallest expected count.
-			if(headerBitCount < (paddingBitCount + elementCountBitCount + containerSizeBitCount + (2 * byteBitCount))){
-				this->setError(45345, "packHeader() - invalid header bit count.");
+			int minimumBitCount = paddingBitCount + elementCountBitCount + containerSizeBitCount + (2 * byteBitCount);
+			if(headerBitCount < minimumBitCount){
+				this->errorCurrent += "headerBitCount:"+std::to_string(headerBitCount)+" is less than the expected ";
+				this->errorCurrent += "minimumBitCount:"+std::to_string(minimumBitCount);
+				this->setError(3, this->errorCurrent);
 				return -1;
 			}
 
@@ -1480,33 +1491,33 @@ class HuffmanCoding{
 
 			this->header = new (std::nothrow) char[this->header_s];
 			if(!this->header){
-				this->setError(2, "packHeader() - failed to allocate header.");
+				this->setError(4, this->errorCurrent+"failed to allocate header.");
 				return -1;
 			}
 
 			this->header[0] = 0x0;
 
 			if(!this->packByte(this->frequencies_s, 9, this->header, this->header_s, &headerIdx, &bitIdx)){
-				this->setError(3, "packHeader() - failed to pack element count byte.");
+				this->setError(4, this->errorCurrent+"failed to pack element count.");
 				return -1;
 			}
 
 			for(int i=0; i<this->frequencies_s && headerIdx<this->header_s; i++){
 				int containerSize = (((this->frequencies[i]/0xff)) + 1); // rel to sizeof(int) data type
 				if(!this->packByte(containerSize, 3, this->header, this->header_s, &headerIdx, &bitIdx)){
-					this->setError(4, "packHeader() - failed to pack container size byte");
+					this->setError(5, this->errorCurrent+"failed to pack sizeof frequency int.");
 					return -1;
 				}
 
 				int freq = this->frequencies[i];
 				if(!this->packByte(freq, 8, this->header, this->header_s, &headerIdx, &bitIdx)){
-					this->setError(6, "packHeader() - failed to pack freqiency byte.");
+					this->setError(6, this->errorCurrent+"failed to pack frequency value.");
 					return -1;
 				}
 
 				char letter = this->treeLetters[i];
 				if(!this->packByte((int)letter&0xff, 8, this->header, this->header_s, &headerIdx, &bitIdx)){
-					this->setError(4, "packHeader() - failed to pack letter byte.");
+					this->setError(7, this->errorCurrent+"failed to pack tree letter.");
 					return -1;
 				}
 			}
@@ -1515,7 +1526,7 @@ class HuffmanCoding{
 		
 		int getCodeTableIndex(char target){
 			if(!this->validateTreeLetters()){
-				this->setError(345, "getCodeTableIndex() - failed to validate tree letters.");
+				this->setError(0, "getCodeTableIndex() - failed to validate tree letters.");
 				return -1;
 			}
 			for(int i=0; i<this->treeLetters_s; i++){
@@ -1526,23 +1537,25 @@ class HuffmanCoding{
 		}
 
 		int packBody(int startingBitIndex, char *data, size_t dataSize){
+			this->errorCurrent = "packBody() - ";
 			if(!this->validateFrequencies()){
-				this->setError(345, "packBody() - failed to validate frequencies.");
+				this->setError(0, this->errorCurrent+"failed to validate frequencies.");
 				return -1;
 			}else if(!this->validateCodeTable()){
-				this->setError(32, "packBody() - failed to validate code table.");
+				this->setError(1, this->errorCurrent+"failed to validate code table.");
 				return -1;
 			}else if(!this->validateHeader()){
-				this->setError(33, "packBody() - failed to validate header data.");
+				this->setError(2, this->errorCurrent+"failed to validate header data.");
 				return -1;
 			}else if(startingBitIndex < 0 || startingBitIndex >= 8){
-				this->setError(354, "packBody() - starting bit index is out of bounds.");
+				this->errorCurrent += "startingBitIndex:"+std::to_string(startingBitIndex)+"is out of bounds, 8";
+				this->setError(3, this->errorCurrent);
 				return -1;
 			}else if(data == NULL){
-				this->setError(234, "packBody() - data is null.");
+				this->setError(4, this->errorCurrent+"data is null.");
 				return -1;
 			}else if(dataSize <= 0){
-				this->setError(345, "packBody() - dataSize is <= 0");
+				this->setError(5, this->errorCurrent+"dataSize:"+std::to_string(dataSize)+" is empty");
 				return -1;
 			}
 
@@ -1562,13 +1575,13 @@ class HuffmanCoding{
 			if(startingBitIndex > 0) this->body_s++;
 
 			if(this->body_s <= 0){
-				this->setError(32, "packBody() - body_s has underflowed.");
+				this->setError(6, this->errorCurrent+"body_s:"+std::to_string(this->body_s)+" has underflowed.");
 				return -1;
 			}
 
 			this->body = new (std::nothrow) char[this->body_s];
 			if(!this->body){
-				this->setError(43, "packBody() - failed to allocate body.");
+				this->setError(7, this->errorCurrent+"failed to allocate body.");
 				return -1;
 			}
 			this->body[0] = 0;
@@ -1578,16 +1591,18 @@ class HuffmanCoding{
 			for(int i=0; i<dataSize && bi<this->body_s; i++){
 				int tableIdx = this->getCodeTableIndex(data[i]);
 				if(tableIdx <= -1){
-					this->setError(453445, "packBody() - failed to get char index.");
+					this->setError(8, this->errorCurrent+"failed to get char index.");
 					return -1;
 				}else if(tableIdx >= this->frequencies_s){
-					this->setError(432, "packBody() - tableIdx is out of bounds.");
+					this->errorCurrent += "tableIdx:"+std::to_string(tableIdx)+" is out of bounds, ";
+					this->errorCurrent += "frequencies_s:"+std::to_string(this->frequencies_s);
+					this->setError(8, this->errorCurrent);
 					return -1;
 				}
 				int bitCount = this->codeTable[tableIdx];
 				int encodedChar = this->codeTable[tableIdx + this->frequencies_s];
 				if(!this->packByte(encodedChar, bitCount, this->body, this->body_s, &bi, &bitIdx)){
-					this->setError(342, "packBody() - failed to pack body byte.");
+					this->setError(9, this->errorCurrent+"failed to pack body byte.");
 					return -1;
 				}
 			}

@@ -184,18 +184,23 @@ silent! normal! zE
 1074,1295fold
 1297,1350fold
 1041,1350fold
-1353,1595fold
-1598,1817fold
-1820,1891fold
-1894,2164fold
-2167,2170fold
-2174,2175fold
-2178,2204fold
-2207,2220fold
-2223,2271fold
-2274,2316fold
-2320,2366fold
-2371,2532fold
+1353,1366fold
+1379,1449fold
+1451,1525fold
+1527,1537fold
+1539,1610fold
+1353,1610fold
+1613,1832fold
+1835,1906fold
+1909,2179fold
+2182,2185fold
+2189,2190fold
+2193,2219fold
+2222,2235fold
+2238,2286fold
+2289,2331fold
+2335,2381fold
+2386,2547fold
 let &fdl = &fdl
 15
 normal! zo
@@ -217,7 +222,11 @@ normal! zc
 normal! zo
 1041
 normal! zc
-let s:l = 1353 - ((314 * winheight(0) + 14) / 29)
+1353
+normal! zo
+1353
+normal! zc
+let s:l = 1353 - ((628 * winheight(0) + 14) / 29)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
