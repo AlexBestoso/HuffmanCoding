@@ -2254,43 +2254,44 @@ class HuffmanCoding{
 			this->destroyFrequencies();
 			this->destroyOut();
 			this->tablesSorted = false;
+			this->errorCurrent = "compress() - ";
 			if(data == NULL){
-				this->setError(0, "compress(char *data, size_t dataSize) - data is null.");
+				this->setError(0, this->errorCurrent+"data is null.");
 				return false;
 			}
 			if(dataSize <= 0){
-				this->setError(1, "compress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+				this->setError(1, this->errorCurrent+"dataSize:"+std::to_string(dataSize)+" is empty.");
 				return false;
 			}
 
 			if(!this->createTreeLetters(data, dataSize)){
-				this->setError(2, "compress(char *data, size_t dataSize) - Failed to create tree letters.");
+				this->setError(2, this->errorCurrent+"Failed to create tree letters.");
 				return false;
 			}
 
 			if(!this->createFrequency(data, dataSize)){
-				this->setError(3, "compress(char *data, size_t dataSize) - Failed to create frequency table");
+				this->setError(3, this->errorCurrent+"Failed to create frequency table");
 				return false;
 			}
 
 			 
 			if(!this->sortFreqencies()){
-				this->setError(4, "compress(char *data, size_t dataSize) - sortFreqencies failed.");
+				this->setError(4, this->errorCurrent+"sortFreqencies failed.");
 				return false;
 			}
 
 			if(!this->plantTree()){
-				this->setError(545, "compress() - failed to plant tree.");
+				this->setError(5, this->errorCurrent+"failed to plant tree.");
 				return false;
 			}
 
 			if(!this->generateCodeTable()){
-				this->setError(5555, "compress() - failed to generate code table.");
+				this->setError(6, this->errorCurrent+"failed to generate code table.");
 				return false;
 			}
 
 			if(!this->encode(data, dataSize)){
-				this->setError(5, "compress(char *data, size_t dataSize) - Failed to encode data.");
+				this->setError(7, this->errorCurrent+"Failed to encode data.");
 				return false;
 			}
 
@@ -2308,11 +2309,12 @@ class HuffmanCoding{
 
 			this->tablesSorted = false; // possibley deprecated variable
 
+			this->errorCurrent = "decompress() - "; 
 			if(data == NULL){
-				this->setError(100, "decompress(char *data, size_t dataSize) - data is null.");
+				this->setError(0, this->errorCurrent+"data is null.");
 				return false;
 			}else if(dataSize <= 0){
-				this->setError(101, "decompress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+				this->setError(1, this->errorCurrent+"dataSize:"+std::to_string(dataSize)+" is empty.");
 				return false;
 			}
 
@@ -2320,22 +2322,22 @@ class HuffmanCoding{
 			int bodyPadding = 0;
 			int headerPadding = 0;
 			if(!this->unpackHeader(data, dataSize, &bodyStart, &bodyPadding, &headerPadding)){
-				this->setError(102, "decompress(char *data, size_t dataSize) - faiiled to unpack header.");
+				this->setError(2, this->errorCurrent+"faiiled to unpack header.");
 				return false;
 			}
 
 			if(!this->plantTree()){
-				this->setError(103, "decompress(char *data, size_t dataSize) - failed to plant tree.");
+				this->setError(3, this->errorCurrent+"failed to plant tree.");
 				return false;
 			}
 
 			if(!this->generateCodeTable()){
-				this->setError(1304, "decompress() - failed to generate code table.");
+				this->setError(4, this->errorCurrent+"failed to generate code table.");
 				return false;
 			}
 
 			if(!this->unpackBody(data, dataSize, bodyStart, headerPadding, bodyPadding)){
-				this->setError(4535, "decompress() - failed to unpack body.");
+				this->setError(5, this->errorCurrent+"failed to unpack body.");
 				return false;
 			}
 
@@ -2345,17 +2347,20 @@ class HuffmanCoding{
 #if HUFFMAN_EXPERIMENTAL == 1
 		/* QJ experimental functions */
 		bool popTables(int freqIndex){
+			this->errorCurrent = "popTables() - ";
 			if(!this->validateFrequencies()){
-				this->setError(4345, "reduceFrequency()- frequencies table is invalid.");
+				this->setError(0, this->errorCurrent+"frequencies table is invalid.");
 				return false;
 			}else if(!this->validateTreeLetters()){
-				this->setError(366, "popTables() - failed to validate tree letters.");
+				this->setError(1, this->errorCurrent+"failed to validate tree letters.");
 				return false;
 			}else if(!this->validateCodeTable()){
-				this->setError(222, "popTables() - failed to validate code table.");
+				this->setError(2, this->errorCurrent+"failed to validate code table.");
 				return false;
 			}else if(!(freqIndex < this->frequencies_s) || freqIndex < 0){
-				this->setError(345, "reduceFrequency() - freqIndex out of bounds.");
+				this->errorCurrent += "freqIndex:"+std::to_string(freqIndex)+" is out of bounds, ";
+				this->errorCurrent += "frequencies_s:"+std::to_string(this->frequencies_s);
+				this->setError(3, this->errorCurrent);
 				return false;
 			}
 
@@ -2378,11 +2383,14 @@ class HuffmanCoding{
 		}
 
 		bool reduceFrequency(int freqIndex){
+			this->errorCurrent = "reduceFrequency() - ";
 			if(!this->validateFrequencies()){
-				this->setError(4345, "reduceFrequency()- frequencies table is invalid.");
+				this->setError(0, this->errorCurrent+"frequencies table is invalid.");
 				return false;
 			}else if(!(freqIndex < this->frequencies_s) || freqIndex < 0){
-				this->setError(345, "reduceFrequency() - freqIndex out of bounds.");
+				this->errorCurrent += "freqIndex:"+std::to_string(freqIndex)+" is out of bounds, ";
+				this->errorCurrent += "frequencies_s:"+std::to_string(this->frequencies_s);
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 
