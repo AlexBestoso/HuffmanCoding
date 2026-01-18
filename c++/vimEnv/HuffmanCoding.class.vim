@@ -127,32 +127,97 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-15,50fold
-53,109fold
-112,192fold
-195,344fold
-347,705fold
-708,1002fold
-1005,1299fold
-1302,1544fold
-1547,1766fold
-1769,1840fold
-1843,2113fold
-2116,2119fold
-2123,2124fold
-2127,2153fold
-2156,2169fold
-2172,2220fold
-2223,2265fold
-2269,2315fold
-2320,2481fold
+15,51fold
+54,57fold
+59,62fold
+64,67fold
+69,76fold
+78,81fold
+83,87fold
+89,92fold
+94,100fold
+102,105fold
+107,110fold
+54,110fold
+113,117fold
+119,123fold
+125,130fold
+132,140fold
+142,150fold
+152,157fold
+159,164fold
+166,171fold
+173,179fold
+181,186fold
+188,193fold
+113,193fold
+196,208fold
+210,222fold
+224,236fold
+238,254fold
+256,272fold
+274,286fold
+288,300fold
+302,314fold
+316,328fold
+330,342fold
+344,356fold
+196,356fold
+359,402fold
+404,440fold
+442,480fold
+482,521fold
+523,581fold
+583,642fold
+644,687fold
+689,724fold
+359,725fold
+733,776fold
+778,794fold
+796,816fold
+818,833fold
+838,862fold
+864,1022fold
+1024,1038fold
+728,1038fold
+1042,1068fold
+1074,1295fold
+1297,1350fold
+1041,1350fold
+1353,1366fold
+1379,1449fold
+1451,1525fold
+1527,1537fold
+1539,1610fold
+1353,1610fold
+1613,1682fold
+1684,1757fold
+1759,1839fold
+1613,1839fold
+1842,1918fold
+1921,1956fold
+1842,1956fold
+1968,2002fold
+2004,2038fold
+2040,2136fold
+2138,2191fold
+1960,2191fold
+2194,2197fold
+2201,2202fold
+2205,2231fold
+2234,2247fold
+2250,2299fold
+2302,2345fold
+2349,2383fold
+2349,2401fold
+2406,2567fold
 let &fdl = &fdl
-let s:l = 9 - ((8 * winheight(0) + 22) / 45)
+let s:l = 2569 - ((376 * winheight(0) + 14) / 29)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 9
-normal! 074|
+keepjumps 2569
+normal! 02|
 let &g:so = s:so_save | let &g:siso = s:siso_save
 doautoall SessionLoadPost
 " vim: set ft=vim :

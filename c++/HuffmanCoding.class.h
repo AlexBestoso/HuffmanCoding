@@ -6,7 +6,7 @@
  *  - - - 
  **/
 
-// Set these to 0 to remove debug and experiemental code from the compile.
+// Set these to 0 if you want to exclude them from the compile.
 #define HUFFMAN_DEBUGGING 1
 #define HUFFMAN_EXPERIMENTAL 1
 class HuffmanCoding{
@@ -46,6 +46,7 @@ class HuffmanCoding{
 
 		int error;
 		std::string error_msg;
+		std::string errorCurrent;
 
 		bool tablesSorted; // deprecated
 
@@ -193,151 +194,162 @@ class HuffmanCoding{
 
 		/* QJ validate functions */
 		bool validateBody(void){
+			this->errorCurrent = "validateBody() - ";
 			if(this->body == NULL){
-				this->setError(0, "validateBody() - body is null.");
+				this->setError(0, this->errorCurrent + "body is null.");
 				return false;
 			}
 			if(this->body_s <= 0){
-				std::string msg = "validateBody() - body_s is <= 0, || "+std::to_string(this->body_s);
-				this->setError(1, msg);
+				this->errorCurrent += "body_s:"+std::to_string(this->body_s)+" is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateHeader(void){
+			this->errorCurrent = "validateHeader() - ";
 			if(this->header == NULL){
-				this->setError(0, "validateHeader() - header is null.");
+				this->setError(0, this->errorCurrent+"header is null.");
 				return false;
 			}
 			if(this->header_s <= 0){
-				std::string msg = "validateHeader() - header_s is <= 0, || "+std::to_string(this->header_s);
-				this->setError(1, msg);
+				this->errorCurrent = "header_s:"+std::to_string(this->header_s)+" is empty";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateCodeTable(void){
+			this->errorCurrent = "validateCodeTable() - ";
 			if(this->codeTable == NULL){
-				this->setError(0, "validateCodeTable() - code table is null.");
+				this->setError(0, this->errorCurrent+"codeTable is null.");
 				return false;
 			}
 			if(this->codeTable_s <= 0){
-				std::string msg = "validateCodeTable() - code table size <= 0, || "+std::to_string(this->codeTable_s);
-				this->setError(1, msg);
+				this->errorCurrent += "codeTableSize:"+std::to_string(this->codeTable_s)+" is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateTreeData(void){
+			this->errorCurrent = "validateTreeData() - ";
 			if(this->treeData == NULL){
-				this->setError(0, "validateTreeData(void) - treeData is null.");
+				this->setError(0, this->errorCurrent + "treeData is null.");
 				return false;
 			}
 			if(this->treeDataTypes == NULL){
-				this->setError(1, "validateTreeData() - treeDataTypes is null.");
+				this->setError(1, this->errorCurrent + "treeDataTypes is null.");
 				return false;
 			}	
 			if(this->treeData_s <= 0){
-				std::string msg = "validateTreeData() - tree data size <= 0, || "+std::to_string(this->treeData_s);
-				this->setError(2, msg);
+				this->errorCurrent += "treeData_s:"+std::to_string(this->treeData_s) + "is empty.";
+				this->setError(2, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateTreeLayers(void){
+			this->errorCurrent = "validateTreeLayers() - ";
 			if(this->treeLayerIndecies == NULL){
-				this->setError(0, "validateTreeLayers() - tree layer indecies is null.");
+				this->setError(0, this->errorCurrent + "treeLayerIndecies is null.");
 				return false;
 			}
 			if(this->treeLayerSizes == NULL){
-				this->setError(1, "validateTreeLayers() - tree layer sizes is null.");
+				this->setError(1, this->errorCurrent + "treeLayerSizes is null.");
 				return false;
 			}
 			if(this->treeDataLayerCount <= 0){
-				std::string msg = "validateTreeLayers() - tree data layer count is <= 0, || "+std::to_string(this->treeDataLayerCount);
-				this->setError(2, msg);
+				this->errorCurrent += "treeDataLayerCount:"+std::to_string(this->treeDataLayerCount)+" is empty";
+				this->setError(2, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateTreeLetters(void){
+			this->errorCurrent = "validateTreeLetters";
 			if(this->treeLetters == NULL){
-				this->setError(0, "validateTreeLetters() - tree letters is null.");
+				this->setError(0, this->errorCurrent+ "treeLetters is null.");
 				return false;
 			}
 			if(this->treeLetters_s <= 0){
-				std::string msg = "validateTreeLetters() - treeLetters_s <= 0, || "+std::to_string(this->treeLetters_s);
-				this->setError(1, msg);
+				this->errorCurrent += "treeLetters_s:"+std::to_string(this->treeLetters_s)+" is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}	
 
 		bool validateFrequencies(void){
+			this->errorCurrent = "validateFrequencies() - ";
 			if(this->frequencies == NULL){
-				this->setError(0, "validateFrequencies(void) - frequencies is null.");
+				this->setError(0, this->errorCurrent + "frequencies is null.");
 				return false;
 			}
 			if(this->frequencies_s <= 0){
-				std::string msg = "validateFrequencies(void) - frequencies_s <= 0, ||" + std::to_string(this->frequencies_s);
-				this->setError(1, msg);
+				this->errorCurrent += "frequencies_s:" + std::to_string(this->frequencies_s) + " is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateWorkQueue(void){
+			this->errorCurrent = "validateWorkQueue";
 			if(this->workQueue == NULL){
-				this->setError(0, "validateWorkQueue() - workQueue is null.");
+				this->setError(0, this->errorCurrent+"workQueue is null.");
 				return false;
 			}
 			if(this->workQueue_s <= 0){
-				std::string msg = "validateWorkQueue() - workQueue_s <= 0, ||" + std::to_string(this->workQueue_s);
-				this->setError(1, "validateWorkQueue() - workQueue_s <= 0, treating as null.");
+				this->errorCurrent += "workQueue_s:" + std::to_string(this->workQueue_s)+" is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateWorkBuffer(void){
+			this->errorCurrent = "validateWorkBuffer - ";
 			if(this->workBuffer == NULL){
-				this->setError(0, "validateWorkBuffer() - workBuffer is null.");
+				this->setError(0, this->errorCurrent + "workBuffer is null.");
 				return false;
 			}
 			if(this->workBuffer_s <= 0){
-				std::string msg = "validateWorkBuffer() - workBuffer_s <= 0, ||" + std::to_string(this->workBuffer_s);
-				this->setError(1, "validateWorkBuffer() - workBuffer_s <= 0, treating as null.");
+				this->errorCurrent += "workBuffer_s:" + std::to_string(this->workBuffer_s)+" is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateWorkTypeBuffer(void){
+			this->errorCurrent = "validateWorkTypeBuffer() - ";
 			if(this->workTypeBuffer == NULL){
-				this->setError(0, "validateWorkTypeBuffer() - workTypeBuffer is null.");
+				this->setError(0, this->errorCurrent+"workTypeBuffer is null.");
 				return false;
 			}
 			if(this->workTypeBuffer_s <= 0){
-				std::string msg = "validateWorkTypeBuffer() - workTypeBuffer_s <= 0, ||" + std::to_string(this->workTypeBuffer_s);
-				this->setError(1, "validateWorkTypeBuffer() - workTypeBuffer_s <= 0, treating as null.");
+				this->errorCurrent += "workTypeBuffer_s:" + std::to_string(this->workTypeBuffer_s)+" is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
 		}
 
 		bool validateOut(void){
+			this->errorCurrent = "validateOut() - ";
 			if(this->out == NULL){
-				this->setError(0, "validateOut() - out is null.");
+				this->setError(0, this->errorCurrent + "out is null.");
 				return false;
 			}
 			if(this->out_s <= 0){
-				std::string msg = "validateOut() - out_s <= 0, ||" + std::to_string(this->out_s);
-				this->setError(1, "validateOut() - out_s <= 0, treating as null.");
+				this->errorCurrent += "out_s:" + std::to_string(this->out_s)+" is empty.";
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 			return true;
@@ -345,15 +357,16 @@ class HuffmanCoding{
 			
 		/* QJ resize functions */
 		bool resizeTreeLetters(size_t size){
+			this->errorCurrent = "resizeTreeLetters() - ";
 			if(size < 0){
-				this->setError(0, "resizeTreeLetters() - size is negative.");
+				this->setError(0, this->errorCurrent+"size:"+std::to_string(size)+" is negative.");
 				return false;
 			}else if(size == 0){
 				this->destroyTreeLetters();
 			}else if(this->treeLetters == NULL){
 				this->treeLetters = new (std::nothrow) char[size];
 				if(!this->treeLetters){
-					this->setError(1, "resizeTreeLetters() - failed to allocate treeLetters.");
+					this->setError(1, this->errorCurrent+"failed to allocate treeLetters.");
 					return false;
 				}
 				this->treeLetters_s = size;
@@ -361,7 +374,7 @@ class HuffmanCoding{
 				size_t oldSize = this->treeLetters_s;
 				char *transfer = new (std::nothrow) char[oldSize];
 				if(!transfer){
-					this->setError(2, "resizeTreeLetters() - failed to allocate transfer buffer.");
+					this->setError(2, this->errorCurrent+"failed to allocate transfer.");
 					return false;
 				}
 
@@ -371,7 +384,7 @@ class HuffmanCoding{
 
 				this->treeLetters = new (std::nothrow) char[size];
 				if(!this->treeLetters){
-					this->setError(3, "resizeTreeLetters() - failed to allocate treeLetters.");
+					this->setError(3, this->errorCurrent+"failed to allocate treeLetters.");
 					return false;
 				}
 
@@ -389,12 +402,13 @@ class HuffmanCoding{
 		}
 
 		bool resizeFrequencies(size_t size){
+			this->errorCurrent = "resizeFrequencies() - ";
 			if(size == 0){
 				this->destroyFrequencies();
 			}else if(this->frequencies == NULL){
 				this->frequencies = new (std::nothrow) int[size];
 				if(!this->frequencies){
-					this->setError(0, "resizeFrequencies() - failed to allocate frequencies.");
+					this->setError(0, this->errorCurrent+"failed to allocate frequencies.");
 					return false;
 				}
 				this->frequencies_s = size;
@@ -402,7 +416,7 @@ class HuffmanCoding{
 				size_t oldSize = this->frequencies_s;
 				int *transfer = new (std::nothrow) int[oldSize];
 				if(!transfer){
-					this->setError(1, "resizeFrequencies() - failed to allocate transfer.");
+					this->setError(1, this->errorCurrent+"failed to allocate transfer.");
 					return false;
 				}
 				for(int i=0; i<oldSize; i++)
@@ -410,7 +424,7 @@ class HuffmanCoding{
 				this->destroyFrequencies();
 				this->frequencies = new (std::nothrow) int[size];
 				if(!this->frequencies){
-					this->setError(2, "resizeFrequencies() - failed to allocate frequencies.");
+					this->setError(2, this->errorCurrent+"failed to allocate frequencies.");
 					return false;
 				}
 				this->frequencies_s = size;
@@ -426,13 +440,14 @@ class HuffmanCoding{
 		}
 
 		bool resizeWorkBuffer(size_t size){
+			this->errorCurrent = "resizeWorkBuffer() - ";
 			if(size == 0){
 				this->destroyWorkBuffer();
 			}else if(this->workBuffer == NULL || this->workBuffer_s <= 0){
 				this->destroyWorkBuffer();
 				this->workBuffer = new (std::nothrow) int[size];
 				if(!this->workBuffer){
-					this->setError(0, "resizeWorkBuffer() - failed to allocate workBuffer");
+					this->setError(0, this->errorCurrent+"failed to allocate workBuffer");
 					return false;
 				}
 				this->workBuffer_s = size;
@@ -440,7 +455,7 @@ class HuffmanCoding{
 				size_t oldSize = this->workBuffer_s;
 				int *transfer = new (std::nothrow) int[oldSize];
 				if(!transfer){
-					this->setError(1, "resizeWorkBuffer() - failed to allocate transfer buffer");
+					this->setError(1, this->errorCurrent+"failed to allocate transfer buffer");
 					return false;
 				}
 				for(int i=0; i<oldSize; i++){
@@ -449,7 +464,7 @@ class HuffmanCoding{
 				this->destroyWorkBuffer();
 				this->workBuffer = new (std::nothrow) int[size];
 				if(!this->workBuffer){
-					this->setError(2, "resizeWorkBuffer() - failed to allocate workBuffer.");
+					this->setError(2, this->errorCurrent+"failed to allocate workBuffer.");
 					return false;
 				}
 				this->workBuffer_s = size;
@@ -465,13 +480,14 @@ class HuffmanCoding{
 		}
 
 		bool resizeWorkTypeBuffer(size_t size){
+			this->errorCurrent = "resizeWorkTypeBuffer() - ";
 			if(size == 0){
 				this->destroyWorkTypeBuffer();
 			}else if(this->workTypeBuffer == NULL || this->workTypeBuffer_s <= 0){
 				this->destroyWorkTypeBuffer();
 				this->workTypeBuffer = new (std::nothrow) int[size];
 				if(!this->workTypeBuffer){
-					this->setError(0, "resizeWorkTypeBuffer() - failed to allocate workTypeBuffer.");
+					this->setError(0, this->errorCurrent+"failed to allocate workTypeBuffer.");
 					return false;
 				}
 				this->workTypeBuffer_s = size;
@@ -479,7 +495,7 @@ class HuffmanCoding{
 				size_t oldSize = this->workTypeBuffer_s;
 				int *transfer = new (std::nothrow) int[oldSize];
 				if(!transfer){
-					this->setError(1, "resizeWorkTypeBuffer() - failed to allocate transfer.");
+					this->setError(1, this->errorCurrent+"failed to allocate transfer.");
 					return false;
 				}
 				for(int i=0; i<oldSize; i++){
@@ -488,7 +504,7 @@ class HuffmanCoding{
 				this->destroyWorkTypeBuffer();
 				this->workTypeBuffer = new (std::nothrow) int[size];
 				if(!this->workTypeBuffer){
-					this->setError(2, "resizeWorkTypeBuffer() - failed to allocate workTypeBuffer.");
+					this->setError(2, this->errorCurrent+"failed to allocate workTypeBuffer.");
 					return false;
 				}
 				this->workTypeBuffer_s = size;
@@ -505,17 +521,18 @@ class HuffmanCoding{
 		}
 		
 		bool resizeTreeData(size_t size){
+			this->errorCurrent = "resizeTreeData() - ";
 			if(size == 0){
 				this->destroyTreeData();
 			}else if(this->treeData == NULL){
 				this->treeData = new (std::nothrow) int[size];
 				if(!this->treeData){
-					this->setError(0, "resizeTreeData() -  treedata failed to allocate.");
+					this->setError(0, this->errorCurrent+"treeData failed to allocate.");
 					return false;
 				}
 				this->treeDataTypes = new (std::nothrow) int[size];
 				if(!this->treeDataTypes){
-					this->setError(1, "resizeTreeData() - treeDataTypes failed to allocate.");
+					this->setError(1, this->errorCurrent+"treeDataTypes failed to allocate.");
 					return false;
 				}
 				this->treeData_s = size;
@@ -523,12 +540,12 @@ class HuffmanCoding{
 				size_t oldSize = this->treeData_s;
 				int *transfer = new (std::nothrow) int[oldSize];
 				if(!transfer){
-					this->setError(2, "resizeTreeData() - failed to allocate transfer.");
+					this->setError(2, this->errorCurrent+"failed to allocate transfer.");
 					return false;
 				}
 				int *transferTwo = new (std::nothrow) int[oldSize];
 				if(!transferTwo){
-					this->setError(3, "resizeTreeData() - failed to allocate transferTwo.");
+					this->setError(3, this->errorCurrent+"failed to allocate transferTwo.");
 					return false;
 				}
 				for(int i=0; i<oldSize; i++){
@@ -538,12 +555,12 @@ class HuffmanCoding{
 				this->destroyTreeData();
 				this->treeData = new (std::nothrow) int[size];
 				if(!this->treeData){
-					this->setError(4, "resizeTreeData() - failed to allocate treeData.");
+					this->setError(4, this->errorCurrent+"failed to allocate treeData.");
 					return false;
 				}
 				this->treeDataTypes = new (std::nothrow) int[size];
 				if(!this->treeDataTypes){
-					this->setError(5, "resizeTreeData() - failed to allocate treeDataTypes.");
+					this->setError(5, this->errorCurrent+"failed to allocate treeDataTypes.");
 					return false;
 				}
 				this->treeData_s = size;
@@ -564,18 +581,19 @@ class HuffmanCoding{
 		}
 
 		bool resizeTreeLayers(size_t size){
+			this->errorCurrent = "resizeTreeLayers() - ";
 			if(size == 0){
 				this->destroyTreeLayers();
 			}else if(this->treeLayerIndecies == NULL || this->treeLayerSizes == NULL){
 				this->destroyTreeLayers();
 				this->treeLayerIndecies = new (std::nothrow) int[size];
 				if(!this->treeLayerIndecies){
-					this->setError(0, "resizeTreeLayers() - failed to allocate treeLayerIndecies");
+					this->setError(0, this->errorCurrent+"failed to allocate treeLayerIndecies.");
 					return false;
 				}
 				this->treeLayerSizes = new (std::nothrow) int[size];
 				if(!this->treeLayerSizes){
-					this->setError(1, "resizeTreeLayers() - failed to allocate treeLayerSizes.");
+					this->setError(1, this->errorCurrent+"failed to allocate treeLayerSizes.");
 					return false;
 				}
 				this->treeDataLayerCount = size;
@@ -583,12 +601,12 @@ class HuffmanCoding{
 				size_t oldSize = this->treeDataLayerCount;
 				int *transfer = new (std::nothrow) int[oldSize];
 				if(!transfer){
-					this->setError(2, "resizeTreeLayers() - failed to allocate transfer.");
+					this->setError(2, this->errorCurrent+"failed to allocate transfer.");
 					return false;
 				}
 				int *transferTwo = new (std::nothrow) int[oldSize];
 				if(!transferTwo){
-					this->setError(3, "resizeTreeLayers() - failed to allocate transferTwo.");
+					this->setError(3, this->errorCurrent+"failed to allocate transferTwo.");
 					return false;
 				}
 				for(int i=0; i<oldSize; i++){
@@ -598,12 +616,12 @@ class HuffmanCoding{
 				this->destroyTreeLayers();
 				this->treeLayerIndecies = new (std::nothrow) int[size];
 				if(!this->treeLayerIndecies){
-					this->setError(4, "resizeTreeLayers() - failed to allocate treeLayerIndecies.");
+					this->setError(4, this->errorCurrent+"failed to allocate treeLayerIndecies.");
 					return false;
 				}
 				this->treeLayerSizes = new (std::nothrow) int[size];
 				if(!this->treeLayerSizes){
-					this->setError(5, "resizeTreeLayers() - failed to allocate treeLayerSizes.");
+					this->setError(5, this->errorCurrent+"failed to allocate treeLayerSizes.");
 					return false;
 				}
 				this->treeDataLayerCount = size;
@@ -624,15 +642,16 @@ class HuffmanCoding{
 		}
 
 		bool resizeCodeTable(size_t size){
+			this->errorCurrent = "resizeCodeTable() - ";
 			if(size < 0){
-				this->setError(0, "resizeCodeTable() - size is negative.");
+				this->setError(0, this->errorCurrent+"size:"+std::to_string(size)+" is negative.");
 				return false;
 			}else if(size == 0){
 				this->destroyCodingTable();
 			}else if(this->codeTable == NULL){
 				this->codeTable = new (std::nothrow) int[size];
 				if(!this->codeTable){
-					this->setError(1, "resizeCodeTable() - failed to allocate codeTable.");
+					this->setError(1, this->errorCurrent+"failed to allocate codeTable.");
 					return false;
 				}
 				this->codeTable_s = size;
@@ -640,7 +659,7 @@ class HuffmanCoding{
 				size_t oldSize = this->codeTable_s;
 				int *transfer = new (std::nothrow) int[oldSize];
 				if(!transfer){
-					this->setError(2, "resizeCodeTable() - failed to allocate transfer buffer.");
+					this->setError(2, this->errorCurrent+"failed to allocate transfer.");
 					return false;
 				}
 
@@ -650,7 +669,7 @@ class HuffmanCoding{
 
 				this->codeTable = new (std::nothrow) int[size];
 				if(!this->codeTable){
-					this->setError(3, "resizeCodeTable() - failed to allocate codeTable.");
+					this->setError(3, this->errorCurrent+"failed to allocate codeTable.");
 					return false;
 				}
 
@@ -668,12 +687,13 @@ class HuffmanCoding{
 		}
 
 		bool resizeWorkQueue(size_t size){
+			this->errorCurrent = "resizeWorkQueue() - ";
 			if(size == 0){
 				this->destroyWorkQueue();
 			}else if(this->workQueue == NULL){
 				this->workQueue = new (std::nothrow) int[size];
 				if(!this->workQueue){
-					this->setError(0, "resizeWorkQueue() - failed to allocate workQueue.");
+					this->setError(0, this->errorCurrent+"failed to allocate workQueue.");
 					return false;
 				}
 				this->workQueue_s = size;
@@ -681,7 +701,7 @@ class HuffmanCoding{
 				size_t oldSize = this->workQueue_s;
 				int *transfer = new (std::nothrow) int[oldSize];
 				if(!transfer){
-					this->setError(2, "resizeWorkQueue() - transfer failed to allocate.");
+					this->setError(1, this->errorCurrent+"transfer failed to allocate.");
 					return false;
 				}
 				for(int i=0; i<oldSize; i++){
@@ -690,7 +710,7 @@ class HuffmanCoding{
 				this->destroyWorkQueue();
 				this->workQueue = new (std::nothrow) int[size];
 				if(!this->workQueue){
-					this->setError(4, "resizeWorkQueue() - failed to allocate workQueue");
+					this->setError(2, this->errorCurrent+"failed to allocate workQueue");
 					return false;
 				}
 				this->workQueue_s = size;
@@ -711,24 +731,28 @@ class HuffmanCoding{
 			Returns the number of items int queue
 		*/
 		int pushWorkQueue(int val, int queueCount){
+			this->errorCurrent = "pushWorkQueue() - ";
 			if(!this->validateFrequencies()){
-				this->setError(234, "pushWorkQueue() - invalid frequencies.");
+				this->setError(0, this->errorCurrent+"invalid frequencies.");
 				return -1;
-			}
-			if(!this->validateWorkQueue()){
+
+			}else if(!this->validateWorkQueue()){
 				this->clearError();
 				if(!this->resizeWorkQueue(this->frequencies_s)){
-					this->setError(2, "pushWorkQueue() - failed to resize workqueue.");
+					this->setError(1, this->errorCurrent+"failed to resize workQueue.");
 					return -1;
 				}
+
 				for(int i=0; i<this->workQueue_s; i++)
-					this->workQueue[i] = -1; // init
+					this->workQueue[i] = -1;
+
 			}else if(this->workQueue[this->workQueue_s-1] != -1){
 				// if queue is full, expand by one element.
 				if(!this->resizeWorkQueue(this->workQueue_s+1)){
-					this->setError(3, "pushWorkQueue() - failed to resize workQueue.");
+					this->setError(2, this->errorCurrent+"failed to resize workQueue.");
 					return -1;
 				}
+
 				this->workQueue[this->workQueue_s-1] = -1;
 			}
 
@@ -745,18 +769,19 @@ class HuffmanCoding{
 				newQueueCount++;
 			}
 			if(failure){
-				this->setError(54355, "pushWorkQueue() - failed to push value.");
+				this->setError(3, this->errorCurrent+"failed to push value.");
 				return -1;
 			}
 			return newQueueCount;
 		}
 
 		bool calculateLayerIndecies(void){
+			this->errorCurrent = "calculateLayerIndecies() - ";
 			if(!this->validateTreeData()){
-				this->setError(0, "calculateLayerIndecies() - failed to valied treeData.");
+				this->setError(0, this->errorCurrent+"failed to valied treeData.");
 				return false;
 			}else if(!this->validateTreeLayers()){
-				this->setError(1, "calculateLayerIndecies() - failed to validate treeLayers");
+				this->setError(1, this->errorCurrent+"failed to validate treeLayers");
 				return false;
 			}
 
@@ -769,11 +794,12 @@ class HuffmanCoding{
 		}
 		
 		bool isBaseIndex(int target){
+			this->errorCurrent = "isBaseIndex() - ";
 			if(!this->validateTreeData()){
-				this->setError(4444, "isBaseIndex() - invalid tree data.");
+				this->setError(0, this->errorCurrent + "invalid tree data.");
 				return false;
 			}else if(!this->validateTreeLayers()){
-				this->setError(2, "isBaseIndex() - invalid tree layers");
+				this->setError(1, this->errorCurrent + "invalid tree layers.");
 				return false;
 			}
 
@@ -790,8 +816,9 @@ class HuffmanCoding{
 		}
 		
 		int getBaseLayerIndex(int target){
+			this->errorCurrent = "getBaseLayerIndex() - ";
 			if(!this->validateTreeLayers()){
-				this->setError(0, "getBaseLayerIndex() - invalid tree layer data");
+				this->setError(0, this->errorCurrent+"invalid tree layer data.");
 				return -1;
 			}
 			for(int i=0; i<this->treeDataLayerCount; i++){
@@ -801,7 +828,7 @@ class HuffmanCoding{
 					return i;
 				}
 			}
-			this->setError(1, "getBaseLayerIndex() - target isn't within layer range.");
+			this->setError(1, this->errorCurrent+"target isn't within layer range.");
 			return -1;
 		}
 
@@ -809,14 +836,15 @@ class HuffmanCoding{
 		 * This function is limited by sizeof(int)
 		 * */
 		bool addBitToCodeTable(int targetIndex, int bit){
+			this->errorCurrent = "addBitToCodeTable() - ";
 			if(!this->validateFrequencies()){
-				this->setError(45345, "addBitToCodeTable() - failed to validate frequencies.");
+				this->setError(0, this->errorCurrent+"failed to validate frequencies.");
 				return false;
 			}else if(!this->validateCodeTable()){
-				this->setError(2, "addBitToCodeTable() - failed to validate code table.");
+				this->setError(1, this->errorCurrent+"failed to validate code table.");
 				return false;
 			}else if(targetIndex < 0 || targetIndex >= this->codeTable_s){
-				this->setError(45454, "addBitToCodeTable() - targetIndex is out of bounds.");
+				this->setError(2, this->errorCurrent+"targetIndex:"+std::to_string(targetIndex)+"out of bounds, max:"+std::to_string(this->codeTable_s));
 				return false;
 			}
 			
@@ -827,40 +855,40 @@ class HuffmanCoding{
 			int codeIdx = targetIndex+this->frequencies_s;
 			this->codeTable[codeIdx] = (this->codeTable[codeIdx] << 1) + (bit&0x01);
 			if(this->codeTable[targetIndex] > 32){
-				this->setError(345, "addBitToCodeTable() - data loss detected, shifted more than sizeof int, 32 bits");
+				this->setError(3, this->errorCurrent+"codeTable["+std::to_string(targetIndex)+"]:"+std::to_string(this->codeTable[targetIndex])+" bigger than the supported 32 bits.");
 				return false;
 			}
 			return true;
 		}
 
-
 		bool getSubIndecies(int targetIndex, int *zeroIndex, int *oneIndex){
+			this->errorCurrent = "getSubIndecies() - ";
 			if(!this->validateTreeData()){
-				this->setError(44442, "getSubIndecies() - invalid tree data.");
+				this->setError(0, this->errorCurrent+"invalid tree data.");
 				return false;
 			}else if(!this->validateFrequencies()){
-				this->setError(3542, "getSubIndecies() - invalid frequencies.");
+				this->setError(1, this->errorCurrent+"invalid frequencies.");
 				return false;
 			}else if(!this->validateTreeLayers()){
-				this->setError(3, "getSubIndecies() - invalid tree layers.");
+				this->setError(2, this->errorCurrent+"invalid tree layers.");
 				return false;
 			}else if(targetIndex < 0 || targetIndex >= this->treeData_s){
-				std::string message = "getSubIndecies() - targetIndex is out of bounds. target:"+std::to_string(targetIndex)+" | treeSize:"+std::to_string(this->treeData_s);
-				this->setError(44452, message.c_str());
+				this->errorCurrent += "targetIndex:"+std::to_string(targetIndex)+" is out of bounds, treeData_s:"+std::to_string(this->treeData_s);
+				this->setError(3, this->errorCurrent);
 				return false;
 			}
 
 			// Determine which layer our targetIndex is a part of.
 			int targetLayer = this->getBaseLayerIndex(targetIndex);
 			if(this->failed()){
-				this->setError(5555, "getSubIndecies() - failed to get target layer.");
+				this->setError(4, this->errorCurrent+"failed to get targetLayer.");
 				return false;
 			}else if(targetLayer >= this->treeDataLayerCount || targetLayer < 0){
-				this->setError(4, "getSubIndecies() - targetLayer is out of bounds.");
+				this->setError(5, this->errorCurrent+"targetLayer:"+std::to_string(targetLayer)+"is out of bounds, treeDataLayerCount:"+std::to_string(this->treeDataLayerCount));
 				return false;
 			}
 
-			// What if the targetLayer is pointing to the base layer of the tree?
+			// ensures that odd-sized buffers are handled.
 			if(targetLayer == 0){
 				zeroIndex[0] = targetIndex;
 				oneIndex[0] = -1;
@@ -871,34 +899,39 @@ class HuffmanCoding{
 			// identify the start and end of the target layer.
 			int targetLayerStart = this->treeLayerIndecies[targetLayer];
 			if(targetLayerStart < 0 || targetLayerStart >= this->treeData_s){
-				this->setError(545, "getSubIndecies() - targetLayerStart is out of bounds.");
+				this->setError(6, this->errorCurrent+"targetLayerStart:"+std::to_string(targetLayerStart)+" is out of bounds, treeData_s:"+std::to_string(this->treeData_s));
 				return false;
 			}
 			int targetLayerEnd = targetLayerStart - this->treeLayerSizes[targetLayer];
 			if(!(targetLayerEnd >= -1) || targetLayerEnd >= (int)this->treeData_s){
-				this->setError(3445, "getSubIndecies() - targetLayerEnd is out of bounds.");
+				this->setError(7, this->errorCurrent+"targetLayerEnd:"+std::to_string(targetLayerEnd)+"is out of bounds, treeData_s:"+std::to_string(this->treeData_s));
 				return  false;
 			}
 			
 			// Identify the source layer, and its start and end.
 			int sourceLayer = targetLayer - 1;
 			if(sourceLayer < 0 || sourceLayer >= this->treeDataLayerCount){
-				this->setError(453, "getSubIndecies() - sourceLayer is out of bounds.");
+				this->setError(8, this->errorCurrent+"sourceLayer:"+std::to_string(sourceLayer)+"is out of bounds, treeDataLayerCount:"+std::to_string(this->treeDataLayerCount));
 				return false;
 			}
 			int sourceLayerStart = this->treeLayerIndecies[sourceLayer];
 			if(sourceLayerStart < 0 || sourceLayerStart >= (int)this->treeData_s){
-				this->setError(43, "getSubIndecies() - sourceLayerStart is out of bounds");
+				this->setError(9, this->errorCurrent+"sourceLayerStart:"+std::to_string(sourceLayerStart)+"is out of bounds, treeData:"+std::to_string(this->treeData_s));
 				return false;
 			}
 			int sourceLayerEnd = sourceLayerStart - this->treeLayerSizes[sourceLayer];
 			if(sourceLayerEnd < 0 || sourceLayerStart > (int)this->treeData_s){
-				this->setError(654, "getSubIndecies() - sourceLayerEnd is out of bounds.");
+				this->setError(10, this->errorCurrent+"sourceLayerEnd:"+std::to_string(sourceLayerEnd)+"is out of bounds, treeData_s:"+std::to_string(this->treeData_s));
 				return false;
 			}
 
+			// source tree layer size should always be > because of how the huffman tree is structured.
 			if(this->treeLayerSizes[sourceLayer] <= this->treeLayerSizes[targetLayer]){
-				this->setError(545, "getSubIndecies() - source and target layers appear corrupted. source <= target.");
+				this->errorCurrent += "Layers out of order. ";
+				this->errorCurrent += "src treeLayerSizes["+std::to_string(sourceLayer)+"]:";
+				this->errorCurrent += std::to_string(this->treeLayerSizes[sourceLayer])+" <= target treeLayerSizes[";
+				this->errorCurrent += std::to_string(targetLayer)+"]:"+std::to_string(this->treeLayerSizes[targetLayer]);
+				this->setError(11, this->errorCurrent);
 				return false;
 			}
 			
@@ -914,7 +947,7 @@ class HuffmanCoding{
 				// Handle edge case for final loop/interation
 				if(finalLoop && tracer == -1){
 						if(sum == -1){
-							this->setError(777, "getSubIndecies() - Attempted to process for an undefined condition. Stopping.");
+							this->setError(12, this->errorCurrent+"final iteration impossible context.");
 							return false;
 						}
 						if(t == targetIndex){
@@ -933,7 +966,7 @@ class HuffmanCoding{
 
 					t--;
 					if(!(t>targetLayerEnd)){
-						this->setError(4533, "getSubIndecies() - miss aligned tree.");
+						this->setError(13, this->errorCurrent+"miss-aligned tree.");
 						return false;
 					}
 
@@ -981,14 +1014,17 @@ class HuffmanCoding{
 					continue;
 				}
 			}
-			std::string msg = "getSubIndecies(target:"+std::to_string(targetIndex)+") - dbg : sourceLayer:"+std::to_string(sourceLayer)+" | targetLayer:"+std::to_string(targetLayer);
-			this->setError(4444, msg.c_str());
+			this->errorCurrent += "Failed to find sub index for targetIndex:";
+			this->errorCurrent += std::to_string(targetIndex)+", sourceLayer:";
+			this->errorCurrent += std::to_string(sourceLayer)+", targetLayer:"+std::to_string(targetLayer);
+			this->setError(14, this->errorCurrent);
 			return false;
 		}
 
 		int popWorkQueue(void){
+			this->errorCurrent = "popWorkQueue() - ";
 			if(!this->validateWorkQueue()){
-				this->setError(5345, "popWorkQueue() - invalid work queue.");
+				this->setError(0, "invalid work queue.");
 				return -1;
 			}
 			int ret = this->workQueue[0];
@@ -1004,16 +1040,17 @@ class HuffmanCoding{
 		/* QJ tree functions */
 		// seed function expects value and type buffers to be equal to frequencies_s
 		bool seedLayers(void){
+			this->errorCurrent = "seedLayers() - ";
 			if(!this->validateFrequencies()){
-				this->setError(4301, "seedLayers(void) - failed to validate frequenncies.");
+				this->setError(0, this->errorCurrent+"failed to validate frequenncies.");
 				return false;
 			}else if(this->treeData != NULL){
-				this->setError(13224, "tree data already seeded.");
+				this->setError(1, this->errorCurrent+"treeData already seeded.");
 				return false;
 			}
 
 			if(!this->resizeTreeData(this->frequencies_s)){
-				this->setError(3, "seedLayers() - failed to resize treeData");
+				this->setError(2, this->errorCurrent+"failed to resize treeData.");
 				return false;
 			}
 			for(int i=0; i<this->treeData_s; i++){
@@ -1022,7 +1059,7 @@ class HuffmanCoding{
 			}
 
 			if(!this->resizeTreeLayers(1)){
-				this->setError(4, "seedLayers() - failed to resize tree layers.");
+				this->setError(3, this->errorCurrent+"failed to resize tree layers.");
 				return false;
 			}
 			this->treeLayerSizes[0] = this->frequencies_s;
@@ -1035,32 +1072,33 @@ class HuffmanCoding{
 			returns true when more layers can be grown, false when done growing, and false with the error set if there's an error.
 		// */
 		bool growLayer(int *valueBuffer, size_t valueBuffer_s, int *typeBuffer, size_t typeBuffer_s){
+			this->errorCurrent = "growLayer() - ";
 			if(valueBuffer == NULL){
-				this->setError(4545, "growLAyer() - valueBuffer is null.");
+				this->setError(0, this->errorCurrent+"valueBuffer is null.");
 				return false;
 			}else if(valueBuffer_s <= 0){
-				this->setError(2, "growLayer() - valueBuffer_s <= 0");
+				this->setError(1, this->errorCurrent+"valueBuffer_s:"+std::to_string(valueBuffer_s)+" is empty.");
 				return false;
 			}else if(typeBuffer == NULL){
-				this->setError(46584, "growLayer() = typeBuffer is null.");
+				this->setError(2, this->errorCurrent+"typeBuffer is null.");
 				return false;
 			}else if(typeBuffer_s <= 0){
-				this->setError(54, "growLayer() - typeBuffer_s <= 0");
+				this->setError(3, this->errorCurrent+"typeBuffer_s:"+std::to_string(typeBuffer_s)+" is empty.");
 				return false;
 			}else if(!this->validateFrequencies()){
-				this->setError(601, "growLayer(void) - invalid frequencies.");
+				this->setError(4, this->errorCurrent+"invalid frequencies.");
 				return false;
 			}
 
 			// Check if buffers need to be seeded.
 			if(this->treeData == NULL || this->treeData_s <= 0){
 				if(!this->seedLayers()){
-					this->setError(602, "growLoayer(void) - failed to seed layers.");
+					this->setError(5, this->errorCurrent+"failed to seed layers.");
 					return false;
 				}
 				return true;
 			}else if(!this->calculateLayerIndecies() || this->treeDataLayerCount <= 0){
-				this->setError(2, "growLayer() - failed to calculate Layer indecies.");
+				this->setError(6, this->errorCurrent+"failed to calculate Layer indecies.");
 				return false;
 			}
 
@@ -1068,13 +1106,13 @@ class HuffmanCoding{
 			int topLayerStart = this->treeLayerIndecies[this->treeDataLayerCount - 1];
 			size_t topLayerSize = this->treeLayerSizes[this->treeDataLayerCount - 1];
 			if(topLayerSize <= 0){
-				this->setError(4545, "growLayer() - invalid top size");
+				this->setError(7, this->errorCurrent+"invalid top size");
 				return false;
 			}else if(topLayerStart < 0 || topLayerStart >= this->treeData_s){
-				this->setError(3, "growLayer() - topLayerStart is out of bounds.");
+				this->setError(8, this->errorCurrent+"topLayerStart:"+std::to_string(topLayerStart)+" is out of bounds, treeData_s:"+std::to_string(this->treeData_s));
 				return false;
 			}else if(this->treeDataTypes[0] == 0){
-				this->setError(543, "growLayer() - invalid seed data.");
+				this->setError(9, this->errorCurrent+"invalid seed data, treeDataTypes[0] == 0 is a bad bottom node.");
 				return false;
 			}
 
@@ -1094,7 +1132,10 @@ class HuffmanCoding{
 			this->workBuffer_fill=0;
 			for(int i=topLayerStart, tracer=-1, sum=-1; i>=0 && i<this->treeData_s; i--){
 				if(this->workBuffer_fill < 0 || this->workBuffer_fill >= valueBuffer_s || this->workBuffer_fill >= typeBuffer_s){
-					this->setError(6, "growLayer() - workBuffer_fill is out of bounds.");
+					this->errorCurrent += "workBuffer_fill:"+std::to_string(this->workBuffer_fill)+" is out of bounds, ";
+					this->errorCurrent += "valueBuffer_s:"+std::to_string(valueBuffer_s)+" or ";
+					this->errorCurrent += "typeBuffer_s:"+std::to_string(typeBuffer_s);
+					this->setError(10, this->errorCurrent);
 					return false;
 				}
 				if(this->frequencyMax <= this->treeData[i]) break;
@@ -1104,7 +1145,7 @@ class HuffmanCoding{
 				if(tracer == -1){
 					if(i == 0){
 						if(sum == -1){
-							this->setError(777, "growLayer() - this error should never happen, Ha!");
+							this->setError(11, this->errorCurrent+"Impossible condition!");
 							return false;
 						}
 						sum = this->treeData[i] + sum;
@@ -1195,7 +1236,10 @@ class HuffmanCoding{
 				// loop didn't happen, no more data to process
 				return false;
 			}else if(this->workBuffer_fill - 1 < 0 || this->workBuffer_fill >= typeBuffer_s){
-				this->setError(456, "growLayer() - workBuffer_fill out of bounds.");
+				this->errorCurrent += "workBuffer_fill:"+std::to_string(this->workBuffer_fill)+" is out of bounds, ";
+				this->errorCurrent += "typeBuffer_s:"+std::to_string(typeBuffer_s)+" unless/or ";
+				this->errorCurrent += "workBuffer_fill-1 < 0";
+				this->setError(12, this->errorCurrent);
 				return false;
 			}
 			// the last layer value to be grown is a top node.
@@ -1203,14 +1247,14 @@ class HuffmanCoding{
 
 			// Append workbuffer fill treeLayerSizes, layerCount validated not to be <= 0 earlier
 			if(!this->resizeTreeLayers(this->treeDataLayerCount + 1)){
-				this->setError(7, "growLoayer() - failed to resize treeLayers");
+				this->setError(13, this->errorCurrent+"failed to resize treeLayers");
 				return false;
 			}
 			this->treeLayerSizes[this->treeDataLayerCount - 1] = this->workBuffer_fill;
 					
 			size_t originalSize = this->treeData_s;
 			if(!this->resizeTreeData(originalSize + this->workBuffer_fill)){
-				this->setError(8, "growLayer() - failed to resize treeData.");
+				this->setError(14, this->errorCurrent+"failed to resize treeData.");
 				return false;
 			}
 			
@@ -1219,7 +1263,9 @@ class HuffmanCoding{
 			for(int i=this->treeData_s-1, ogSizeTrack=0;  ogSizeTrack<originalSize && i>=0; i--, ogSizeTrack++){
 				int offsetIdx = i - this->workBuffer_fill;
 				if(offsetIdx < 0 || offsetIdx >= this->treeData_s){
-					this->setError(9, "growLayer() - offsetIdx is out of bounds.");
+					this->errorCurrent += "offsetIdx:"+std::to_string(offsetIdx)+" is out of bounds, ";
+					this->errorCurrent += "treeData_s:"+std::to_string(this->treeData_s);
+					this->setError(15, this->errorCurrent);
 					return false;
 				}
 				this->treeData[i] = this->treeData[offsetIdx];
@@ -1230,11 +1276,15 @@ class HuffmanCoding{
 			for(int i=0; i<this->workBuffer_fill && i<this->treeData_s; i++){
 				int workIdx = this->workBuffer_fill-1-i;
 				if(workIdx < 0 || workIdx >= valueBuffer_s){
-					this->setError(645, "growLayer() - workIdx: value overflow");
+					this->errorCurrent += "workIdx:"+std::to_string(workIdx)+" is out of bounds, ";
+					this->errorCurrent += "valueBuffer_s:"+std::to_string(valueBuffer_s);
+					this->setError(16, this->errorCurrent);
 					return false;
 				}
 				if(workIdx < 0 || workIdx >= typeBuffer_s){
-					this->setError(645, "growLayer() - workIdx: type overflow");
+					this->errorCurrent += "workIdx:"+std::to_string(workIdx)+" is out of bounds, ";
+					this->errorCurrent += "typeBuffer_s:"+std::to_string(typeBuffer_s);
+					this->setError(17, this->errorCurrent);
 					return false;
 				}
 				this->treeData[i] = valueBuffer[workIdx];
@@ -1245,20 +1295,19 @@ class HuffmanCoding{
 		}
 
 		bool plantTree(void){
+			this->errorCurrent = "plantTree() - ";
 			if(!this->validateFrequencies()){
-				this->setError(700, "plantTree(void) - invalid frequencies.");
+				this->setError(0, this->errorCurrent+"invalid frequencies.");
 				return false;
 			}
 			this->destroyTreeData();
 			this->destroyWorkTypeBuffer();
 			this->destroyWorkBuffer();
 			if(!this->resizeWorkBuffer(this->frequencies_s)){
-				this->setError(1, "plantTree() - failed to resize work buffer.");
+				this->setError(1, this->errorCurrent+"failed to resize work buffer.");
 				return false;
-			}
-			
-			if(!this->resizeWorkTypeBuffer(this->workBuffer_s)){
-				this->setError(2, "plantTree() - failed to resize work Type buffer.");
+			}else if(!this->resizeWorkTypeBuffer(this->workBuffer_s)){
+				this->setError(2, this->errorCurrent+"failed to resize work Type buffer.");
 				this->destroyWorkBuffer();
 				return false;
 			}
@@ -1269,13 +1318,13 @@ class HuffmanCoding{
 			int timeoutError = 0;
 			while(this->growLayer(this->workBuffer, this->workBuffer_s, this->workTypeBuffer, this->workTypeBuffer_s)){
 				if(this->failed()){
-					this->setError(5, "plantTree() - failed to grow layer");
+					this->setError(3, this->errorCurrent+"failed to grow layer.");
 					this->destroyWorkBuffer();
 					this->destroyWorkTypeBuffer();
 					return false;
 				}
 				if(timeoutError >= this->workTypeBuffer_s){
-					this->setError(3, "plantTree() - grow layer has timed out.");
+					this->setError(4, this->errorCurrent+"grow layer has timed out.");
 					this->destroyWorkBuffer();
 					this->destroyWorkTypeBuffer();
 					return false;
@@ -1286,13 +1335,15 @@ class HuffmanCoding{
 			this->destroyWorkBuffer();
 			this->destroyWorkTypeBuffer();
 			if(this->failed()){
-				this->setError(6, "plantTree() - failed to grow layer");
+				this->setError(5, this->errorCurrent+"failed to grow layer");
 				return false;
 			}
 
 			this->calculateLayerIndecies();
 			if(this->treeData[0] != this->frequencyMax){
-				this->setError(3333, "plantTree(void) - Failed to grow tree, tree is corrupt.");
+				this->errorCurrent += "failed to grow tree, frequencyMax:"+std::to_string(this->frequencyMax)+" != ";
+				this->errorCurrent += "treeData[0]:"+std::to_string(this->treeData[0]);
+				this->setError(6, this->errorCurrent);
 				return false;
 			}
 			return true;
@@ -1301,7 +1352,7 @@ class HuffmanCoding{
 		/* QJ bit packing functions */
 		int deriveChunkIndex(int maxChunkBitCount, int bitsLeft){
 			if(maxChunkBitCount <= 0){
-				this->setError(345, "deriveChunkIndex() - maxChunkBitCount must be > than 0.");
+				this->setError(0, "deriveChunkIndex() - maxChunkBitCount must be > than 0.");
 				return -1;
 			}else if(bitsLeft <= 0){
 				return -1;
@@ -1326,27 +1377,32 @@ class HuffmanCoding{
 		*  |_-> 6 to which byte in array of bytes, 7 points to which bit in selected byte.
 		* */
 		bool packByte(int packingTarget, int targetBitCount, char *dstBuffer, size_t dstBufferSize, int *dstIndex, int *bitIndex){
+			this->errorCurrent = "packByte() - ";
 			int binaryMax=8; // Pack byte, so we operate relative to a max container of 8
 			if(targetBitCount <= 0){
-				this->setError(234, "packByte() - targetBitCount <= 0");
+				this->setError(0, this->errorCurrent+"targetBitCount:"+std::to_string(targetBitCount)+" is empty.");
 				return false;
 			}else if(dstBuffer == NULL){
-				this->setError(23, "packByte() - dstBuffer is null,");
+				this->setError(1, this->errorCurrent+"dstBuffer is null,");
 				return false;
 			}else if(dstBufferSize <= 0){
-				this->setError(43, "packByte() - dstBufferSize is <= 0");
+				this->setError(2, this->errorCurrent+"dstBufferSize:"+std::to_string(dstBufferSize)+" is empty.");
 				return false;
 			}else if(dstIndex == NULL){
-				this->setError(33, "packByte() - dstIndex is null.");
+				this->setError(3, this->errorCurrent+"dstIndex is null.");
 				return false;
 			}else if(dstIndex[0] >= dstBufferSize || dstIndex[0] < 0){
-				this->setError(34, "packByte() - dstIndex is out of bounds.");
+				this->errorCurrent += "dstIndex:"+std::to_string(dstIndex[0])+" is out of bounds, ";
+				this->errorCurrent += "dstBufferSize:"+std::to_string(dstBufferSize);
+				this->setError(4, this->errorCurrent);
 				return false;
 			}else if(bitIndex == NULL){
-				this->setError(345345, "packByte() - bitIndex is null.");
+				this->setError(5, this->errorCurrent+"bitIndex is null.");
 				return false;
 			}else if(bitIndex[0] >= binaryMax || bitIndex[0] < 0){
-				this->setError(345345, "packByte() - bitIndex is out of bounds, max hardcoded to 8");
+				this->errorCurrent += "bitIndex:"+std::to_string(bitIndex[0])+" is out of bounds, ";
+				this->errorCurrent += "binaryMax:"+std::to_string(binaryMax);
+				this->setError(6, this->errorCurrent);
 				return false;
 			}
 
@@ -1393,14 +1449,17 @@ class HuffmanCoding{
 		}
 
 		int packHeader(void){
+			this->errorCurrent = "packHeader() - ";
 			if(!this->validateFrequencies()){
-				this->setError(1000, "packHeader(void) - failed to validate frequencies.");
+				this->setError(0, this->errorCurrent+"failed to validate frequencies.");
 				return -1;
 			}else if(!this->validateTreeLetters()){
-				this->setError(34, "packHeader() - failed to validate tree letters.");
+				this->setError(1, this->errorCurrent+"failed to validate tree letters.");
 				return -1;
 			}else if(this->frequencies_s != this->treeLetters_s){
-				this->setError(12323, "packHeader() - frequency and tree letter arrays are missaligned.");
+				this->errorCurrent += "frequencies_s:"+std::to_string(this->frequencies_s)+" != ";
+				this->errorCurrent += "treeLetters_s:"+std::to_string(this->treeLetters_s);
+				this->setError(2, this->errorCurrent);
 				return -1;
 			}
 
@@ -1418,8 +1477,11 @@ class HuffmanCoding{
 			}
 
 			// ensure bit count isn't less than the smallest expected count.
-			if(headerBitCount < (paddingBitCount + elementCountBitCount + containerSizeBitCount + (2 * byteBitCount))){
-				this->setError(45345, "packHeader() - invalid header bit count.");
+			int minimumBitCount = paddingBitCount + elementCountBitCount + containerSizeBitCount + (2 * byteBitCount);
+			if(headerBitCount < minimumBitCount){
+				this->errorCurrent += "headerBitCount:"+std::to_string(headerBitCount)+" is less than the expected ";
+				this->errorCurrent += "minimumBitCount:"+std::to_string(minimumBitCount);
+				this->setError(3, this->errorCurrent);
 				return -1;
 			}
 
@@ -1429,33 +1491,33 @@ class HuffmanCoding{
 
 			this->header = new (std::nothrow) char[this->header_s];
 			if(!this->header){
-				this->setError(2, "packHeader() - failed to allocate header.");
+				this->setError(4, this->errorCurrent+"failed to allocate header.");
 				return -1;
 			}
 
 			this->header[0] = 0x0;
 
 			if(!this->packByte(this->frequencies_s, 9, this->header, this->header_s, &headerIdx, &bitIdx)){
-				this->setError(3, "packHeader() - failed to pack element count byte.");
+				this->setError(4, this->errorCurrent+"failed to pack element count.");
 				return -1;
 			}
 
 			for(int i=0; i<this->frequencies_s && headerIdx<this->header_s; i++){
 				int containerSize = (((this->frequencies[i]/0xff)) + 1); // rel to sizeof(int) data type
 				if(!this->packByte(containerSize, 3, this->header, this->header_s, &headerIdx, &bitIdx)){
-					this->setError(4, "packHeader() - failed to pack container size byte");
+					this->setError(5, this->errorCurrent+"failed to pack sizeof frequency int.");
 					return -1;
 				}
 
 				int freq = this->frequencies[i];
 				if(!this->packByte(freq, 8, this->header, this->header_s, &headerIdx, &bitIdx)){
-					this->setError(6, "packHeader() - failed to pack freqiency byte.");
+					this->setError(6, this->errorCurrent+"failed to pack frequency value.");
 					return -1;
 				}
 
 				char letter = this->treeLetters[i];
 				if(!this->packByte((int)letter&0xff, 8, this->header, this->header_s, &headerIdx, &bitIdx)){
-					this->setError(4, "packHeader() - failed to pack letter byte.");
+					this->setError(7, this->errorCurrent+"failed to pack tree letter.");
 					return -1;
 				}
 			}
@@ -1464,7 +1526,7 @@ class HuffmanCoding{
 		
 		int getCodeTableIndex(char target){
 			if(!this->validateTreeLetters()){
-				this->setError(345, "getCodeTableIndex() - failed to validate tree letters.");
+				this->setError(0, "getCodeTableIndex() - failed to validate tree letters.");
 				return -1;
 			}
 			for(int i=0; i<this->treeLetters_s; i++){
@@ -1475,23 +1537,25 @@ class HuffmanCoding{
 		}
 
 		int packBody(int startingBitIndex, char *data, size_t dataSize){
+			this->errorCurrent = "packBody() - ";
 			if(!this->validateFrequencies()){
-				this->setError(345, "packBody() - failed to validate frequencies.");
+				this->setError(0, this->errorCurrent+"failed to validate frequencies.");
 				return -1;
 			}else if(!this->validateCodeTable()){
-				this->setError(32, "packBody() - failed to validate code table.");
+				this->setError(1, this->errorCurrent+"failed to validate code table.");
 				return -1;
 			}else if(!this->validateHeader()){
-				this->setError(33, "packBody() - failed to validate header data.");
+				this->setError(2, this->errorCurrent+"failed to validate header data.");
 				return -1;
 			}else if(startingBitIndex < 0 || startingBitIndex >= 8){
-				this->setError(354, "packBody() - starting bit index is out of bounds.");
+				this->errorCurrent += "startingBitIndex:"+std::to_string(startingBitIndex)+"is out of bounds, 8";
+				this->setError(3, this->errorCurrent);
 				return -1;
 			}else if(data == NULL){
-				this->setError(234, "packBody() - data is null.");
+				this->setError(4, this->errorCurrent+"data is null.");
 				return -1;
 			}else if(dataSize <= 0){
-				this->setError(345, "packBody() - dataSize is <= 0");
+				this->setError(5, this->errorCurrent+"dataSize:"+std::to_string(dataSize)+" is empty");
 				return -1;
 			}
 
@@ -1511,13 +1575,13 @@ class HuffmanCoding{
 			if(startingBitIndex > 0) this->body_s++;
 
 			if(this->body_s <= 0){
-				this->setError(32, "packBody() - body_s has underflowed.");
+				this->setError(6, this->errorCurrent+"body_s:"+std::to_string(this->body_s)+" has underflowed.");
 				return -1;
 			}
 
 			this->body = new (std::nothrow) char[this->body_s];
 			if(!this->body){
-				this->setError(43, "packBody() - failed to allocate body.");
+				this->setError(7, this->errorCurrent+"failed to allocate body.");
 				return -1;
 			}
 			this->body[0] = 0;
@@ -1527,16 +1591,18 @@ class HuffmanCoding{
 			for(int i=0; i<dataSize && bi<this->body_s; i++){
 				int tableIdx = this->getCodeTableIndex(data[i]);
 				if(tableIdx <= -1){
-					this->setError(453445, "packBody() - failed to get char index.");
+					this->setError(8, this->errorCurrent+"failed to get char index.");
 					return -1;
 				}else if(tableIdx >= this->frequencies_s){
-					this->setError(432, "packBody() - tableIdx is out of bounds.");
+					this->errorCurrent += "tableIdx:"+std::to_string(tableIdx)+" is out of bounds, ";
+					this->errorCurrent += "frequencies_s:"+std::to_string(this->frequencies_s);
+					this->setError(8, this->errorCurrent);
 					return -1;
 				}
 				int bitCount = this->codeTable[tableIdx];
 				int encodedChar = this->codeTable[tableIdx + this->frequencies_s];
 				if(!this->packByte(encodedChar, bitCount, this->body, this->body_s, &bi, &bitIdx)){
-					this->setError(342, "packBody() - failed to pack body byte.");
+					this->setError(9, this->errorCurrent+"failed to pack body byte.");
 					return -1;
 				}
 			}
@@ -1545,26 +1611,29 @@ class HuffmanCoding{
 
 		/* QJ bit unpacking functions */
 		int unpackByte(char *src, size_t srcSize, int *srcIndex, int *bitIndex, int expectedBitCount){
+			this->errorCurrent = "unpackByte() - ";
 			if(src == NULL){
-				this->setError(342, "unpackByte() - src is null.");
+				this->setError(0, this->errorCurrent+"src is null.");
 				return 0;
 			}else if(srcSize <= 0){
-				this->setError(54, "unpackByte() - srcSize is <= 0");
+				this->setError(1, this->errorCurrent+"srcSize:"+std::to_string(srcSize)+" is empty.");
 				return 0;
 			}else if(srcIndex == NULL){
-				this->setError(45, "unpackByte() - srcIndex is null.");
+				this->setError(2, this->errorCurrent+"srcIndex is null.");
 				return 0;
 			}else if(srcIndex[0] < 0 || srcIndex[0] >= (int)srcSize){
-				this->setError(354, "unpackByte() - srcIndex is out of bounds.");
+				this->errorCurrent += "srcIndex:"+std::to_string(srcIndex[0])+" is out of bounds, ";
+				this->errorCurrent += "srcSize:"+std::to_string(srcSize);
+				this->setError(3, this->errorCurrent);
 				return 0;
 			}else if(bitIndex == NULL){
-				this->setError(234, "unpackByte() - bitIndex is null.");
+				this->setError(4, this->errorCurrent+"bitIndex is null.");
 				return 0;
 			}else if(bitIndex[0] < 0 || bitIndex[0] >= 8){
-				this->setError(324, "unpackByte() - bitIndex is out of bounds.");
+				this->setError(5, this->errorCurrent+"bitIndex:"+std::to_string(bitIndex[0])+" is out of bounds, 8");
 				return 0;
 			}else if(expectedBitCount <= 0){
-				this->setError(234, "unpackByte() - expectedBitCount is <= 0.");
+				this->setError(6, this->errorCurrent+"expectedBitCount:"+std::to_string(expectedBitCount)+" is empty.");
 				return 0;
 			}
 
@@ -1606,27 +1675,28 @@ class HuffmanCoding{
 				}
 			}
 			if(this->failed()){
-				this->setError(345, "unpackByte() - failed to derive chunk index.");
+				this->setError(7, this->errorCurrent+"failed to derive chunk index.");
 				return 0;
 			}
 			return ret;
 		}
 
 		bool unpackHeader(char *data, size_t dataSize, int *bodyStart, int *bodyPadding, int *headerPadding){
+			this->errorCurrent = "unpackHeader() - ";
 			if(data == NULL){
-				this->setError(1100, "unpackHeader(char *data, size_t dataSize) - data is null.");
+				this->setError(0, this->errorCurrent+"data is null.");
 				return false;
 			}else if(dataSize <= 2){
-				this->setError(1101, "unpackHeader(char *data, size_t dataSize) - dataSize <= 2, which is invalid, treating as null.");
+				this->setError(1, this->errorCurrent+"dataSize:"+std::to_string(dataSize)+" is too small, min 3");
 				return false;
 			}else if(bodyStart == NULL){
-				this->setError(234, "unpackHeader() - bodyStart is null.");
+				this->setError(2, this->errorCurrent+"bodyStart is null.");
 				return false;
 			}else if(bodyPadding == NULL){
-				this->setError(345, "unpackHeader() - bodyPadding is null.");
+				this->setError(3, this->errorCurrent+"bodyPadding is null.");
 				return false;
 			}else if(headerPadding == NULL){
-				this->setError(111, "unpackHeader() - headerPadding is null.");
+				this->setError(4, this->errorCurrent+"headerPadding is null.");
 				return false;
 			}
 
@@ -1640,40 +1710,40 @@ class HuffmanCoding{
 			// NOTE: are we even actually using body padding?
 			bodyPadding[0] = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 4);
 			if(this->failed()){
-				this->setError(234, "unpackHeader() - failed to unpack body padding.");
+				this->setError(5, this->errorCurrent+"failed to unpack body padding.");
 				return false;
 			}
 			
 			elementCount = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 9);
 			if(this->failed()){
-				this->setError(435, "unpackHeader() - failed to unpack element count.");
+				this->setError(6, this->errorCurrent+"failed to unpack element count.");
 				return false;
 			}
 
 			if(!this->resizeTreeLetters(elementCount)){
-				this->setError(234, "unpackHeader() - failed to resize tree letters.");
+				this->setError(7, this->errorCurrent+"failed to resize tree letters.");
 				return false;
 			}else if(!this->resizeFrequencies(elementCount)){
-				this->setError(54, "unpackHeader() - failed to resize frequencies.");
+				this->setError(8, this->errorCurrent+"failed to resize frequencies.");
 				return false;
 			}
 
 			for(int i=0; i<this->frequencies_s; i++){
 				int containerSize = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 3);
 				if(this->failed()){
-					this->setError(32354, "unpackHeader() - failed to unpack container size.");
+					this->setError(9, this->errorCurrent+"failed to unpack container size.");
 					return false;
 				}
 
 				int freqValue = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, containerSize * 8);
 				if(this->failed()){
-					this->setError(345, "unpackHeader() - failed to unpack frequency value.");
+					this->setError(10, this->errorCurrent+"failed to unpack frequency value.");
 					return false;
 				}
 
 				int freqLetter = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 8);
 				if(this->failed()){
-					this->setError(3425, "unpackHeader() - failed to unpack frequency letter.");
+					this->setError(11, this->errorCurrent+"failed to unpack frequency letter.");
 					return false;
 				}
 
@@ -1687,26 +1757,29 @@ class HuffmanCoding{
 		}
 
 		bool unpackBody(char *data, size_t dataSize, int bodyStart, int bitOffset, int endPadding){
+			this->errorCurrent = "unpackBody() - ";
 			if(data == NULL){
-				this->setError(234, "unpackBody() - data is null.");
+				this->setError(0, this->errorCurrent+"data is null.");
 				return false;
 			}else if(dataSize <= 0){
-				this->setError(354, "unpackBody() - dataSize is <= 0.");
+				this->setError(1, this->errorCurrent+"dataSize:"+std::to_string(dataSize)+" is empty.");
 				return false;
 			}else if(bodyStart < 0 || bodyStart >= dataSize){
-				this->setError(456, "unpackBody() - bodyStart is out of bounds.");
+				this->errorCurrent += "bodyStart:"+std::to_string(bodyStart)+" is out of bounds, ";
+				this->errorCurrent += "dataSize:"+std::to_string(dataSize);
+				this->setError(2, this->errorCurrent);
 				return false;
 			}else if(bitOffset < 0 || bitOffset >= 8){
-				this->setError(355, "unpackBody() - bitOffset is out of bounds.");
+				this->setError(3, this->errorCurrent+"bitOffset:"+std::to_string(bitOffset)+" is out of bounds, 8");
 				return false;
 			}else if(!this->validateTreeData()){
-				this->setError(222, "unpackBody() - failed to validate tree data.");
+				this->setError(4, this->errorCurrent+"failed to validate tree data.");
 				return false;
 			}else if(!this->validateFrequencies()){
-				this->setError(653, "unpackBody() - failed to validate frequencies.");
+				this->setError(5, this->errorCurrent+"failed to validate frequencies.");
 				return false;
 			}else if(!this->validateCodeTable()){
-				this->setError(46, "unpackBody() - failed to validate code table.");
+				this->setError(6, this->errorCurrent+"failed to validate code table.");
 				return false;
 			}
 
@@ -1714,12 +1787,12 @@ class HuffmanCoding{
 			this->out_s = this->frequencyMax;
 			this->out = new (std::nothrow) char[this->out_s];
 			if(!this->out){
-				this->setError(424, "unpackBody() - failed to allocat out.");
+				this->setError(7, this->errorCurrent+"failed to allocat out.");
 				return false;
 			}
 
 			if(!this->codeTableSortByBitCount()){
-				this->setError(5345, "unpackBody() - failed to sort code table.");
+				this->setError(8, this->errorCurrent+"failed to sort code table.");
 				return false;
 			}
 
@@ -1727,7 +1800,7 @@ class HuffmanCoding{
 				int maxBitCount = this->codeTable[this->frequencies_s-1];
 				int encoded = this->unpackByte(data, dataSize, &bodyStart, &bitOffset, maxBitCount);
 				if(this->failed()){
-					this->setError(2525, "unpackBody() - failed to unpack compressed chunk.");
+					this->setError(9, this->errorCurrent+"failed to unpack compressed chunk.");
 					return false;
 				}	
 				int tableCode = 0;
@@ -1757,8 +1830,8 @@ class HuffmanCoding{
 					}
 				}
 				if(!success){
-					std::string msg = "Failure index : "+std::to_string(o);
-					this->setError(34544, "unpackBody() - failed to decode data. "+msg);
+					this->errorCurrent += "failed to decode body at index o:"+std::to_string(o);
+					this->setError(10, this->errorCurrent);
 					return false;
 				}
 			}
@@ -1767,20 +1840,21 @@ class HuffmanCoding{
 
 		/* QJ sort functions */
 		bool codeTableSortByBitCount(void){
+			this->errorCurrent = "codeTableSortByBitCount() - ";
 			if(!this->validateTreeData()){
-				this->setError(44456, "generateCodeTable() - failed to validate tree data.");
+				this->setError(0, this->errorCurrent+"failed to validate tree data.");
 				return false;
 			}else if(!this->validateFrequencies()){
-				this->setError(665434, "generateCodeTable() - failed to validate frequencies.");
+				this->setError(1, this->errorCurrent+"failed to validate frequencies.");
 				return false;
 			}else if(!this->validateCodeTable()){
-				this->setError(2342, "codeTableSortByBitCount() - failed to validate code table.");
+				this->setError(2, this->errorCurrent+"failed to validate code table.");
 				return false;
 			}
 
 			this->destroyWorkBuffer();
 			if(!this->resizeWorkBuffer(this->frequencies_s)){
-				this->setError(324, "codeTableSortByBitCount() - failed to resize workbuffer.");
+				this->setError(3, this->errorCurrent+"failed to resize workbuffer.");
 				return false;
 			}
 
@@ -1790,7 +1864,9 @@ class HuffmanCoding{
 					int biggerIdx = grabIdx;
 					if((biggerIdx+this->frequencies_s < 0 || biggerIdx+this->frequencies_s >= this->codeTable_s) ||
 					   (biggerIdx < 0 || biggerIdx >= this->codeTable_s)){
-						this->setError(234, "codeTableSortByBitCount() - biggerIdx is out of bounds.");
+						this->errorCurrent += "biggerIdx:"+std::to_string(biggerIdx)+" is out of bounds, ";
+						this->errorCurrent += "codeTable_s:"+std::to_string(this->codeTable_s);
+						this->setError(4, this->errorCurrent);
 						return false;
 					}
 
@@ -1798,7 +1874,9 @@ class HuffmanCoding{
 					int smallerIdx = i;
 					if((smallerIdx+this->frequencies_s < 0 || smallerIdx+this->frequencies_s >= this->codeTable_s) || 
 					   (smallerIdx < 0 || smallerIdx >= this->codeTable_s)){ // insanity check
-						this->setError(234, "codeTableSortByBitCount() - smallerIdx is out of bounds.");
+						this->errorCurrent += "smallerIdx:"+std::to_string(smallerIdx)+" is out of bounds, ";
+						this->errorCurrent += "codeTable_s:"+std::to_string(this->codeTable_s);
+						this->setError(5, this->errorCurrent);
 						return false;
 					}
 
@@ -1838,103 +1916,20 @@ class HuffmanCoding{
 			this->destroyWorkBuffer();
 			return true;
 		}
-
-		/* QJ encode functions */
-		/* //
-			Algorithm breakdown:
-			1) make sure we have data
-			2) get index i from data until no more data.
-			3) 	check if data i is inside our tree letters array.
-			4)	if data i not in array, resize array by +1
-			5)		Append data i to the array
-		// */
-		bool createTreeLetters(char *data, size_t dataSize){
-			if(data == NULL){
-				this->setError(200, "createTreeLetters(char *data, size_t dataSize) - data is null.");
-				return false;
-			}
-			if(dataSize <= 0){
-				this->setError(201, "createTreeLetters(char *data, size_t dataSize) - dataSize is <= 0, treating data as null");
-				return false;
-			}
-
-			this->destroyTreeLetters();
-			for(int i=0; i<dataSize; i++){
-				char testChar = data[i];
-				bool matched = false;
-				for(int j=0; j<this->treeLetters_s; j++){
-					if(testChar == this->treeLetters[j]){
-						matched = true;
-						break;
-					}
-				}
-				if(!matched){
-					if(!this->resizeTreeLetters(this->treeLetters_s + 1)){
-						this->setError(4, "createTreeLetters() - Failed to resize tree letters.");
-						return false;
-					}
-					if(this->treeLetters_s - 1 < 0){
-						this->setError(5, "createTreeLetters() - Unexpected underflow detected.");
-						return false;
-					}
-					this->treeLetters[this->treeLetters_s-1] = testChar;
-				}
-			}
-
-			return true;
-		}
-
-		bool createFrequency(char *data, size_t dataSize){
-			if(data == NULL){
-				this->setError(302, "createFrequency(char *data, size_t dataSize) - data is null.");
-				return false;
-			}
-			if(dataSize <= 0){
-				this->setError(303, "createFrequency(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
-				return false;
-			}
-
-			if(!this->validateTreeLetters()){
-				this->setError(0, "createFrequency() - Invalid tree letters.");
-				return false;
-			}
-
-			this->destroyFrequencies();
-			this->frequencyMax=0;
-
-			for(int i=0; i<this->treeLetters_s; i++){
-				char targetChar = this->treeLetters[i];
-				int freq = 0;
-				for(int j=0; j<dataSize; j++){
-					if(targetChar == data[j])
-						freq++;
-				}
-				if(!this->resizeFrequencies(this->frequencies_s + 1)){
-					this->setError(1, "createFrequency() - failed to resize frequencies array.");
-					return false;
-				}
-				if(this->frequencies_s - 1 < 0){
-					this->setError(2, "createFrequency() - Unexpected buffer underflow.");
-					return false;
-				}
-				this->frequencies[this->frequencies_s - 1] = freq;
-				this->frequencyMax += freq;
-			}
-			return true;
-		}
 		
 		// most to least frequent.
 		bool sortFreqencies(void){
+			this->errorCurrent = "sortFreqencies() - ";
 			if(!this->validateFrequencies()){
-				this->setError(400, "sortFreqencies(void) - failed to validate frequencies.");
+				this->setError(0, this->errorCurrent+"failed to validate frequencies.");
 				return false;
-			}
-			if(!this->validateTreeLetters()){
-				this->setError(1, "sortFrequencies() - failed to validate tree letters.");
+			}else if(!this->validateTreeLetters()){
+				this->setError(1, this->errorCurrent+"failed to validate tree letters.");
 				return false;
-			}
-			if(this->treeLetters_s != this->frequencies_s){
-				this->setError(402, "sortFreqencies(void) - Table Corruption, treeLetters_s != frequencies_s.");
+			}else if(this->treeLetters_s != this->frequencies_s){
+				this->errorCurrent += "table corruption, treeLetters_s:"+std::to_string(this->treeLetters_s)+" != ";
+				this->errorCurrent += "frequencies_s:"+std::to_string(this->frequencies_s);
+				this->setError(2, this->errorCurrent);
 				return false;
 			}
 
@@ -1960,24 +1955,107 @@ class HuffmanCoding{
 			return true;
 		}
 
-		bool generateCodeTable(void){
-			if(!this->validateTreeData()){
-				this->setError(44456, "generateCodeTable() - failed to validate tree data.");
+
+		/* QJ encode functions */
+		/* //
+			Algorithm breakdown:
+			1) make sure we have data
+			2) get index i from data until no more data.
+			3) 	check if data i is inside our tree letters array.
+			4)	if data i not in array, resize array by +1
+			5)		Append data i to the array
+		// */
+		bool createTreeLetters(char *data, size_t dataSize){
+			this->errorCurrent = "createTreeLetters() - ";
+			if(data == NULL){
+				this->setError(0, this->errorCurrent+"data is null.");
 				return false;
-			}else if(!this->validateFrequencies()){
-				this->setError(665434, "generateCodeTable() - failed to validate frequencies.");
+			}else if(dataSize <= 0){
+				this->setError(1, this->errorCurrent+"dataSize:"+std::to_string(dataSize)+" is empty.");
+				return false;
+			}
+
+			this->destroyTreeLetters();
+			for(int i=0; i<dataSize; i++){
+				char testChar = data[i];
+				bool matched = false;
+				for(int j=0; j<this->treeLetters_s; j++){
+					if(testChar == this->treeLetters[j]){
+						matched = true;
+						break;
+					}
+				}
+				if(!matched){
+					if(!this->resizeTreeLetters(this->treeLetters_s + 1)){
+						this->setError(3, this->errorCurrent+"Failed to resize tree letters.");
+						return false;
+					}
+					if(this->treeLetters_s - 1 < 0){
+						this->setError(4, this->errorCurrent+"treeLetters_s:"+std::to_string(this->treeLetters_s)+" - 1 underflows array.");
+						return false;
+					}
+					this->treeLetters[this->treeLetters_s-1] = testChar;
+				}
+			}
+
+			return true;
+		}
+
+		bool createFrequency(char *data, size_t dataSize){
+			this->errorCurrent = "createFrequency() - ";
+			if(data == NULL){
+				this->setError(0, this->errorCurrent+"data is null.");
+				return false;
+			}else if(dataSize <= 0){
+				this->setError(1, this->errorCurrent+"dataSize:"+std::to_string(dataSize)+" is empty.");
 				return false;
 			}else if(!this->validateTreeLetters()){
-				this->setError(2, "generateCodeTable() - failed to validate tree letters.");
+				this->setError(2, this->errorCurrent+"Invalid tree letters.");
+				return false;
+			}
+
+			this->destroyFrequencies();
+			this->frequencyMax=0;
+
+			for(int i=0; i<this->treeLetters_s; i++){
+				char targetChar = this->treeLetters[i];
+				int freq = 0;
+				for(int j=0; j<dataSize; j++){
+					if(targetChar == data[j])
+						freq++;
+				}
+				if(!this->resizeFrequencies(this->frequencies_s + 1)){
+					this->setError(3, this->errorCurrent+"failed to resize frequencies array.");
+					return false;
+				}else if(this->frequencies_s - 1 < 0){
+					this->setError(4, this->errorCurrent+"frequencies_s:"+std::to_string(this->frequencies_s)+" - 1 induceds an underflow.");
+					return false;
+				}
+				this->frequencies[this->frequencies_s - 1] = freq;
+				this->frequencyMax += freq;
+			}
+			return true;
+		}
+		
+		bool generateCodeTable(void){
+			this->errorCurrent = "generateCodeTable() - ";
+			if(!this->validateTreeData()){
+				this->setError(0, this->errorCurrent+"failed to validate tree data.");
+				return false;
+			}else if(!this->validateFrequencies()){
+				this->setError(1, this->errorCurrent+"failed to validate frequencies.");
+				return false;
+			}else if(!this->validateTreeLetters()){
+				this->setError(2, this->errorCurrent+"failed to validate tree letters.");
 				return false;
 			}else if(!this->validateTreeLayers()){
-				this->setError(3, "generateCodeTable() - failed to validate tree layers.");
+				this->setError(3, this->errorCurrent+"failed to validate tree layers.");
 				return false;
 			}
 
 			this->destroyCodingTable();
 			if(!this->resizeCodeTable(this->frequencies_s*2)){
-				this->setError(5, "generateCodeTable() - failed to resize code table.");
+				this->setError(4, this->errorCurrent+"failed to resize code table.");
 				return false;
 			}
 			for(int i=0; i<this->codeTable_s; i++)
@@ -1991,10 +2069,10 @@ class HuffmanCoding{
 			int bitArray[2] = {0};
 			for(int i=0; i<=start; i++){
 				if(this->isBaseIndex(i)){
-					this->setError(3234, "generateCodeTable() - huffman tree missaligned. Cannot start processing from base node.");
+					this->setError(5, this->errorCurrent+"huffman tree missaligned, index i:"+std::to_string(i)+" is a base node.");
 					return false; 
 				}else if(!this->getSubIndecies(i, &zero, &one) && this->failed()){
-					this->setError(666, "generateCodeTable() - failed to get inital sub indecies.");
+					this->setError(6, this->errorCurrent+"failed to get inital sub indecies.");
 					return false;
 				}
 
@@ -2004,7 +2082,7 @@ class HuffmanCoding{
 					if(this->isBaseIndex(bitArray[bit])){
 						int newIndex = bitArray[bit] - converter; // convert to bitarray[x] into a value between 0 and frequencies_s
 						if(!this->addBitToCodeTable(newIndex, bit)){
-							this->setError(45423, "generateCodeTable() - failed to add bit to code table.");
+							this->setError(7, this->errorCurrent+"failed to add bit to code table.");
 							return false;
 						}
 						continue;
@@ -2012,7 +2090,7 @@ class HuffmanCoding{
 					queueFill = 0;
 					queueFill = this->pushWorkQueue(bitArray[bit], queueFill);
 					if(this->failed()){
-						this->setError(3234, "generateCodeTable() - failed to push data to queue.");
+						this->setError(8, this->errorCurrent+"failed to push data to queue.");
 						return false;
 					}
 					while(queueFill > 0){
@@ -2020,20 +2098,20 @@ class HuffmanCoding{
 						queueFill--;
 
 						if(!this->getSubIndecies(target, &zero, &one) && this->failed()){
-							this->setError(3333, "generateCodeTable() - failed to get sub node to add bit to.");
+							this->setError(9, this->errorCurrent+"failed to get sub indecies.");
 							return false;
 						}
 
 						if(this->isBaseIndex(zero)){
 							int newIndex = zero - converter; // convert to 0 to frequencie_s
 							if(!this->addBitToCodeTable(newIndex, bit)){
-								this->setError(445, "generateCodeTable() - failed to add bit to zero index.");
+								this->setError(10, this->errorCurrent+"ailed to add bit to zero index.");
 								return false;
 							}
 						}else{
 							queueFill = this->pushWorkQueue(zero, queueFill);
 							if(this->failed()){
-								this->setError(234, "generateCodeTable() - failed to push data to queue.");
+								this->setError(11, this->errorCurrent+"failed to push data to queue.");
 								return false;
 							}
 						}
@@ -2041,13 +2119,13 @@ class HuffmanCoding{
 						if(this->isBaseIndex(one)){
 							int newIndex = one - converter; // convert to 0 to frequencie_s
 							if(!this->addBitToCodeTable(newIndex, bit)){
-								this->setError(435, "generateCodeTable() - failed to add bit to one index.");
+								this->setError(12, this->errorCurrent+"failed to add bit to one index.");
 								return false;
 							}
 						}else{
 							queueFill = this->pushWorkQueue(one, queueFill);
 							if(this->failed()){
-								this->setError(234, "generateCodeTable() - failed to push data to queue.");
+								this->setError(13, this->errorCurrent+"failed to push data to queue.");
 								return false;
 							}
 						}
@@ -2058,23 +2136,23 @@ class HuffmanCoding{
 		}
 		
 		bool encode(char *data, size_t dataSize){
-
+			this->errorCurrent = "encode() - ";
 			int headerPadding = this->packHeader();
 			if(headerPadding <= -1){
-				this->setError(1201, "encode() - failed to pack header.");
+				this->setError(0, this->errorCurrent+"failed to pack header.");
 				return false;
 			}
 
 			int bodyPadding = this->packBody(headerPadding, data, dataSize);
 			if(bodyPadding <= -1 || this->failed()){
-				this->setError(4324, "encode() - failed to pack body.");
+				this->setError(1, this->errorCurrent + "failed to pack body.");
 				return false;
 			}
 
 			int a=0, b=0;
 			// TODO: change padding to 3 bits.
 			if(!this->packByte(bodyPadding, 4, this->header, this->header_s, &a, &b)){
-				this->setError(234, "encode() - failed to pack body padding.");
+				this->setError(2, this->errorCurrent+"failed to pack body padding.");
 			}
 
 			this->destroyOut();
@@ -2089,7 +2167,7 @@ class HuffmanCoding{
 
 			this->out = new (std::nothrow) char[this->out_s];
 			if(!this->out){
-				this->setError(3, "encode() = failed to allocate out.");
+				this->setError(3, this->errorCurrent+"failed to allocate out.");
 				return false;
 			}
 
@@ -2176,43 +2254,44 @@ class HuffmanCoding{
 			this->destroyFrequencies();
 			this->destroyOut();
 			this->tablesSorted = false;
+			this->errorCurrent = "compress() - ";
 			if(data == NULL){
-				this->setError(0, "compress(char *data, size_t dataSize) - data is null.");
+				this->setError(0, this->errorCurrent+"data is null.");
 				return false;
 			}
 			if(dataSize <= 0){
-				this->setError(1, "compress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+				this->setError(1, this->errorCurrent+"dataSize:"+std::to_string(dataSize)+" is empty.");
 				return false;
 			}
 
 			if(!this->createTreeLetters(data, dataSize)){
-				this->setError(2, "compress(char *data, size_t dataSize) - Failed to create tree letters.");
+				this->setError(2, this->errorCurrent+"Failed to create tree letters.");
 				return false;
 			}
 
 			if(!this->createFrequency(data, dataSize)){
-				this->setError(3, "compress(char *data, size_t dataSize) - Failed to create frequency table");
+				this->setError(3, this->errorCurrent+"Failed to create frequency table");
 				return false;
 			}
 
 			 
 			if(!this->sortFreqencies()){
-				this->setError(4, "compress(char *data, size_t dataSize) - sortFreqencies failed.");
+				this->setError(4, this->errorCurrent+"sortFreqencies failed.");
 				return false;
 			}
 
 			if(!this->plantTree()){
-				this->setError(545, "compress() - failed to plant tree.");
+				this->setError(5, this->errorCurrent+"failed to plant tree.");
 				return false;
 			}
 
 			if(!this->generateCodeTable()){
-				this->setError(5555, "compress() - failed to generate code table.");
+				this->setError(6, this->errorCurrent+"failed to generate code table.");
 				return false;
 			}
 
 			if(!this->encode(data, dataSize)){
-				this->setError(5, "compress(char *data, size_t dataSize) - Failed to encode data.");
+				this->setError(7, this->errorCurrent+"Failed to encode data.");
 				return false;
 			}
 
@@ -2230,11 +2309,12 @@ class HuffmanCoding{
 
 			this->tablesSorted = false; // possibley deprecated variable
 
+			this->errorCurrent = "decompress() - "; 
 			if(data == NULL){
-				this->setError(100, "decompress(char *data, size_t dataSize) - data is null.");
+				this->setError(0, this->errorCurrent+"data is null.");
 				return false;
 			}else if(dataSize <= 0){
-				this->setError(101, "decompress(char *data, size_t dataSize) - dataSize is <= 0, treating data as null.");
+				this->setError(1, this->errorCurrent+"dataSize:"+std::to_string(dataSize)+" is empty.");
 				return false;
 			}
 
@@ -2242,22 +2322,22 @@ class HuffmanCoding{
 			int bodyPadding = 0;
 			int headerPadding = 0;
 			if(!this->unpackHeader(data, dataSize, &bodyStart, &bodyPadding, &headerPadding)){
-				this->setError(102, "decompress(char *data, size_t dataSize) - faiiled to unpack header.");
+				this->setError(2, this->errorCurrent+"faiiled to unpack header.");
 				return false;
 			}
 
 			if(!this->plantTree()){
-				this->setError(103, "decompress(char *data, size_t dataSize) - failed to plant tree.");
+				this->setError(3, this->errorCurrent+"failed to plant tree.");
 				return false;
 			}
 
 			if(!this->generateCodeTable()){
-				this->setError(1304, "decompress() - failed to generate code table.");
+				this->setError(4, this->errorCurrent+"failed to generate code table.");
 				return false;
 			}
 
 			if(!this->unpackBody(data, dataSize, bodyStart, headerPadding, bodyPadding)){
-				this->setError(4535, "decompress() - failed to unpack body.");
+				this->setError(5, this->errorCurrent+"failed to unpack body.");
 				return false;
 			}
 
@@ -2267,17 +2347,20 @@ class HuffmanCoding{
 #if HUFFMAN_EXPERIMENTAL == 1
 		/* QJ experimental functions */
 		bool popTables(int freqIndex){
+			this->errorCurrent = "popTables() - ";
 			if(!this->validateFrequencies()){
-				this->setError(4345, "reduceFrequency()- frequencies table is invalid.");
+				this->setError(0, this->errorCurrent+"frequencies table is invalid.");
 				return false;
 			}else if(!this->validateTreeLetters()){
-				this->setError(366, "popTables() - failed to validate tree letters.");
+				this->setError(1, this->errorCurrent+"failed to validate tree letters.");
 				return false;
 			}else if(!this->validateCodeTable()){
-				this->setError(222, "popTables() - failed to validate code table.");
+				this->setError(2, this->errorCurrent+"failed to validate code table.");
 				return false;
 			}else if(!(freqIndex < this->frequencies_s) || freqIndex < 0){
-				this->setError(345, "reduceFrequency() - freqIndex out of bounds.");
+				this->errorCurrent += "freqIndex:"+std::to_string(freqIndex)+" is out of bounds, ";
+				this->errorCurrent += "frequencies_s:"+std::to_string(this->frequencies_s);
+				this->setError(3, this->errorCurrent);
 				return false;
 			}
 
@@ -2300,11 +2383,14 @@ class HuffmanCoding{
 		}
 
 		bool reduceFrequency(int freqIndex){
+			this->errorCurrent = "reduceFrequency() - ";
 			if(!this->validateFrequencies()){
-				this->setError(4345, "reduceFrequency()- frequencies table is invalid.");
+				this->setError(0, this->errorCurrent+"frequencies table is invalid.");
 				return false;
 			}else if(!(freqIndex < this->frequencies_s) || freqIndex < 0){
-				this->setError(345, "reduceFrequency() - freqIndex out of bounds.");
+				this->errorCurrent += "freqIndex:"+std::to_string(freqIndex)+" is out of bounds, ";
+				this->errorCurrent += "frequencies_s:"+std::to_string(this->frequencies_s);
+				this->setError(1, this->errorCurrent);
 				return false;
 			}
 
