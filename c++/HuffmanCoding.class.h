@@ -710,7 +710,7 @@ class HuffmanCoding{
 				this->destroyWorkQueue();
 				this->workQueue = new (std::nothrow) int[size];
 				if(!this->workQueue){
-					his->setError(2, this->errorCurrent+"failed to allocate workQueue");
+					this->setError(2, this->errorCurrent+"failed to allocate workQueue");
 					return false;
 				}
 				this->workQueue_s = size;
@@ -731,24 +731,28 @@ class HuffmanCoding{
 			Returns the number of items int queue
 		*/
 		int pushWorkQueue(int val, int queueCount){
+			this->errorCurrent = "pushWorkQueue() - ";
 			if(!this->validateFrequencies()){
-				this->setError(234, "pushWorkQueue() - invalid frequencies.");
+				this->setError(0, this->errorCurrent+"invalid frequencies.");
 				return -1;
-			}
-			if(!this->validateWorkQueue()){
+
+			}else if(!this->validateWorkQueue()){
 				this->clearError();
 				if(!this->resizeWorkQueue(this->frequencies_s)){
-					this->setError(2, "pushWorkQueue() - failed to resize workqueue.");
+					this->setError(1, this->errorCurrent+"failed to resize workQueue.");
 					return -1;
 				}
+
 				for(int i=0; i<this->workQueue_s; i++)
-					this->workQueue[i] = -1; // init
+					this->workQueue[i] = -1;
+
 			}else if(this->workQueue[this->workQueue_s-1] != -1){
 				// if queue is full, expand by one element.
 				if(!this->resizeWorkQueue(this->workQueue_s+1)){
-					this->setError(3, "pushWorkQueue() - failed to resize workQueue.");
+					this->setError(2, this->errorCurrent+"failed to resize workQueue.");
 					return -1;
 				}
+
 				this->workQueue[this->workQueue_s-1] = -1;
 			}
 
@@ -765,18 +769,19 @@ class HuffmanCoding{
 				newQueueCount++;
 			}
 			if(failure){
-				this->setError(54355, "pushWorkQueue() - failed to push value.");
+				this->setError(3, this->errorCurrent+"failed to push value.");
 				return -1;
 			}
 			return newQueueCount;
 		}
 
 		bool calculateLayerIndecies(void){
+			this->errorCurrent = "calculateLayerIndecies() - ";
 			if(!this->validateTreeData()){
-				this->setError(0, "calculateLayerIndecies() - failed to valied treeData.");
+				this->setError(0, this->errorCurrent+"failed to valied treeData.");
 				return false;
 			}else if(!this->validateTreeLayers()){
-				this->setError(1, "calculateLayerIndecies() - failed to validate treeLayers");
+				this->setError(1, this->errorCurrent+"failed to validate treeLayers");
 				return false;
 			}
 
@@ -789,11 +794,12 @@ class HuffmanCoding{
 		}
 		
 		bool isBaseIndex(int target){
+			this->errorCurrent = "isBaseIndex() - ";
 			if(!this->validateTreeData()){
-				this->setError(4444, "isBaseIndex() - invalid tree data.");
+				this->setError(0, this->errorCurrent + "invalid tree data.");
 				return false;
 			}else if(!this->validateTreeLayers()){
-				this->setError(2, "isBaseIndex() - invalid tree layers");
+				this->setError(1, this->errorCurrent + "invalid tree layers.");
 				return false;
 			}
 
@@ -810,8 +816,9 @@ class HuffmanCoding{
 		}
 		
 		int getBaseLayerIndex(int target){
+			this->errorCurrent = "getBaseLayerIndex() - ";
 			if(!this->validateTreeLayers()){
-				this->setError(0, "getBaseLayerIndex() - invalid tree layer data");
+				this->setError(0, this->errorCurrent+"invalid tree layer data.");
 				return -1;
 			}
 			for(int i=0; i<this->treeDataLayerCount; i++){
@@ -821,7 +828,7 @@ class HuffmanCoding{
 					return i;
 				}
 			}
-			this->setError(1, "getBaseLayerIndex() - target isn't within layer range.");
+			this->setError(1, this->errorCurrent+"target isn't within layer range.");
 			return -1;
 		}
 
@@ -829,14 +836,15 @@ class HuffmanCoding{
 		 * This function is limited by sizeof(int)
 		 * */
 		bool addBitToCodeTable(int targetIndex, int bit){
+			this->errorCurrent = "addBitToCodeTable() - ";
 			if(!this->validateFrequencies()){
-				this->setError(45345, "addBitToCodeTable() - failed to validate frequencies.");
+				this->setError(0, this->errorCurrent+"failed to validate frequencies.");
 				return false;
 			}else if(!this->validateCodeTable()){
-				this->setError(2, "addBitToCodeTable() - failed to validate code table.");
+				this->setError(1, this->errorCurrent+"failed to validate code table.");
 				return false;
 			}else if(targetIndex < 0 || targetIndex >= this->codeTable_s){
-				this->setError(45454, "addBitToCodeTable() - targetIndex is out of bounds.");
+				this->setError(2, this->errorCurrent+"targetIndex:"+std::to_string(targetIndex)+"out of bounds, max:"+std::to_string(this->codeTable_s));
 				return false;
 			}
 			
@@ -847,40 +855,40 @@ class HuffmanCoding{
 			int codeIdx = targetIndex+this->frequencies_s;
 			this->codeTable[codeIdx] = (this->codeTable[codeIdx] << 1) + (bit&0x01);
 			if(this->codeTable[targetIndex] > 32){
-				this->setError(345, "addBitToCodeTable() - data loss detected, shifted more than sizeof int, 32 bits");
+				this->setError(3, this->errorCurrent+"codeTable["+std::to_string(targetIndex)+"]:"+std::to_string(this->codeTable[targetIndex])+" bigger than the supported 32 bits.");
 				return false;
 			}
 			return true;
 		}
 
-
 		bool getSubIndecies(int targetIndex, int *zeroIndex, int *oneIndex){
+			this->errorCurrent = "getSubIndecies() - ";
 			if(!this->validateTreeData()){
-				this->setError(44442, "getSubIndecies() - invalid tree data.");
+				this->setError(0, this->errorCurrent+"invalid tree data.");
 				return false;
 			}else if(!this->validateFrequencies()){
-				this->setError(3542, "getSubIndecies() - invalid frequencies.");
+				this->setError(1, this->errorCurrent+"invalid frequencies.");
 				return false;
 			}else if(!this->validateTreeLayers()){
-				this->setError(3, "getSubIndecies() - invalid tree layers.");
+				this->setError(2, this->errorCurrent+"invalid tree layers.");
 				return false;
 			}else if(targetIndex < 0 || targetIndex >= this->treeData_s){
-				std::string message = "getSubIndecies() - targetIndex is out of bounds. target:"+std::to_string(targetIndex)+" | treeSize:"+std::to_string(this->treeData_s);
-				this->setError(44452, message.c_str());
+				this->errorCurrent += "targetIndex:"+std::to_string(targetIndex)+" is out of bounds, treeData_s:"+std::to_string(this->treeData_s);
+				this->setError(3, this->errorCurrent);
 				return false;
 			}
 
 			// Determine which layer our targetIndex is a part of.
 			int targetLayer = this->getBaseLayerIndex(targetIndex);
 			if(this->failed()){
-				this->setError(5555, "getSubIndecies() - failed to get target layer.");
+				this->setError(4, this->errorCurrent+"failed to get targetLayer.");
 				return false;
 			}else if(targetLayer >= this->treeDataLayerCount || targetLayer < 0){
-				this->setError(4, "getSubIndecies() - targetLayer is out of bounds.");
+				this->setError(5, this->errorCurrent+"targetLayer:"+std::to_string(targetLayer)+"is out of bounds, treeDataLayerCount:"+std::to_string(this->treeDataLayerCount));
 				return false;
 			}
 
-			// What if the targetLayer is pointing to the base layer of the tree?
+			// ensures that odd-sized buffers are handled.
 			if(targetLayer == 0){
 				zeroIndex[0] = targetIndex;
 				oneIndex[0] = -1;
@@ -891,34 +899,39 @@ class HuffmanCoding{
 			// identify the start and end of the target layer.
 			int targetLayerStart = this->treeLayerIndecies[targetLayer];
 			if(targetLayerStart < 0 || targetLayerStart >= this->treeData_s){
-				this->setError(545, "getSubIndecies() - targetLayerStart is out of bounds.");
+				this->setError(6, this->errorCurrent+"targetLayerStart:"+std::to_string(targetLayerStart)+" is out of bounds, treeData_s:"+std::to_string(this->treeData_s));
 				return false;
 			}
 			int targetLayerEnd = targetLayerStart - this->treeLayerSizes[targetLayer];
 			if(!(targetLayerEnd >= -1) || targetLayerEnd >= (int)this->treeData_s){
-				this->setError(3445, "getSubIndecies() - targetLayerEnd is out of bounds.");
+				this->setError(7, this->errorCurrent+"targetLayerEnd:"+std::to_string(targetLayerEnd)+"is out of bounds, treeData_s:"+std::to_string(this->treeData_s));
 				return  false;
 			}
 			
 			// Identify the source layer, and its start and end.
 			int sourceLayer = targetLayer - 1;
 			if(sourceLayer < 0 || sourceLayer >= this->treeDataLayerCount){
-				this->setError(453, "getSubIndecies() - sourceLayer is out of bounds.");
+				this->setError(8, this->errorCurrent+"sourceLayer:"+std::to_string(sourceLayer)+"is out of bounds, treeDataLayerCount:"+std::to_string(this->treeDataLayerCount));
 				return false;
 			}
 			int sourceLayerStart = this->treeLayerIndecies[sourceLayer];
 			if(sourceLayerStart < 0 || sourceLayerStart >= (int)this->treeData_s){
-				this->setError(43, "getSubIndecies() - sourceLayerStart is out of bounds");
+				this->setError(9, this->errorCurrent+"sourceLayerStart:"+std::to_string(sourceLayerStart)+"is out of bounds, treeData:"+std::to_string(this->treeData_s));
 				return false;
 			}
 			int sourceLayerEnd = sourceLayerStart - this->treeLayerSizes[sourceLayer];
 			if(sourceLayerEnd < 0 || sourceLayerStart > (int)this->treeData_s){
-				this->setError(654, "getSubIndecies() - sourceLayerEnd is out of bounds.");
+				this->setError(10, this->errorCurrent+"sourceLayerEnd:"+std::to_string(sourceLayerEnd)+"is out of bounds, treeData_s:"+std::to_string(this->treeData_s));
 				return false;
 			}
 
+			// source tree layer size should always be > because of how the huffman tree is structured.
 			if(this->treeLayerSizes[sourceLayer] <= this->treeLayerSizes[targetLayer]){
-				this->setError(545, "getSubIndecies() - source and target layers appear corrupted. source <= target.");
+				this->errorCurrent += "Layers out of order. ";
+				this->errorCurrent += "src treeLayerSizes["+std::to_string(sourceLayer)+"]:";
+				this->errorCurrent += std::to_string(this->treeLayerSizes[sourceLayer])+" <= target treeLayerSizes[";
+				this->errorCurrent += std::to_string(targetLayer)+"]:"+std::to_string(this->treeLayerSizes[targetLayer]);
+				this->setError(11, this->errorCurrent);
 				return false;
 			}
 			
@@ -934,7 +947,7 @@ class HuffmanCoding{
 				// Handle edge case for final loop/interation
 				if(finalLoop && tracer == -1){
 						if(sum == -1){
-							this->setError(777, "getSubIndecies() - Attempted to process for an undefined condition. Stopping.");
+							this->setError(12, this->errorCurrent+"final iteration impossible context.");
 							return false;
 						}
 						if(t == targetIndex){
@@ -953,7 +966,7 @@ class HuffmanCoding{
 
 					t--;
 					if(!(t>targetLayerEnd)){
-						this->setError(4533, "getSubIndecies() - miss aligned tree.");
+						this->setError(13, this->errorCurrent+"miss-aligned tree.");
 						return false;
 					}
 
@@ -1001,14 +1014,17 @@ class HuffmanCoding{
 					continue;
 				}
 			}
-			std::string msg = "getSubIndecies(target:"+std::to_string(targetIndex)+") - dbg : sourceLayer:"+std::to_string(sourceLayer)+" | targetLayer:"+std::to_string(targetLayer);
-			this->setError(4444, msg.c_str());
+			this->errorCurrent += "Failed to find sub index for targetIndex:";
+			this->errorCurrent += std::to_string(targetIndex)+", sourceLayer:";
+			this->errorCurrent += std::to_string(sourceLayer)+", targetLayer:"+std::to_string(targetLayer);
+			this->setError(14, this->errorCurrent);
 			return false;
 		}
 
 		int popWorkQueue(void){
+			this->errorCurrent = "popWorkQueue() - ";
 			if(!this->validateWorkQueue()){
-				this->setError(5345, "popWorkQueue() - invalid work queue.");
+				this->setError(0, "invalid work queue.");
 				return -1;
 			}
 			int ret = this->workQueue[0];
