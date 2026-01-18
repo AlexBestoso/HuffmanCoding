@@ -1840,20 +1840,21 @@ class HuffmanCoding{
 
 		/* QJ sort functions */
 		bool codeTableSortByBitCount(void){
+			this->errorCurrent = "codeTableSortByBitCount() - ";
 			if(!this->validateTreeData()){
-				this->setError(44456, "generateCodeTable() - failed to validate tree data.");
+				this->setError(0, this->errorCurrent+"failed to validate tree data.");
 				return false;
 			}else if(!this->validateFrequencies()){
-				this->setError(665434, "generateCodeTable() - failed to validate frequencies.");
+				this->setError(1, this->errorCurrent+"failed to validate frequencies.");
 				return false;
 			}else if(!this->validateCodeTable()){
-				this->setError(2342, "codeTableSortByBitCount() - failed to validate code table.");
+				this->setError(2, this->errorCurrent+"failed to validate code table.");
 				return false;
 			}
 
 			this->destroyWorkBuffer();
 			if(!this->resizeWorkBuffer(this->frequencies_s)){
-				this->setError(324, "codeTableSortByBitCount() - failed to resize workbuffer.");
+				this->setError(3, this->errorCurrent+"failed to resize workbuffer.");
 				return false;
 			}
 
@@ -1863,7 +1864,9 @@ class HuffmanCoding{
 					int biggerIdx = grabIdx;
 					if((biggerIdx+this->frequencies_s < 0 || biggerIdx+this->frequencies_s >= this->codeTable_s) ||
 					   (biggerIdx < 0 || biggerIdx >= this->codeTable_s)){
-						this->setError(234, "codeTableSortByBitCount() - biggerIdx is out of bounds.");
+						this->errorCurrent += "biggerIdx:"+std::to_string(biggerIdx)+" is out of bounds, ";
+						this->errorCurrent += "codeTable_s:"+std::to_string(this->codeTable_s);
+						this->setError(4, this->errorCurrent);
 						return false;
 					}
 
@@ -1871,7 +1874,9 @@ class HuffmanCoding{
 					int smallerIdx = i;
 					if((smallerIdx+this->frequencies_s < 0 || smallerIdx+this->frequencies_s >= this->codeTable_s) || 
 					   (smallerIdx < 0 || smallerIdx >= this->codeTable_s)){ // insanity check
-						this->setError(234, "codeTableSortByBitCount() - smallerIdx is out of bounds.");
+						this->errorCurrent += "smallerIdx:"+std::to_string(smallerIdx)+" is out of bounds, ";
+						this->errorCurrent += "codeTable_s:"+std::to_string(this->codeTable_s);
+						this->setError(5, this->errorCurrent);
 						return false;
 					}
 

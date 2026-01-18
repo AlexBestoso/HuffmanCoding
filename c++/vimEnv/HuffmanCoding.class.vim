@@ -194,16 +194,17 @@ silent! normal! zE
 1684,1757fold
 1759,1839fold
 1613,1839fold
-1842,1913fold
-1916,2186fold
-2189,2192fold
-2196,2197fold
-2200,2226fold
-2229,2242fold
-2245,2293fold
-2296,2338fold
-2342,2388fold
-2393,2554fold
+1842,1918fold
+1842,1918fold
+1921,2191fold
+2194,2197fold
+2201,2202fold
+2205,2231fold
+2234,2247fold
+2250,2298fold
+2301,2343fold
+2347,2393fold
+2398,2559fold
 let &fdl = &fdl
 15
 normal! zo
@@ -231,11 +232,15 @@ normal! zo
 normal! zc
 1613
 normal! zo
-let s:l = 1759 - ((720 * winheight(0) + 14) / 29)
+1842
+normal! zo
+1842
+normal! zc
+let s:l = 1842 - ((802 * winheight(0) + 14) / 29)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 1759
+keepjumps 1842
 normal! 01|
 let &g:so = s:so_save | let &g:siso = s:siso_save
 doautoall SessionLoadPost
