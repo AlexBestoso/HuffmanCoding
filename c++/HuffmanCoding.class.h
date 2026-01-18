@@ -1611,26 +1611,29 @@ class HuffmanCoding{
 
 		/* QJ bit unpacking functions */
 		int unpackByte(char *src, size_t srcSize, int *srcIndex, int *bitIndex, int expectedBitCount){
+			this->errorCurrent = "unpackByte() - ";
 			if(src == NULL){
-				this->setError(342, "unpackByte() - src is null.");
+				this->setError(0, this->errorCurrent+"src is null.");
 				return 0;
 			}else if(srcSize <= 0){
-				this->setError(54, "unpackByte() - srcSize is <= 0");
+				this->setError(1, this->errorCurrent+"srcSize:"+std::to_string(srcSize)+" is empty.");
 				return 0;
 			}else if(srcIndex == NULL){
-				this->setError(45, "unpackByte() - srcIndex is null.");
+				this->setError(2, this->errorCurrent+"srcIndex is null.");
 				return 0;
 			}else if(srcIndex[0] < 0 || srcIndex[0] >= (int)srcSize){
-				this->setError(354, "unpackByte() - srcIndex is out of bounds.");
+				this->errorCurrent += "srcIndex:"+std::to_string(srcIndex[0])+" is out of bounds, ";
+				this->errorCurrent += "srcSize:"+std::to_string(srcSize);
+				this->setError(3, this->errorCurrent);
 				return 0;
 			}else if(bitIndex == NULL){
-				this->setError(234, "unpackByte() - bitIndex is null.");
+				this->setError(4, this->errorCurrent+"bitIndex is null.");
 				return 0;
 			}else if(bitIndex[0] < 0 || bitIndex[0] >= 8){
-				this->setError(324, "unpackByte() - bitIndex is out of bounds.");
+				this->setError(5, this->errorCurrent+"bitIndex:"+std::to_string(bitIndex[0])+" is out of bounds, 8");
 				return 0;
 			}else if(expectedBitCount <= 0){
-				this->setError(234, "unpackByte() - expectedBitCount is <= 0.");
+				this->setError(6, this->errorCurrent+"expectedBitCount:"+std::to_string(expectedBitCount)+" is empty.");
 				return 0;
 			}
 
@@ -1672,27 +1675,28 @@ class HuffmanCoding{
 				}
 			}
 			if(this->failed()){
-				this->setError(345, "unpackByte() - failed to derive chunk index.");
+				this->setError(7, this->errorCurrent+"failed to derive chunk index.");
 				return 0;
 			}
 			return ret;
 		}
 
 		bool unpackHeader(char *data, size_t dataSize, int *bodyStart, int *bodyPadding, int *headerPadding){
+			this->errorCurrent = "unpackHeader() - ";
 			if(data == NULL){
-				this->setError(1100, "unpackHeader(char *data, size_t dataSize) - data is null.");
+				this->setError(0, this->errorCurrent+"data is null.");
 				return false;
 			}else if(dataSize <= 2){
-				this->setError(1101, "unpackHeader(char *data, size_t dataSize) - dataSize <= 2, which is invalid, treating as null.");
+				this->setError(1, this->errorCurrent+"dataSize:"+std::to_string(dataSize)+" is too small, min 3");
 				return false;
 			}else if(bodyStart == NULL){
-				this->setError(234, "unpackHeader() - bodyStart is null.");
+				this->setError(2, this->errorCurrent+"bodyStart is null.");
 				return false;
 			}else if(bodyPadding == NULL){
-				this->setError(345, "unpackHeader() - bodyPadding is null.");
+				this->setError(3, this->errorCurrent+"bodyPadding is null.");
 				return false;
 			}else if(headerPadding == NULL){
-				this->setError(111, "unpackHeader() - headerPadding is null.");
+				this->setError(4, this->errorCurrent+"headerPadding is null.");
 				return false;
 			}
 
@@ -1706,40 +1710,40 @@ class HuffmanCoding{
 			// NOTE: are we even actually using body padding?
 			bodyPadding[0] = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 4);
 			if(this->failed()){
-				this->setError(234, "unpackHeader() - failed to unpack body padding.");
+				this->setError(5, this->errorCurrent+"failed to unpack body padding.");
 				return false;
 			}
 			
 			elementCount = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 9);
 			if(this->failed()){
-				this->setError(435, "unpackHeader() - failed to unpack element count.");
+				this->setError(6, this->errorCurrent+"failed to unpack element count.");
 				return false;
 			}
 
 			if(!this->resizeTreeLetters(elementCount)){
-				this->setError(234, "unpackHeader() - failed to resize tree letters.");
+				this->setError(7, this->errorCurrent+"failed to resize tree letters.");
 				return false;
 			}else if(!this->resizeFrequencies(elementCount)){
-				this->setError(54, "unpackHeader() - failed to resize frequencies.");
+				this->setError(8, this->errorCurrent+"failed to resize frequencies.");
 				return false;
 			}
 
 			for(int i=0; i<this->frequencies_s; i++){
 				int containerSize = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 3);
 				if(this->failed()){
-					this->setError(32354, "unpackHeader() - failed to unpack container size.");
+					this->setError(9, this->errorCurrent+"failed to unpack container size.");
 					return false;
 				}
 
 				int freqValue = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, containerSize * 8);
 				if(this->failed()){
-					this->setError(345, "unpackHeader() - failed to unpack frequency value.");
+					this->setError(10, this->errorCurrent+"failed to unpack frequency value.");
 					return false;
 				}
 
 				int freqLetter = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 8);
 				if(this->failed()){
-					this->setError(3425, "unpackHeader() - failed to unpack frequency letter.");
+					this->setError(11, this->errorCurrent+"failed to unpack frequency letter.");
 					return false;
 				}
 
@@ -1753,26 +1757,29 @@ class HuffmanCoding{
 		}
 
 		bool unpackBody(char *data, size_t dataSize, int bodyStart, int bitOffset, int endPadding){
+			this->errorCurrent = "unpackBody() - ";
 			if(data == NULL){
-				this->setError(234, "unpackBody() - data is null.");
+				this->setError(0, this->errorCurrent+"data is null.");
 				return false;
 			}else if(dataSize <= 0){
-				this->setError(354, "unpackBody() - dataSize is <= 0.");
+				this->setError(1, this->errorCurrent+"dataSize:"+std::to_string(dataSize)+" is empty.");
 				return false;
 			}else if(bodyStart < 0 || bodyStart >= dataSize){
-				this->setError(456, "unpackBody() - bodyStart is out of bounds.");
+				this->errorCurrent += "bodyStart:"+std::to_string(bodyStart)+" is out of bounds, ";
+				this->errorCurrent += "dataSize:"+std::to_string(dataSize);
+				this->setError(2, this->errorCurrent);
 				return false;
 			}else if(bitOffset < 0 || bitOffset >= 8){
-				this->setError(355, "unpackBody() - bitOffset is out of bounds.");
+				this->setError(3, this->errorCurrent+"bitOffset:"+std::to_string(bitOffset)+" is out of bounds, 8");
 				return false;
 			}else if(!this->validateTreeData()){
-				this->setError(222, "unpackBody() - failed to validate tree data.");
+				this->setError(4, this->errorCurrent+"failed to validate tree data.");
 				return false;
 			}else if(!this->validateFrequencies()){
-				this->setError(653, "unpackBody() - failed to validate frequencies.");
+				this->setError(5, this->errorCurrent+"failed to validate frequencies.");
 				return false;
 			}else if(!this->validateCodeTable()){
-				this->setError(46, "unpackBody() - failed to validate code table.");
+				this->setError(6, this->errorCurrent+"failed to validate code table.");
 				return false;
 			}
 
@@ -1780,12 +1787,12 @@ class HuffmanCoding{
 			this->out_s = this->frequencyMax;
 			this->out = new (std::nothrow) char[this->out_s];
 			if(!this->out){
-				this->setError(424, "unpackBody() - failed to allocat out.");
+				this->setError(7, this->errorCurrent+"failed to allocat out.");
 				return false;
 			}
 
 			if(!this->codeTableSortByBitCount()){
-				this->setError(5345, "unpackBody() - failed to sort code table.");
+				this->setError(8, this->errorCurrent+"failed to sort code table.");
 				return false;
 			}
 
@@ -1793,7 +1800,7 @@ class HuffmanCoding{
 				int maxBitCount = this->codeTable[this->frequencies_s-1];
 				int encoded = this->unpackByte(data, dataSize, &bodyStart, &bitOffset, maxBitCount);
 				if(this->failed()){
-					this->setError(2525, "unpackBody() - failed to unpack compressed chunk.");
+					this->setError(9, this->errorCurrent+"failed to unpack compressed chunk.");
 					return false;
 				}	
 				int tableCode = 0;
@@ -1823,8 +1830,8 @@ class HuffmanCoding{
 					}
 				}
 				if(!success){
-					std::string msg = "Failure index : "+std::to_string(o);
-					this->setError(34544, "unpackBody() - failed to decode data. "+msg);
+					this->errorCurrent += "failed to decode body at index o:"+std::to_string(o);
+					this->setError(10, this->errorCurrent);
 					return false;
 				}
 			}

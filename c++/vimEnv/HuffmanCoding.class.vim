@@ -190,17 +190,20 @@ silent! normal! zE
 1527,1537fold
 1539,1610fold
 1353,1610fold
-1613,1832fold
-1835,1906fold
-1909,2179fold
-2182,2185fold
-2189,2190fold
-2193,2219fold
-2222,2235fold
-2238,2286fold
-2289,2331fold
-2335,2381fold
-2386,2547fold
+1613,1682fold
+1684,1757fold
+1759,1839fold
+1613,1839fold
+1842,1913fold
+1916,2186fold
+2189,2192fold
+2196,2197fold
+2200,2226fold
+2229,2242fold
+2245,2293fold
+2296,2338fold
+2342,2388fold
+2393,2554fold
 let &fdl = &fdl
 15
 normal! zo
@@ -226,12 +229,14 @@ normal! zc
 normal! zo
 1353
 normal! zc
-let s:l = 1353 - ((628 * winheight(0) + 14) / 29)
+1613
+normal! zo
+let s:l = 1759 - ((720 * winheight(0) + 14) / 29)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 1353
-normal! 0
+keepjumps 1759
+normal! 01|
 let &g:so = s:so_save | let &g:siso = s:siso_save
 doautoall SessionLoadPost
 " vim: set ft=vim :
