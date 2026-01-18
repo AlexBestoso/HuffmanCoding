@@ -1040,16 +1040,17 @@ class HuffmanCoding{
 		/* QJ tree functions */
 		// seed function expects value and type buffers to be equal to frequencies_s
 		bool seedLayers(void){
+			this->errorCurrent = "seedLayers() - ";
 			if(!this->validateFrequencies()){
-				this->setError(4301, "seedLayers(void) - failed to validate frequenncies.");
+				this->setError(0, this->errorCurrent+"failed to validate frequenncies.");
 				return false;
 			}else if(this->treeData != NULL){
-				this->setError(13224, "tree data already seeded.");
+				this->setError(1, this->errorCurrent+"treeData already seeded.");
 				return false;
 			}
 
 			if(!this->resizeTreeData(this->frequencies_s)){
-				this->setError(3, "seedLayers() - failed to resize treeData");
+				this->setError(2, this->errorCurrent+"failed to resize treeData.");
 				return false;
 			}
 			for(int i=0; i<this->treeData_s; i++){
@@ -1058,7 +1059,7 @@ class HuffmanCoding{
 			}
 
 			if(!this->resizeTreeLayers(1)){
-				this->setError(4, "seedLayers() - failed to resize tree layers.");
+				this->setError(3, this->errorCurrent+"failed to resize tree layers.");
 				return false;
 			}
 			this->treeLayerSizes[0] = this->frequencies_s;
@@ -1071,32 +1072,33 @@ class HuffmanCoding{
 			returns true when more layers can be grown, false when done growing, and false with the error set if there's an error.
 		// */
 		bool growLayer(int *valueBuffer, size_t valueBuffer_s, int *typeBuffer, size_t typeBuffer_s){
+			this->errorCurrent = "growLayer() - ";
 			if(valueBuffer == NULL){
-				this->setError(4545, "growLAyer() - valueBuffer is null.");
+				this->setError(0, this->errorCurrent+"valueBuffer is null.");
 				return false;
 			}else if(valueBuffer_s <= 0){
-				this->setError(2, "growLayer() - valueBuffer_s <= 0");
+				this->setError(1, this->errorCurrent+"valueBuffer_s:"+std::to_string(valueBuffer_s)+" is empty.");
 				return false;
 			}else if(typeBuffer == NULL){
-				this->setError(46584, "growLayer() = typeBuffer is null.");
+				this->setError(2, this->errorCurrent+"typeBuffer is null.");
 				return false;
 			}else if(typeBuffer_s <= 0){
-				this->setError(54, "growLayer() - typeBuffer_s <= 0");
+				this->setError(3, this->errorCurrent+"typeBuffer_s:"+std::to_string(typeBuffer_s)+" is empty.");
 				return false;
 			}else if(!this->validateFrequencies()){
-				this->setError(601, "growLayer(void) - invalid frequencies.");
+				this->setError(4, this->errorCurrent+"invalid frequencies.");
 				return false;
 			}
 
 			// Check if buffers need to be seeded.
 			if(this->treeData == NULL || this->treeData_s <= 0){
 				if(!this->seedLayers()){
-					this->setError(602, "growLoayer(void) - failed to seed layers.");
+					this->setError(5, this->errorCurrent+"failed to seed layers.");
 					return false;
 				}
 				return true;
 			}else if(!this->calculateLayerIndecies() || this->treeDataLayerCount <= 0){
-				this->setError(2, "growLayer() - failed to calculate Layer indecies.");
+				this->setError(6, this->errorCurrent+"failed to calculate Layer indecies.");
 				return false;
 			}
 
@@ -1104,13 +1106,13 @@ class HuffmanCoding{
 			int topLayerStart = this->treeLayerIndecies[this->treeDataLayerCount - 1];
 			size_t topLayerSize = this->treeLayerSizes[this->treeDataLayerCount - 1];
 			if(topLayerSize <= 0){
-				this->setError(4545, "growLayer() - invalid top size");
+				this->setError(7, this->errorCurrent+"invalid top size");
 				return false;
 			}else if(topLayerStart < 0 || topLayerStart >= this->treeData_s){
-				this->setError(3, "growLayer() - topLayerStart is out of bounds.");
+				this->setError(8, this->errorCurrent+"topLayerStart:"+std::to_string(topLayerStart)+" is out of bounds, treeData_s:"+std::to_string(this->treeData_s));
 				return false;
 			}else if(this->treeDataTypes[0] == 0){
-				this->setError(543, "growLayer() - invalid seed data.");
+				this->setError(9, this->errorCurrent+"invalid seed data, treeDataTypes[0] == 0 is a bad bottom node.");
 				return false;
 			}
 
@@ -1130,7 +1132,10 @@ class HuffmanCoding{
 			this->workBuffer_fill=0;
 			for(int i=topLayerStart, tracer=-1, sum=-1; i>=0 && i<this->treeData_s; i--){
 				if(this->workBuffer_fill < 0 || this->workBuffer_fill >= valueBuffer_s || this->workBuffer_fill >= typeBuffer_s){
-					this->setError(6, "growLayer() - workBuffer_fill is out of bounds.");
+					this->errorCurrent += "workBuffer_fill:"+std::to_string(this->workBuffer_fill)+" is out of bounds, ";
+					this->errorCurrent += "valueBuffer_s:"+std::to_string(valueBuffer_s)+" or ";
+					this->errorCurrent += "typeBuffer_s:"+std::to_string(typeBuffer_s);
+					this->setError(10, this->errorCurrent);
 					return false;
 				}
 				if(this->frequencyMax <= this->treeData[i]) break;
@@ -1140,7 +1145,7 @@ class HuffmanCoding{
 				if(tracer == -1){
 					if(i == 0){
 						if(sum == -1){
-							this->setError(777, "growLayer() - this error should never happen, Ha!");
+							this->setError(11, this->errorCurrent+"Impossible condition!");
 							return false;
 						}
 						sum = this->treeData[i] + sum;
@@ -1231,7 +1236,10 @@ class HuffmanCoding{
 				// loop didn't happen, no more data to process
 				return false;
 			}else if(this->workBuffer_fill - 1 < 0 || this->workBuffer_fill >= typeBuffer_s){
-				this->setError(456, "growLayer() - workBuffer_fill out of bounds.");
+				this->errorCurrent += "workBuffer_fill:"+std::to_string(this->workBuffer_fill)+" is out of bounds, ";
+				this->errorCurrent += "typeBuffer_s:"+std::to_string(typeBuffer_s)+" unless/or ";
+				this->errorCurrent += "workBuffer_fill-1 < 0";
+				this->setError(12, this->errorCurrent);
 				return false;
 			}
 			// the last layer value to be grown is a top node.
@@ -1239,14 +1247,14 @@ class HuffmanCoding{
 
 			// Append workbuffer fill treeLayerSizes, layerCount validated not to be <= 0 earlier
 			if(!this->resizeTreeLayers(this->treeDataLayerCount + 1)){
-				this->setError(7, "growLoayer() - failed to resize treeLayers");
+				this->setError(13, this->errorCurrent+"failed to resize treeLayers");
 				return false;
 			}
 			this->treeLayerSizes[this->treeDataLayerCount - 1] = this->workBuffer_fill;
 					
 			size_t originalSize = this->treeData_s;
 			if(!this->resizeTreeData(originalSize + this->workBuffer_fill)){
-				this->setError(8, "growLayer() - failed to resize treeData.");
+				this->setError(14, this->errorCurrent+"failed to resize treeData.");
 				return false;
 			}
 			
@@ -1255,7 +1263,9 @@ class HuffmanCoding{
 			for(int i=this->treeData_s-1, ogSizeTrack=0;  ogSizeTrack<originalSize && i>=0; i--, ogSizeTrack++){
 				int offsetIdx = i - this->workBuffer_fill;
 				if(offsetIdx < 0 || offsetIdx >= this->treeData_s){
-					this->setError(9, "growLayer() - offsetIdx is out of bounds.");
+					this->errorCurrent += "offsetIdx:"+std::to_string(offsetIdx)+" is out of bounds, ";
+					this->errorCurrent += "treeData_s:"+std::to_string(this->treeData_s);
+					this->setError(15, this->errorCurrent);
 					return false;
 				}
 				this->treeData[i] = this->treeData[offsetIdx];
@@ -1266,11 +1276,15 @@ class HuffmanCoding{
 			for(int i=0; i<this->workBuffer_fill && i<this->treeData_s; i++){
 				int workIdx = this->workBuffer_fill-1-i;
 				if(workIdx < 0 || workIdx >= valueBuffer_s){
-					this->setError(645, "growLayer() - workIdx: value overflow");
+					this->errorCurrent += "workIdx:"+std::to_string(workIdx)+" is out of bounds, ";
+					this->errorCurrent += "valueBuffer_s:"+std::to_string(valueBuffer_s);
+					this->setError(16, this->errorCurrent);
 					return false;
 				}
 				if(workIdx < 0 || workIdx >= typeBuffer_s){
-					this->setError(645, "growLayer() - workIdx: type overflow");
+					this->errorCurrent += "workIdx:"+std::to_string(workIdx)+" is out of bounds, ";
+					this->errorCurrent += "typeBuffer_s:"+std::to_string(typeBuffer_s);
+					this->setError(17, this->errorCurrent);
 					return false;
 				}
 				this->treeData[i] = valueBuffer[workIdx];
@@ -1281,20 +1295,19 @@ class HuffmanCoding{
 		}
 
 		bool plantTree(void){
+			this->errorCurrent = "plantTree() - ";
 			if(!this->validateFrequencies()){
-				this->setError(700, "plantTree(void) - invalid frequencies.");
+				this->setError(0, this->errorCurrent+"invalid frequencies.");
 				return false;
 			}
 			this->destroyTreeData();
 			this->destroyWorkTypeBuffer();
 			this->destroyWorkBuffer();
 			if(!this->resizeWorkBuffer(this->frequencies_s)){
-				this->setError(1, "plantTree() - failed to resize work buffer.");
+				this->setError(1, this->errorCurrent+"failed to resize work buffer.");
 				return false;
-			}
-			
-			if(!this->resizeWorkTypeBuffer(this->workBuffer_s)){
-				this->setError(2, "plantTree() - failed to resize work Type buffer.");
+			}else if(!this->resizeWorkTypeBuffer(this->workBuffer_s)){
+				this->setError(2, this->errorCurrent+"failed to resize work Type buffer.");
 				this->destroyWorkBuffer();
 				return false;
 			}
@@ -1305,13 +1318,13 @@ class HuffmanCoding{
 			int timeoutError = 0;
 			while(this->growLayer(this->workBuffer, this->workBuffer_s, this->workTypeBuffer, this->workTypeBuffer_s)){
 				if(this->failed()){
-					this->setError(5, "plantTree() - failed to grow layer");
+					this->setError(3, this->errorCurrent+"failed to grow layer.");
 					this->destroyWorkBuffer();
 					this->destroyWorkTypeBuffer();
 					return false;
 				}
 				if(timeoutError >= this->workTypeBuffer_s){
-					this->setError(3, "plantTree() - grow layer has timed out.");
+					this->setError(4, this->errorCurrent+"grow layer has timed out.");
 					this->destroyWorkBuffer();
 					this->destroyWorkTypeBuffer();
 					return false;
@@ -1322,13 +1335,15 @@ class HuffmanCoding{
 			this->destroyWorkBuffer();
 			this->destroyWorkTypeBuffer();
 			if(this->failed()){
-				this->setError(6, "plantTree() - failed to grow layer");
+				this->setError(5, this->errorCurrent+"failed to grow layer");
 				return false;
 			}
 
 			this->calculateLayerIndecies();
 			if(this->treeData[0] != this->frequencyMax){
-				this->setError(3333, "plantTree(void) - Failed to grow tree, tree is corrupt.");
+				this->errorCurrent += "failed to grow tree, frequencyMax:"+std::to_string(this->frequencyMax)+" != ";
+				this->errorCurrent += "treeData[0]:"+std::to_string(this->treeData[0]);
+				this->setError(6, this->errorCurrent);
 				return false;
 			}
 			return true;
