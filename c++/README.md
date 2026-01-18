@@ -1,5 +1,12 @@
 # Huffman Coding - c++
 
+I have updated the main file to use a new system for managing qa testing.
+Should be able to use this to get timing averages for all the major functions, not just the overall process.
+
+a new system for managing tests has begun to get set in place.
+--dev notes above
+
+
 To use vim as an IDE, run `vim -u ./huff.vimrc`, to open all the files with line folds.
 
 documentation pending.

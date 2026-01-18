@@ -1,172 +1,112 @@
-/* The Bestoso Stinks License
- * - This software should be considered expeimental.
- * - This software should be considered as having been written for demonstrative purposes.
- * - This software should be considered potentially vulnerable.
- * - To use it, you accept that Anything Whatsoever that breaks, because of this software, is your fault.
- *  - - - -
- **/
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string>
 #include <ctime>
 #include <time.h>
+#include <fcntl.h>
 
 #include "HuffmanCoding.class.h"
 
-clock_t timeStart, timeEnd;
-double cpuTime;
-struct element{
-	int count;
-	double sumation;
-	double quotant;
-};
+#include "./qa.class.h"
+#include "./qaFunctions/qaFunctions.h"
 
-struct element initElement(struct element e){
-	e.count = 0;
-	e.sumation = 0.0;
-	e.quotant = 0.0;
-	return e;
-}
-void printElement(const char *elementName, struct element e){
-	printf("breakdown of element '%s'\n", elementName);
-	printf("\tcount: %d\n\tsumation: %lf\n\tquotant: %lf\n", e.count, e.sumation, e.quotant);
+int testId=0;
+const int testsAvailable=1;
+
+#define TEST_RANDOM256 0
+void testRandom256Colors(void){
+	qa.color_reset();
+	qa.color_whiteBg();
+	qa.color_blackFg();
 }
 
-struct element compressElement;
-struct element decompressElement;
-
-void startTimer(void){
-	timeStart = clock();
+std::string testRandom256GenMessage(size_t *sizeOut){
+	std::string ret = "";
+	int byteBox[256];
+	sizeOut[0] = 0;
+	for(int i=0; i<256; i++){
+		byteBox[i] = (rand() % 256) + 1;
+		for(int j=0; j<byteBox[i]; j++){
+			ret += (char)i;
+			sizeOut[0]++;
+		}
+	}
+	return ret;
 }
+bool testRandom256(void){
+	int testRuns = 1;
+	testRandom256Colors();
+	qa.logCurrent = "[*]-~ Test Name : Random 256\n";
+	qa.logCurrent += " |_-~ Description: Ensure that compression on a file containing all 256 possible bytes doesn't fail.\n";
+	qa.logCurrent += " |_-~ Test will run "+std::to_string(testRuns)+" times.\n";
+	qa.lprint(qa.logCurrent, qa.logCurrent.length());
+	
+	HuffmanCoding hc;
+	std::string testMessage="";
+	size_t msgSize=0;
+	printf("\r |");
+	testMessage = testRandom256GenMessage(&msgSize);
 
-void endTimer(void){
-	timeEnd = clock() - timeStart;
-	cpuTime = ((double)timeEnd) / CLOCKS_PER_SEC;
+	if(!hc.createTreeLetters((char*)testMessage.c_str(), msgSize)){
+		qa.logCurrent = "\n[E]-~ Test Failed.\n";
+	//	qa.logCurrent += "|_-~ Iteration "+std::to_string(i)+" of "+std::to_string(testRuns)+"\n";
+		qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
+		qa.lprint(qa.logCurrent, qa.logCurrent.length());
+		return false;
+	}
+		
+	if(!hc.createFrequency((char*)testMessage.c_str(), msgSize)){
+		qa.logCurrent = "\n[E]-~ Test Failed.\n";
+		qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
+		qa.lprint(qa.logCurrent, qa.logCurrent.length());
+		return false;
+	}
+
+	 
+	if(!hc.sortFreqencies()){
+		qa.logCurrent = "\n[E]-~ Test Failed.\n";
+		qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
+		qa.lprint(qa.logCurrent, qa.logCurrent.length());
+		return false;
+	}
+
+	if(!hc.plantTree()){
+		qa.logCurrent = "\n[E]-~ Test Failed.\n";
+		qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
+		qa.lprint(qa.logCurrent, qa.logCurrent.length());
+		return false;
+	}
+
+	if(!hc.generateCodeTable()){
+		qa.logCurrent = "\n[E]-~ Test Failed.\n";
+		qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
+		qa.lprint(qa.logCurrent, qa.logCurrent.length());
+		return false;
+	}
+
+	if(!hc.encode((char*)testMessage.c_str(), msgSize)){
+		qa.logCurrent = "\n[E]-~ Test Failed.\n";
+		qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
+		qa.lprint(qa.logCurrent, qa.logCurrent.length());
+		return false;
+	}
+
+	
+	return true;
 }
-
-void printTimer(const char *operationDescription){
-	printf("%s took %lf to execute.\n", operationDescription, cpuTime);
-}
-
 int main(int argc, char *argv[]){
-	compressElement = initElement(compressElement);
-	decompressElement = initElement(decompressElement);
-	int rounds=1;
-	if(argc >= 2){
-		rounds = std::stoi(argv[1]);
-	}
-	for(int q=0; q < rounds; q++){
-		system("clear");
-		printf("===Round %d of %d\n", q, rounds);
-		printf("[*] Generating random data to compress.\n");
-		HuffmanCoding hc;
-		int counts[256];
-		size_t ogMsgSize = 0;
-		size_t endTestSize = 0;
-		std::srand(time(0));
-
-		for(int i=0; i<256; i++){
-			counts[i] = rand() % (60-1+1)+1;
-			ogMsgSize += counts[i];
-		}
-		endTestSize = ogMsgSize;
-		char *ogMsg = new char[ogMsgSize];
-		for(int i=0, midx=0; i<256 && midx < ogMsgSize; i++){
-			for(int j=0; j<counts[i] && midx < ogMsgSize; j++){
-				ogMsg[midx] = i;
-				midx++;
-			}
-		}
-		
-		printf("[*] Compressing %ld bytes of data at location %p\n", ogMsgSize, ogMsg);
-		printf("[^] Starting timer...\n");
-		startTimer();
-		if(!hc.compress(ogMsg, ogMsgSize)){
-			printf("Failed. %s\n", hc.getErrorMessage().c_str());
-			printf("\033[5mDATA DUMP\033[0;31m\n");
-			hc.printTreeLetters();
-			printf("\n\033[0;32m");
-			hc.printFrequencies();
-			printf("\n\033[0;33m");
-			hc.printCodeTable();
-			printf("\n\033[1;34m");
-			hc.printTree();
-			printf("\033[0m");
-			exit(EXIT_FAILURE);
-		}
-		endTimer();
-		compressElement.count++;
-		compressElement.sumation += cpuTime;
-		compressElement.quotant = compressElement.sumation / compressElement.count;
-		printTimer("[*] Compression time: ");
-		printf("\n\n");
-		
-		size_t compressedData_s = hc.out_s;
-		char *compressedData = new char[compressedData_s];
-		for(int i=0; i<hc.out_s; i++){
-			compressedData[i] = hc.out[i];
-		}
-
-		printf("[*] Decompressing %ld bytes of data at location %p\n", compressedData_s, compressedData);
-		printf("[^] Starting timer...\n");
-		startTimer();
-		if(!hc.decompress(compressedData, compressedData_s)){
-			printf("Failed %s\n", hc.getErrorMessage().c_str());
-			printf("\033[5mDATA DUMP\033[0;31m\n");
-			hc.printTreeLetters();
-			printf("\n\033[0;32m");
-			hc.printFrequencies();
-			printf("\n\033[0;33m");
-			hc.printCodeTable();
-			printf("\n\033[1;34m");
-			hc.printTree();
-			printf("\033[0m");
-			exit(EXIT_FAILURE);
-		}
-		endTimer();
-		decompressElement.count++;
-		decompressElement.sumation += cpuTime;
-		decompressElement.quotant = decompressElement.sumation / decompressElement.count;
-		printTimer("[*] Decompression time: ");
-		printf("\n\n");
-
-
-		if(endTestSize != hc.out_s){
-			printf("\n\033[5mDATA DUMP\033[0;31m\n");
-			hc.printTreeLetters();
-			printf("\n\033[0;32m");
-			hc.printFrequencies();
-			printf("\n\033[0;33m");
-			hc.printCodeTable();
-			printf("\n\033[1;34m");
-			hc.printTree();
-			printf("[FAILED] Invalid message. Decompressed message is not the same size as the original! og:%ld != decomp:%ld\n", ogMsgSize, hc.out_s);
-			exit(EXIT_FAILURE);
-		}
-		
-		int goods=0, bads=0;
-		for(int i=0; i<endTestSize; i++){
-			if(ogMsg[i] != hc.out[i]){
-				bads = i;
-				break;
-			}else{
-				goods++;
-			}
-		}
-
-		if(goods != endTestSize){
-			printf("[TEST RESULTS] %d good matches, Failure on iteration %d.\n", goods, bads);
-			printf("[FAILURE] Compression was not successful.\n");
-			exit(EXIT_FAILURE);
-		}else{
-			printf("[SUCCESS] Message passed compression AND decompression.\n");
+	srand(time(NULL));
+	qa.freshLog();
+	welcome(argc, argv);
+	for(int i=0;i<testsAvailable; i++){
+		switch(testId){
+			case TEST_RANDOM256:
+				if(!testRandom256()){
+					
+				}
+			break;
 		}
 	}
-	printf("----------RESULTS----------\n");
-	printElement("Compress Element", compressElement);
-	printf("Average Compression time : %lf seconds.\n\n", compressElement.quotant);
-	printElement("Decompress Element", decompressElement);
-	printf("Average Decompression time : %lf seconds.\n", decompressElement.quotant);
-	exit(EXIT_SUCCESS);
+	qa.quit(EXIT_SUCCESS);
 }
