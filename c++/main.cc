@@ -35,63 +35,95 @@ std::string testRandom256GenMessage(size_t *sizeOut){
 	return ret;
 }
 bool testRandom256(void){
-	int testRuns = 1;
+	int testRuns = 200;
 	testRandom256Colors();
 	qa.logCurrent = "[*]-~ Test Name : Random 256\n";
 	qa.logCurrent += " |_-~ Description: Ensure that compression on a file containing all 256 possible bytes doesn't fail.\n";
 	qa.logCurrent += " |_-~ Test will run "+std::to_string(testRuns)+" times.\n";
+	qa.logCurrent += "\r |";
 	qa.lprint(qa.logCurrent, qa.logCurrent.length());
+
+	struct timeElement elementA = qa.newElement("compress_createTreeLetters");
+	struct timeElement elementB = qa.newElement("compress_createFrequency");
+	struct timeElement elementC = qa.newElement("compress_sortFreqencies");
+	struct timeElement elementD = qa.newElement("compress_plantTree");
+	struct timeElement elementE = qa.newElement("compress_generateCodeTable");
+	struct timeElement elementF = qa.newElement("compress_encode");
 	
-	HuffmanCoding hc;
-	std::string testMessage="";
-	size_t msgSize=0;
-	printf("\r |");
-	testMessage = testRandom256GenMessage(&msgSize);
+	for(int i=0; i<testRuns; i++){
+		HuffmanCoding hc;
+		std::string testMessage="";
+		size_t msgSize=0;
+		testMessage = testRandom256GenMessage(&msgSize);
 
-	if(!hc.createTreeLetters((char*)testMessage.c_str(), msgSize)){
-		qa.logCurrent = "\n[E]-~ Test Failed.\n";
-	//	qa.logCurrent += "|_-~ Iteration "+std::to_string(i)+" of "+std::to_string(testRuns)+"\n";
-		qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
-		qa.lprint(qa.logCurrent, qa.logCurrent.length());
-		return false;
-	}
+		printf("\r /");
+		fflush(stdout);
+		qa.startElementTimer(&elementA);
+		if(!hc.createTreeLetters((char*)testMessage.c_str(), msgSize)){
+			qa.logCurrent = "\n[E]-~ Test Failed.\n";
+			qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
+			qa.lprint(qa.logCurrent, qa.logCurrent.length());
+			return false;
+		}
+		qa.stopElementTimer(&elementA);
 		
-	if(!hc.createFrequency((char*)testMessage.c_str(), msgSize)){
-		qa.logCurrent = "\n[E]-~ Test Failed.\n";
-		qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
-		qa.lprint(qa.logCurrent, qa.logCurrent.length());
-		return false;
-	}
+		printf("\r —");
+		fflush(stdout);
+		qa.startElementTimer(&elementB);
+		if(!hc.createFrequency((char*)testMessage.c_str(), msgSize)){
+			qa.logCurrent = "\n[E]-~ Test Failed.\n";
+			qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
+			qa.lprint(qa.logCurrent, qa.logCurrent.length());
+			return false;
+		}
+		qa.stopElementTimer(&elementB);
 
-	 
-	if(!hc.sortFreqencies()){
-		qa.logCurrent = "\n[E]-~ Test Failed.\n";
-		qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
-		qa.lprint(qa.logCurrent, qa.logCurrent.length());
-		return false;
-	}
+	 	printf("\r \\");
+		fflush(stdout);
+		qa.startElementTimer(&elementC);
+		if(!hc.sortFreqencies()){
+			qa.logCurrent = "\n[E]-~ Test Failed.\n";
+			qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
+			qa.lprint(qa.logCurrent, qa.logCurrent.length());
+			return false;
+		}
+		qa.stopElementTimer(&elementC);
 
-	if(!hc.plantTree()){
-		qa.logCurrent = "\n[E]-~ Test Failed.\n";
-		qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
-		qa.lprint(qa.logCurrent, qa.logCurrent.length());
-		return false;
-	}
+		printf("\r |");
+		fflush(stdout);
+		qa.startElementTimer(&elementD);
+		if(!hc.plantTree()){
+			qa.logCurrent = "\n[E]-~ Test Failed.\n";
+			qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
+			qa.lprint(qa.logCurrent, qa.logCurrent.length());
+			return false;
+		}
+		qa.stopElementTimer(&elementD);
 
-	if(!hc.generateCodeTable()){
-		qa.logCurrent = "\n[E]-~ Test Failed.\n";
-		qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
-		qa.lprint(qa.logCurrent, qa.logCurrent.length());
-		return false;
-	}
+		printf("\r /");
+		fflush(stdout);
+		qa.startElementTimer(&elementE);
+		if(!hc.generateCodeTable()){
+			qa.logCurrent = "\n[E]-~ Test Failed.\n";
+			qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
+			qa.lprint(qa.logCurrent, qa.logCurrent.length());
+			return false;
+		}
+		qa.stopElementTimer(&elementE);
 
-	if(!hc.encode((char*)testMessage.c_str(), msgSize)){
-		qa.logCurrent = "\n[E]-~ Test Failed.\n";
-		qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
-		qa.lprint(qa.logCurrent, qa.logCurrent.length());
-		return false;
+		printf("\r *");
+		fflush(stdout);
+		qa.startElementTimer(&elementF);
+		if(!hc.encode((char*)testMessage.c_str(), msgSize)){
+			qa.logCurrent = "\n[E]-~ Test Failed.\n";
+			qa.logCurrent += "|_-~ Error Message : "+hc.getErrorMessage()+"\n";
+			qa.lprint(qa.logCurrent, qa.logCurrent.length());
+			return false;
+		}
+		qa.startElementTimer(&elementF);
+		printf("\r \\");
+		fflush(stdout);
 	}
-
 	
 	return true;
 }

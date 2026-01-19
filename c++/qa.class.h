@@ -3,15 +3,18 @@
  * the code used for testing.
  * */
 struct timeElement{
-	std::string info_name;
-
-	clock_t time_start;
-	clock_t time_end;
-	double time_cpu;	
-
-	int stat_count;
-	double stat_sumation;
-	double stat_average;
+	std::string elementName;
+	int roundCount;
+	clock_t startTime;
+	clock_t endTime;
+	double duration;	
+	int messageSize;
+	int resultSize;
+	int sizeDifference;
+	int differenceSummation;
+	double durationSumation;
+	double differenceAverage;
+	double durationAverage;	
 };
 
 class QualityAssurance{
@@ -49,34 +52,37 @@ class QualityAssurance{
 			return true;
 		} 
 		struct timeElement initElement(struct timeElement e){
-			e.info_name = "";
-
-			e.time_start = 0;
-			e.time_end = 0;
-			e.time_cpu = 0.0;
-
-			e.stat_count = 0;
-			e.stat_sumation = 0.0;
-			e.stat_average = 0.0;
+			e.elementName = "";
+			e.roundCount = 0;
+			e.startTime = 0;
+			e.endTime = 0;
+			e.duration = 0;	
+			e.messageSize = 0;
+			e.resultSize = 0;
+			e.sizeDifference = 0;
+			e.differenceSummation = 0;
+			e.durationSumation = 0;
+			e.differenceAverage = 0;
+			e.durationAverage = 0;	
 			return e;
 		}
 
 		struct timeElement newElement(std::string name){
 			struct timeElement ret;
 			ret = this->initElement(ret);
-			ret.info_name = name;
+			ret.elementName = name;
 			return ret;
 		}
-		void startElementTimer(struct timeElement e){
-			e.stat_count++;
-			e.time_start = clock();
+		void startElementTimer(struct timeElement *e){
+			e->roundCount++;
+			e->startTime = clock();
 		}
 
-		void endElementTimer(struct timeElement e){
-			e.time_end = clock() - e.time_start;
-			e.time_cpu = ((double)e.time_end) / CLOCKS_PER_SEC;
-			e.stat_sumation += e.time_cpu;
-			e.stat_average = e.stat_sumation / e.stat_count;
+		void stopElementTimer(struct timeElement *e){
+			e->endTime = clock() - e->startTime;
+			e->duration = ((double)e->endTime) / CLOCKS_PER_SEC;
+			e->durationSumation += e->duration;
+			e->durationAverage = e->durationSumation / e->roundCount;
 		}
 
 		void makePretty(void){
