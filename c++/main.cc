@@ -14,6 +14,7 @@
 int testId=0;
 const int testsAvailable=1;
 int testsRandom256Rounds=200;
+int byteBox[256];
 
 #define TEST_RANDOM256 0
 void testRandom256Colors(void){
@@ -22,18 +23,14 @@ void testRandom256Colors(void){
 	qa.color_blackFg();
 }
 
-std::string testRandom256GenMessage(size_t *sizeOut){
-	std::string ret = "";
-	int byteBox[256];
+void testRandom256GenMessage(size_t *sizeOut){
 	sizeOut[0] = 0;
 	for(int i=0; i<256; i++){
 		byteBox[i] = (rand() % 256) + 1;
 		for(int j=0; j<byteBox[i]; j++){
-			ret += (char)i;
 			sizeOut[0]++;
 		}
 	}
-	return ret;
 }
 
 bool testRandom256(int argc, char *argv[]){
@@ -60,24 +57,33 @@ bool testRandom256(int argc, char *argv[]){
 	double averageDifference = 0;
 
 	
-		HuffmanCoding hc;
-		std::string testMessage="";
+	HuffmanCoding hc;
+	HuffmanCoding hcD;
+	char *testMessage = NULL;
+	char *compMsg = NULL;
 	for(int i=0; i<testsRandom256Rounds; i++){
-		std::string compMsg="";
 		size_t compMsgSize=0;
 		size_t msgSize=0;
 
 		// Generate Message.
-		testMessage = testRandom256GenMessage(&msgSize);
+		testRandom256GenMessage(&msgSize);
+		if(testMessage != NULL) delete[] testMessage;
+		testMessage = NULL;
+		testMessage = new (std::nothrow) char[msgSize];
+		for(int i=0, oi=0; oi<msgSize && i<256; i++){
+			for(int j=0; j<byteBox[i] && oi<msgSize; j++){
+				testMessage[oi] = (char)i&0xff;
+			}
+		}
 		lastMsgSize = msgSize;
 
 		// Compress Message.
 		printf("\r /");
 		fflush(stdout);
 		qa.startElementTimer(&elementA);
-		if(!hc.createTreeLetters((char*)testMessage.c_str(), msgSize)){
+		if(!hc.createTreeLetters(testMessage, msgSize)){
 			qa.logCurrent = "\n[E]-~ Test Failed.\n";
-			qa.logCurrent += "|_-~ Error Message, createTreeLetters: "+hc.getErrorMessage()+"\n";
+			qa.logCurrent += "|_-~ Encode Error Message, createTreeLetters: "+hc.getErrorMessage()+"\n";
 			qa.lprint(qa.logCurrent, qa.logCurrent.length());
 			return false;
 		}
@@ -86,9 +92,9 @@ bool testRandom256(int argc, char *argv[]){
 		printf("\r —");
 		fflush(stdout);
 		qa.startElementTimer(&elementB);
-		if(!hc.createFrequency((char*)testMessage.c_str(), msgSize)){
+		if(!hc.createFrequency(testMessage, msgSize)){
 			qa.logCurrent = "\n[E]-~ Test Failed.\n";
-			qa.logCurrent += "|_-~ Error Message, createFrequency: "+hc.getErrorMessage()+"\n";
+			qa.logCurrent += "|_-~ Encode Error Message, createFrequency: "+hc.getErrorMessage()+"\n";
 			qa.lprint(qa.logCurrent, qa.logCurrent.length());
 			return false;
 		}
@@ -99,7 +105,7 @@ bool testRandom256(int argc, char *argv[]){
 		qa.startElementTimer(&elementC);
 		if(!hc.sortFreqencies()){
 			qa.logCurrent = "\n[E]-~ Test Failed.\n";
-			qa.logCurrent += "|_-~ Error Message, sortFreqencies: "+hc.getErrorMessage()+"\n";
+			qa.logCurrent += "|_-~ Encode Error Message, sortFreqencies: "+hc.getErrorMessage()+"\n";
 			qa.lprint(qa.logCurrent, qa.logCurrent.length());
 			return false;
 		}
@@ -110,7 +116,7 @@ bool testRandom256(int argc, char *argv[]){
 		qa.startElementTimer(&elementD);
 		if(!hc.plantTree()){
 			qa.logCurrent = "\n[E]-~ Test Failed.\n";
-			qa.logCurrent += "|_-~ Error Message, plantTree: "+hc.getErrorMessage()+"\n";
+			qa.logCurrent += "|_-~ Encode Error Message, plantTree: "+hc.getErrorMessage()+"\n";
 			qa.lprint(qa.logCurrent, qa.logCurrent.length());
 			return false;
 		}
@@ -121,7 +127,7 @@ bool testRandom256(int argc, char *argv[]){
 		qa.startElementTimer(&elementE);
 		if(!hc.generateCodeTable()){
 			qa.logCurrent = "\n[E]-~ Test Failed.\n";
-			qa.logCurrent += "|_-~ Error Message, generateCodeTable: "+hc.getErrorMessage()+"\n";
+			qa.logCurrent += "|_-~ Encode Error Message, generateCodeTable: "+hc.getErrorMessage()+"\n";
 			qa.lprint(qa.logCurrent, qa.logCurrent.length());
 			return false;
 		}
@@ -130,9 +136,9 @@ bool testRandom256(int argc, char *argv[]){
 		printf("\r *");
 		fflush(stdout);
 		qa.startElementTimer(&elementF);
-		if(!hc.encode((char*)testMessage.c_str(), msgSize)){
+		if(!hc.encode(testMessage, msgSize)){
 			qa.logCurrent = "\n[E]-~ Test Failed.\n";
-			qa.logCurrent += "|_-~ Error Message, encode: "+hc.getErrorMessage()+"\n";
+			qa.logCurrent += "|_-~ Encode Error Message, encode: "+hc.getErrorMessage()+"\n";
 			qa.lprint(qa.logCurrent, qa.logCurrent.length());
 			return false;
 		}
@@ -148,17 +154,19 @@ bool testRandom256(int argc, char *argv[]){
 		printf("out size : %ld\n", hc.out_s);
 
 		// Transfer data:
+		if(compMsg != NULL) delete[] compMsg;
+		compMsg = NULL;
+		compMsg = new char[hc.out_s];
 		for(int a=0; a<hc.out_s; a++){
-			compMsg += hc.out[a];
+			compMsg[a] = hc.out[a];
 		}
 		compMsgSize = hc.out_s;
 
 		// Decompress Message
-		HuffmanCoding hcD;
 		int bodyStart = 0;
 		int bodyPadding = 0;
 		int headerPadding = 0;
-		if(!hcD.unpackHeader((char *)compMsg.c_str(), compMsgSize, &bodyStart, &bodyPadding, &headerPadding)){
+		if(!hcD.unpackHeader(compMsg, compMsgSize, &bodyStart, &bodyPadding, &headerPadding)){
 			qa.logCurrent = "\n[E]-~ Test Failed.\n";
 			qa.logCurrent += "|_-~ Error Message, unpackHeader: "+hcD.getErrorMessage()+"\n";
 			qa.lprint(qa.logCurrent, qa.logCurrent.length());
@@ -179,7 +187,7 @@ bool testRandom256(int argc, char *argv[]){
 			return false;
 		}
 
-		if(!hcD.unpackBody((char *)compMsg.c_str(), compMsgSize, bodyStart, headerPadding, bodyPadding)){
+		if(!hcD.unpackBody(compMsg, compMsgSize, bodyStart, headerPadding, bodyPadding)){
 			qa.logCurrent = "\n[E]-~ Test Failed.\n";
 			qa.logCurrent += "|_-~ Error Message, unpackBody: "+hcD.getErrorMessage()+"\n";
 			qa.lprint(qa.logCurrent, qa.logCurrent.length());
@@ -195,6 +203,8 @@ int main(int argc, char *argv[]){
 	srand(time(NULL));
 	qa.freshLog();
 	welcome(argc, argv);
+
+
 	for(int i=0;i<testsAvailable; i++){
 		switch(testId){
 			case TEST_RANDOM256:

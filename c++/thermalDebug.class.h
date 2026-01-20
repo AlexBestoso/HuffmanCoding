@@ -1,0 +1,6 @@
+class ThermalDebug{
+	private:
+
+	public:
+	
+};

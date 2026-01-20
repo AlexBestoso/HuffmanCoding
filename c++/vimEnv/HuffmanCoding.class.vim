@@ -129,95 +129,176 @@ setlocal wrapmargin=0
 silent! normal! zE
 15,51fold
 54,57fold
-59,62fold
-64,67fold
-69,76fold
-78,81fold
-83,87fold
-89,92fold
-94,100fold
-102,105fold
-107,110fold
-54,110fold
-113,117fold
-119,123fold
-125,130fold
-132,140fold
-142,150fold
-152,157fold
-159,164fold
-166,171fold
-173,179fold
-181,186fold
-188,193fold
-113,193fold
-196,208fold
-210,222fold
-224,236fold
-238,254fold
-256,272fold
-274,286fold
-288,300fold
+58,61fold
+62,65fold
+66,73fold
+74,77fold
+78,82fold
+83,86fold
+87,93fold
+94,97fold
+98,101fold
+54,101fold
+104,108fold
+109,113fold
+114,119fold
+120,128fold
+129,137fold
+138,143fold
+144,149fold
+150,155fold
+156,162fold
+163,168fold
+169,174fold
+104,174fold
+177,189fold
+190,202fold
+203,215fold
+216,232fold
+233,249fold
+250,262fold
+263,275fold
+276,288fold
+289,301fold
 302,314fold
-316,328fold
-330,342fold
-344,356fold
-196,356fold
-359,402fold
-404,440fold
-442,480fold
-482,521fold
-523,581fold
-583,642fold
-644,687fold
-689,724fold
-359,725fold
-733,776fold
-778,794fold
-796,816fold
-818,833fold
-838,862fold
-864,1022fold
-1024,1038fold
-728,1038fold
-1042,1068fold
-1074,1295fold
-1297,1350fold
-1041,1350fold
-1353,1366fold
-1379,1449fold
-1451,1525fold
-1527,1537fold
-1539,1610fold
-1353,1610fold
-1613,1682fold
-1684,1757fold
-1759,1839fold
-1613,1839fold
-1842,1918fold
-1921,1956fold
-1842,1956fold
-1968,2002fold
-2004,2038fold
-2040,2136fold
-2138,2191fold
-1960,2191fold
-2194,2197fold
-2201,2202fold
-2205,2231fold
-2234,2247fold
-2250,2299fold
-2302,2345fold
-2349,2383fold
-2349,2401fold
-2406,2567fold
+315,327fold
+177,327fold
+330,373fold
+374,410fold
+411,449fold
+450,489fold
+490,548fold
+549,608fold
+609,652fold
+653,688fold
+330,688fold
+696,739fold
+740,756fold
+757,777fold
+778,793fold
+797,821fold
+822,980fold
+981,995fold
+691,995fold
+999,1025fold
+1027,1248fold
+998,1248fold
+1251,1264fold
+1276,1346fold
+1347,1421fold
+1422,1432fold
+1433,1504fold
+1251,1504fold
+1507,1576fold
+1577,1577fold
+1507,1577fold
+1579,1655fold
+1579,1656fold
+1658,1661fold
+1658,1661fold
+1665,1666fold
+1669,1671fold
+1672,1674fold
+1675,1677fold
+1678,1681fold
+1669,1681fold
+1684,1695fold
+1696,1709fold
+1684,1709fold
+1712,1746fold
+1747,1781fold
+1782,1817fold
+1818,1871fold
+1872,1968fold
+1969,2022fold
+2023,2103fold
+2104,2184fold
+2185,2198fold
+1712,2198fold
+2201,2250fold
+2253,2296fold
+2300,2334fold
+2335,2351fold
+2300,2351fold
+2356,2366fold
+2367,2377fold
+2378,2402fold
+2403,2426fold
+2427,2456fold
+2457,2478fold
+2479,2481fold
+2482,2495fold
+2496,2509fold
+2356,2509fold
 let &fdl = &fdl
-let s:l = 2569 - ((376 * winheight(0) + 14) / 29)
+54
+normal! zo
+54
+normal! zc
+104
+normal! zo
+104
+normal! zc
+177
+normal! zo
+177
+normal! zc
+330
+normal! zo
+330
+normal! zc
+691
+normal! zo
+691
+normal! zc
+998
+normal! zo
+998
+normal! zc
+1251
+normal! zo
+1276
+normal! zo
+1507
+normal! zo
+1577
+normal! zo
+1579
+normal! zo
+1579
+normal! zc
+1658
+normal! zo
+1658
+normal! zc
+1669
+normal! zo
+1669
+normal! zc
+1684
+normal! zo
+1684
+normal! zc
+1712
+normal! zo
+2023
+normal! zo
+2253
+normal! zo
+2300
+normal! zo
+2300
+normal! zc
+2356
+normal! zo
+2356
+normal! zc
+let s:l = 1302 - ((23 * winheight(0) + 22) / 45)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 2569
-normal! 02|
+keepjumps 1302
+normal! 044|
 let &g:so = s:so_save | let &g:siso = s:siso_save
 doautoall SessionLoadPost
 " vim: set ft=vim :
