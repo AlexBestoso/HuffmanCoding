@@ -2070,21 +2070,25 @@ class HuffmanCoding{
 			for(int i=0; i<this->frequencies_s; i++){
 				int containerSize = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 3);
 				if(this->failed()){
+					this->errorCurrent += "byteIdx:"+std::to_string(byteIdx)+" bitIdx:"+std::to_string(bitIdx)+" ";
 					this->setError(9, this->errorCurrent+"failed to unpack container size.");
 					return false;
 				}else if(containerSize == 0){
+					this->errorCurrent += "byteIdx:"+std::to_string(byteIdx)+" bitIdx:"+std::to_string(bitIdx)+" ";
 					this->setError(10, this->errorCurrent+"unpacked container size is 0, failing.");
 					return false;
 				}
 
 				int freqValue = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, containerSize * 8);
 				if(this->failed()){
+					this->errorCurrent += "byteIdx:"+std::to_string(byteIdx)+" bitIdx:"+std::to_string(bitIdx)+" ";
 					this->setError(11, this->errorCurrent+"failed to unpack frequency value.");
 					return false;
 				}
 
 				int freqLetter = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 8);
 				if(this->failed()){
+					this->errorCurrent += "byteIdx:"+std::to_string(byteIdx)+" bitIdx:"+std::to_string(bitIdx)+" ";
 					this->setError(12, this->errorCurrent+"failed to unpack frequency letter.");
 					return false;
 				}

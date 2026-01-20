@@ -1,9 +1,7 @@
 # Huffman Coding - c++
+I've encountered an issues that causes decompression to fail when generating the header.
 
-I have updated the main file to use a new system for managing qa testing.
-Should be able to use this to get timing averages for all the major functions, not just the overall process.
-
-a new system for managing tests has begun to get set in place.
+Gotta figure out what's cuasing it. It's likely a memory issue; but it needs to be investigated before I can move forward.
 --dev notes above
 
 
