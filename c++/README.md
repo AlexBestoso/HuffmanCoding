@@ -10,6 +10,11 @@ a new system for managing tests has begun to get set in place.
 To use vim as an IDE, run `vim -u ./huff.vimrc`, to open all the files with line folds.
 
 documentation pending.
+commands
+<ul>
+<li>`-t0rounds=`</li>
+</ul>
+
 ## Execution Statistics
 ```
 ===Round 99999 of 100000

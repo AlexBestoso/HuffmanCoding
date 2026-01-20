@@ -2072,17 +2072,20 @@ class HuffmanCoding{
 				if(this->failed()){
 					this->setError(9, this->errorCurrent+"failed to unpack container size.");
 					return false;
+				}else if(containerSize == 0){
+					this->setError(10, this->errorCurrent+"unpacked container size is 0, failing.");
+					return false;
 				}
 
 				int freqValue = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, containerSize * 8);
 				if(this->failed()){
-					this->setError(10, this->errorCurrent+"failed to unpack frequency value.");
+					this->setError(11, this->errorCurrent+"failed to unpack frequency value.");
 					return false;
 				}
 
 				int freqLetter = this->unpackByte(data, dataSize, &byteIdx, &bitIdx, 8);
 				if(this->failed()){
-					this->setError(11, this->errorCurrent+"failed to unpack frequency letter.");
+					this->setError(12, this->errorCurrent+"failed to unpack frequency letter.");
 					return false;
 				}
 
@@ -2174,6 +2177,20 @@ class HuffmanCoding{
 				}
 			}
 			return true;
+		}
+		void resetClass(void){
+			this->destroyBody();
+			this->destroyHeader();
+			this->destroyCodingTable();
+			this->destroyTreeData();
+			this->destroyTreeLayers();
+			this->destroyTreeLetters();
+			this->destroyFrequencies();
+			this->destroyWorkQueue();
+			this->destroyWorkBuffer();
+			this->destroyWorkTypeBuffer();
+			this->clearError();
+			this->destroyOut();
 		}
 
 		/* QJ compress main */

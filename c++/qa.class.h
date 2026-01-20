@@ -8,12 +8,7 @@ struct timeElement{
 	clock_t startTime;
 	clock_t endTime;
 	double duration;	
-	int messageSize;
-	int resultSize;
-	int sizeDifference;
-	int differenceSummation;
 	double durationSumation;
-	double differenceAverage;
 	double durationAverage;	
 };
 
@@ -57,12 +52,7 @@ class QualityAssurance{
 			e.startTime = 0;
 			e.endTime = 0;
 			e.duration = 0;	
-			e.messageSize = 0;
-			e.resultSize = 0;
-			e.sizeDifference = 0;
-			e.differenceSummation = 0;
 			e.durationSumation = 0;
-			e.differenceAverage = 0;
 			e.durationAverage = 0;	
 			return e;
 		}
