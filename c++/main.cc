@@ -61,8 +61,8 @@ bool testRandom256(int argc, char *argv[]){
 
 	
 		HuffmanCoding hc;
-	for(int i=0; i<testsRandom256Rounds; i++){
 		std::string testMessage="";
+	for(int i=0; i<testsRandom256Rounds; i++){
 		std::string compMsg="";
 		size_t compMsgSize=0;
 		size_t msgSize=0;
