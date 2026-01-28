@@ -1,0 +1,5 @@
+class ThermalOutput{
+	private:
+
+	public:
+};

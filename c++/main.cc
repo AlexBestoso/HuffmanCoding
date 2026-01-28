@@ -6,6 +6,8 @@
 #include <time.h>
 #include <fcntl.h>
 
+#include "./thermalDebug/thermalDebugIntegrator.class.h"
+
 #include "HuffmanCoding.class.h"
 
 #include "./qa.class.h"

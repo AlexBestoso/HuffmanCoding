@@ -1,0 +1,5 @@
+class ThermalInput{
+	public:
+
+	private:
+};
