@@ -45,11 +45,8 @@ class ThermalStep{
 			return true;
 
 		}
-
-		bool addStep(ThermalOperation operation){
-			if(!this->stepOpen) return false;
-
-			return true;
-		}
 		
+		void newOperation(){
+
+		}
 };

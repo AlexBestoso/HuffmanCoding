@@ -1305,6 +1305,10 @@ class HuffmanCoding{
 				this->setError(6, this->errorCurrent);
 				return false;
 			}
+			#if HUFFMAN_DEBUGGING == 1
+				ThermalAlgorithm *currentAlgo = thermalDbg.getAlgorithm();
+				ThermalStep *thermalStep = currentAlgo->getCurrentStep();
+			#endif
 
 			int bitsRemaining = targetBitCount;
 			for(int i=this->deriveChunkIndex(binaryMax, bitsRemaining); i>=0 && dstIndex[0] < dstBufferSize; i=this->deriveChunkIndex(binaryMax, bitsRemaining)){

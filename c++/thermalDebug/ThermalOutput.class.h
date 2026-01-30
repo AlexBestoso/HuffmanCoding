@@ -1,4 +1,4 @@
-class ThermalOutput{
+class ThermalVariable{
 	private:
 
 	public:

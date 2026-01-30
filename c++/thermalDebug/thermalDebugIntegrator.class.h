@@ -3,10 +3,8 @@
 struct thermalOperation{
 	std::string name;
 	std::string description;
-	size_t inputCount;
-	ThermalInput *inputs;
-	size_t outputCount;
-	ThermalOutput *outputs;
+	size_t variableCount;
+	ThermalVariable *variables;
 };
 #include "./ThermalOperation.class.h"
 
@@ -57,6 +55,10 @@ class ThermalDebugIntegrator{
 			this->currentAlgo.setDescription(desc);
 			this->currentAlgo.setOutputLoc(outFile);
 			return true;
+		}
+
+		ThermalAlgorithm *getAlgorithm(void){
+			return &currentAlgo;
 		}
 		
 		void setOutputBuffer(uint8_t *outAddr, size_t outsize){

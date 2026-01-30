@@ -5,21 +5,16 @@ class ThermalOperation{
 		void init(void){
 			this->data.name = "";
 			this->data.description = "";
-			this->data.inputCount = 0;
-			this->data.inputs = NULL;
-			this->data.outputCount = 0;
-			this->data.outputs = NULL;
+			this->data.variableCount = 0;
+			this->data.variables = NULL;
 
 		}
 		void reset(void){
 			this->data.name = "";
 			this->data.description = "";
-			this->data.inputCount = 0;
-			if(this->data.inputs != NULL) delete[] this->data.inputs;
-			this->data.inputs = NULL;
-			this->data.outputCount = 0;
-			if(this->data.outputs != NULL) delete[] this->data.outputs;
-			this->data.outputs = NULL;
+			this->data.variableCount = 0;
+			if(this->data.variables != NULL) delete[] this->data.variables;
+			this->data.variables = NULL;
 		}
 		ThermalOperation(){
 			this->init();
