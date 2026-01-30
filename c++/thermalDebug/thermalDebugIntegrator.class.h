@@ -36,6 +36,8 @@ struct thermalAlgorithm{
 class ThermalDebugIntegrator{
 	private:
 		bool processingAlgo;
+		int stepIdx;
+		int operationIdx;
 		ThermalAlgorithm currentAlgo;
 	public:
 	
@@ -56,13 +58,20 @@ class ThermalDebugIntegrator{
 			this->currentAlgo.setOutputLoc(outFile);
 			return true;
 		}
+		
+		void setOutputBuffer(uint8_t *outAddr, size_t outsize){
+
+		}
 
 		void finishAlgorithm(void){
 			this->processingAlgo = false;
 		}
 
 		bool newStep(std::string name, std::string description, std::string srcFileName, int startingLineNumber, int endingLineNumber){
-			
+			return this->currentAlgo.newStep(name, description, srcFileName, startingLineNumber, endingLineNumber);
+		}
+
+		bool addOperator(){
 			return true;
 		}
 

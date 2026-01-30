@@ -11,6 +11,9 @@
 #define HUFFMAN_EXPERIMENTAL 1
 class HuffmanCoding{
 	private:
+#if HUFFMAN_DEBUGGING == 1
+		ThermalDebugIntegrator thermalDbg;
+#endif
 		/* QJ private vars */
 		char *body;
 		size_t body_s;
@@ -1306,7 +1309,6 @@ class HuffmanCoding{
 			int bitsRemaining = targetBitCount;
 			for(int i=this->deriveChunkIndex(binaryMax, bitsRemaining); i>=0 && dstIndex[0] < dstBufferSize; i=this->deriveChunkIndex(binaryMax, bitsRemaining)){
 				int chunk = (packingTarget >> (i*binaryMax)) & 0xff;
-				
 				int msbPos = (bitsRemaining % binaryMax);
 				msbPos = msbPos == 0 ? binaryMax - 1 : msbPos - 1;
 				int lsbPos = 0;
@@ -1392,6 +1394,16 @@ class HuffmanCoding{
 			}
 
 			this->header[0] = 0x0;
+			#if HUFFMAN_DEBUGGING == 1
+				std::string n = "Pack frequency_s";
+				this->thermalDbg.newStep(
+					n, 
+					"Packs total number of frequency elements.", 
+					"HuffmanCoding.class.h", 
+					1408, 
+					1411
+				);
+			#endif
 
 			if(!this->packByte(this->frequencies_s, 9, this->header, this->header_s, &headerIdx, &bitIdx)){
 				this->setError(4, this->errorCurrent+"failed to pack element count.");
@@ -1399,18 +1411,49 @@ class HuffmanCoding{
 			}
 
 			for(int i=0; i<this->frequencies_s && headerIdx<this->header_s; i++){
+				#if HUFFMAN_DEBUGGING == 1
+					std::string n = "Pack Container Size "+std::to_string(i);
+					this->thermalDbg.newStep(
+						n, 
+						"Takes the important huffman tree data and packs it into a file header.", 
+						"HuffmanCoding.class.h", 
+						1350, 
+						1424
+					);
+				#endif
+
 				int containerSize = (((this->frequencies[i]/0xff)) + 1); // rel to sizeof(int) data type
 				if(!this->packByte(containerSize, 3, this->header, this->header_s, &headerIdx, &bitIdx)){
 					this->setError(5, this->errorCurrent+"failed to pack sizeof frequency int.");
 					return -1;
 				}
 
+				#if HUFFMAN_DEBUGGING == 1
+					n = "Pack Frequency "+std::to_string(i);
+					this->thermalDbg.newStep(
+						n, 
+						"Takes the important huffman tree data and packs it into a file header.", 
+						"HuffmanCoding.class.h", 
+						1350, 
+						1424
+					);
+				#endif
 				int freq = this->frequencies[i];
 				if(!this->packByte(freq, 8, this->header, this->header_s, &headerIdx, &bitIdx)){
 					this->setError(6, this->errorCurrent+"failed to pack frequency value.");
 					return -1;
 				}
 
+				#if HUFFMAN_DEBUGGING == 1
+					n = "Pack Letter "+std::to_string(i);
+					this->thermalDbg.newStep(
+						n, 
+						"Takes the important huffman tree data and packs it into a file header.", 
+						"HuffmanCoding.class.h", 
+						1350, 
+						1424
+					);
+				#endif
 				char letter = this->treeLetters[i];
 				if(!this->packByte((int)letter&0xff, 8, this->header, this->header_s, &headerIdx, &bitIdx)){
 					this->setError(7, this->errorCurrent+"failed to pack tree letter.");
@@ -1967,6 +2010,13 @@ class HuffmanCoding{
 			return true;
 		}
 		bool encode(char *data, size_t dataSize){
+			#if HUFFMAN_DEBUGGING == 1
+				this->thermalDbg.newAlgorithm(
+					"Encode / Pack data",
+					"The algorithm for packing the compression result into a header and body.",
+					"./encodeAlgorithm.ted"
+				);
+			#endif
 			this->errorCurrent = "encode() - ";
 			int headerPadding = this->packHeader();
 			if(headerPadding <= -1){

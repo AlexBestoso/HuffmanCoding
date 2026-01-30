@@ -80,5 +80,37 @@ class ThermalAlgorithm{
 
 		~ThermalAlgorithm(){
 
-		}	
+		}
+
+		bool newStep(std::string name, std::string description, std::string srcFileName, int startingLineNumber, int endingLineNumber){
+			if(this->data.stepCount <= 0 || this->data.stepChain == NULL){
+				this->data.stepCount = 1;
+				this->data.stepChain = new (std::nothrow) ThermalStep[1];
+				if(this->data.stepChain == NULL)
+					return false;
+
+			}else{
+				size_t tmpS = this->data.stepCount;
+				ThermalStep *tmp = new (std::nothrow) ThermalStep[tmpS];
+				if(tmp == NULL)
+					return false;
+
+				for(int i=0; i<tmpS; i++)
+					tmp[i] = this->data.stepChain[i];
+
+				delete[] this->data.stepChain;
+				this->data.stepCount++;
+				this->data.stepChain = new (std::nothrow) ThermalStep[this->data.stepCount];
+				if(this->data.stepChain == NULL)
+					return false;
+
+				for(int i=0; i<tmpS; i++)
+					this->data.stepChain[i] = tmp[i];
+
+				delete[] tmp;
+			}
+
+			return this->data.stepChain[this->data.stepCount-1].newStep(name, description, srcFileName, startingLineNumber, endingLineNumber);
+		}
+		
 };
