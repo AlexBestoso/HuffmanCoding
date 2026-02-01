@@ -1351,6 +1351,15 @@ class HuffmanCoding{
 			return true;
 		}
 		int packHeader(void){
+			#if HUFFMAN_DEBUGGING == 1
+				this->thermalDbg.newAlgorithm(
+					"Pack Header",
+					"The algorithm for packing the header data.",
+					"./packHeader.ted"
+				);
+				this->thermalDbg.setOutputBuffer((uint8_t *)this->header, &this->header_s);
+			#endif
+
 			this->errorCurrent = "packHeader() - ";
 			if(!this->validateFrequencies()){
 				this->setError(0, this->errorCurrent+"failed to validate frequencies.");
@@ -2014,13 +2023,6 @@ class HuffmanCoding{
 			return true;
 		}
 		bool encode(char *data, size_t dataSize){
-			#if HUFFMAN_DEBUGGING == 1
-				this->thermalDbg.newAlgorithm(
-					"Encode / Pack data",
-					"The algorithm for packing the compression result into a header and body.",
-					"./encodeAlgorithm.ted"
-				);
-			#endif
 			this->errorCurrent = "encode() - ";
 			int headerPadding = this->packHeader();
 			if(headerPadding <= -1){

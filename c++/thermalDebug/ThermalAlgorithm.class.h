@@ -23,11 +23,12 @@ class ThermalAlgorithm{
 			return this->data.outputLoc;
 		}
 
-		void setOutBufferSize(size_t v){
-        		this->data.outBufferSize = v;
+		void setOutBuffSize(size_t *v){
+        		this->data.outBuffSize = v;
 		}
-		size_t getOutBufferSize(void){
-			return this->data.outBufferSize;
+		size_t getOutBuffSize(void){
+			if(this->data.outBuffSize == NULL) return 0;
+			return this->data.outBuffSize[0];
 		}
 		
 		void setOutBuff(uint8_t *v){
@@ -55,7 +56,7 @@ class ThermalAlgorithm{
 			this->data.name = "";
         		this->data.description = "";
         		this->data.outputLoc = "";
-        		this->data.outBufferSize = 0;
+        		this->data.outBuffSize = NULL;
         		this->data.outBuff = NULL;
         		this->data.stepCount = 0;
         		this->data.stepChain = NULL;
@@ -64,7 +65,7 @@ class ThermalAlgorithm{
 			this->data.name = "";
         		this->data.description = "";
         		this->data.outputLoc = "";
-        		this->data.outBufferSize = 0;
+        		this->data.outBuffSize = NULL;
 			if(this->data.outBuff != NULL)
 				delete[] this->data.outBuff;
         		this->data.outBuff = NULL;
