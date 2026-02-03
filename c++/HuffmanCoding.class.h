@@ -1305,19 +1305,32 @@ class HuffmanCoding{
 				this->setError(6, this->errorCurrent);
 				return false;
 			}
+
+			int bitsRemaining = targetBitCount;
+			int chunk=0, msbPos=0, lsbPos=0, sherrection=0, bitsUsed;
 			#if HUFFMAN_DEBUGGING == 1
 				ThermalAlgorithm *currentAlgo = thermalDbg.getAlgorithm();
 				ThermalStep *thermalStep = currentAlgo->getCurrentStep();
+				printf("Thermal Debug Step:\n\tName : %s\n\tDesc: %s\n\tSrc File: %s\n\tLine numbers: %d - %d\n", thermalStep->getName().c_str(), thermalStep->getDescription().c_str(), thermalStep->getSrcFileName().c_str(), thermalStep->getStartingLineNumber(), thermalStep->getEndingLineNumber());
+				if(!thermalStep->newVariable("int", "chunk", (void *)&chunk)){
+					printf("Failed to allocate new variable.\n");
+					return false;
+				}
 			#endif
-
-			int bitsRemaining = targetBitCount;
+			/*
+			thermalStep->newVariable("int", "msbPos", &msbPos);
+			thermalStep->newVariable("int", "lsbPos", &lsbPos);
+			thermalStep->newVariable("int", "sherrection", &sherrection);
+			thermalStep->newVariable("int", "bitsUsed", &bitsUsed);
+			thermalStep->newVariable("int", "bitsRemaining", &bitsRemaining);*/
 			for(int i=this->deriveChunkIndex(binaryMax, bitsRemaining); i>=0 && dstIndex[0] < dstBufferSize; i=this->deriveChunkIndex(binaryMax, bitsRemaining)){
-				int chunk = (packingTarget >> (i*binaryMax)) & 0xff;
-				int msbPos = (bitsRemaining % binaryMax);
-				msbPos = msbPos == 0 ? binaryMax - 1 : msbPos - 1;
-				int lsbPos = 0;
 
-				int sherrection = (7 - bitIndex[0]) - msbPos;
+				chunk = (packingTarget >> (i*binaryMax)) & 0xff;
+				msbPos = (bitsRemaining % binaryMax);
+				msbPos = msbPos == 0 ? binaryMax - 1 : msbPos - 1;
+				lsbPos = 0;
+
+				sherrection = (7 - bitIndex[0]) - msbPos;
 				if(sherrection < 0){
 					// Negative, right Shift, preserve lost bits.
 					sherrection *= -1;
@@ -1331,7 +1344,7 @@ class HuffmanCoding{
 					lsbPos += sherrection;	
 				} 
 
-				int bitsUsed = (msbPos - lsbPos) + 1;
+				bitsUsed = (msbPos - lsbPos) + 1;
 
 				bitsRemaining -= bitsUsed;
 				dstBuffer[dstIndex[0]] += chunk;
@@ -1424,7 +1437,7 @@ class HuffmanCoding{
 			}
 
 			for(int i=0; i<this->frequencies_s && headerIdx<this->header_s; i++){
-				#if HUFFMAN_DEBUGGING == 1
+				#if HUFFMAN_DEBUGGING == 0
 					std::string n = "Pack Container Size "+std::to_string(i);
 					this->thermalDbg.newStep(
 						n, 
@@ -1441,7 +1454,7 @@ class HuffmanCoding{
 					return -1;
 				}
 
-				#if HUFFMAN_DEBUGGING == 1
+				#if HUFFMAN_DEBUGGING == 0
 					n = "Pack Frequency "+std::to_string(i);
 					this->thermalDbg.newStep(
 						n, 
@@ -1457,7 +1470,7 @@ class HuffmanCoding{
 					return -1;
 				}
 
-				#if HUFFMAN_DEBUGGING == 1
+				#if HUFFMAN_DEBUGGING == 0
 					n = "Pack Letter "+std::to_string(i);
 					this->thermalDbg.newStep(
 						n, 

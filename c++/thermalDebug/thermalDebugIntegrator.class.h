@@ -7,16 +7,6 @@ struct thermalOperation{
 };
 #include "./ThermalOperation.class.h"
 
-struct thermalStep{
-	std::string name;
-	std::string description;
-	std::string srcFileName;
-	int startingLineNumber;
-	int endingLineNumber;
-	size_t operationCount;
-	ThermalOperation *operationChain;
-	
-};
 #include "./ThermalStep.class.h"
 
 struct thermalAlgorithm{
@@ -71,6 +61,11 @@ class ThermalDebugIntegrator{
 
 		bool newStep(std::string name, std::string description, std::string srcFileName, int startingLineNumber, int endingLineNumber){
 			return this->currentAlgo.newStep(name, description, srcFileName, startingLineNumber, endingLineNumber);
+		}
+
+		bool declareStepVariable(){
+			
+			return true;
 		}
 
 		bool addOperator(){

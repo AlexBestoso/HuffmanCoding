@@ -1,125 +1,76 @@
-
+// NOTE: We may want to use static_cast<type>(this->value) to handle returning values.
 class ThermalVariable{
 	private:
 		std::string name;
-		std::string value;
-		int dataType;
+		std::string dataType;
+		void *value;
 	public:
 
 		ThermalVariable(){
 			this->name = "";
-			this->value = "";
-			this->dataType = -1;
+			this->dataType = "";
+			this->value = NULL;
 		}
 
-		void create(std::string t, std::string n, std::string v){
+		void create(std::string t, std::string n, int *v){
+			this->create(t, n, (void *)v);
+		}
+		void create(std::string t, std::string n, char *v){
+			this->create(t, n, (void *)v);
+		}
+		void create(std::string t, std::string n, float *v){
+			this->create(t, n, (void *)v);
+		}
+		void create(std::string t, std::string n, double *v){
+			this->create(t, n, (void *)v);
+		}
+		void create(std::string t, std::string n, size_t *v){
+			this->create(t, n, (void *)v);
+		}
+		void create(std::string t, std::string n, long *v){
+			this->create(t, n, (void *)v);
+		}
+		void create(std::string t, std::string n, void *v){
 			this->name = n;
 			this->value = v;
-			this->dataType = this->dataTypeByName(t);
+			this->dataType = t;
 		}
 
-		std::string rawValue(void){
-			return this->value;
-		}
 		std::string getName(void){
 			return this->name;
 		}
-		float castValue_float(void){
-			float ret = 0.0;
-
-			return ret;
+		std::string getDataType(void){
+			return this->dataType;
 		}
 		void *getValue(void){
-			void *ret = NULL;
-			switch(this->dataType){
-				case 0:{
-					float data = std::stof(this->value);
-					ret = (void *)&data;
-					break;
-				}
-				case 3:{
-					double data = std::stod(this->value);
-					ret = (void *)&data;
-					break;
-				}
-				case 6:{
-					int data = std::stoi(this->value);
-					ret = (void *)&data;
-					break;
-				}
-		/*		case 7:{
-					ret = (void *)&data;
-					break;
-				//	return "char";
-				}
-				case 8:{
-					ret = (void *)&data;
-					break;
-				//	return "signed char";
-				}
-				case 9:{
-					ret = (void *)&data;
-					break;
-				//	return "unsigned char";
-				}
-				case 10:{
-					ret = (void *)&data;
-					break;
-				//	return "signed int";
-				}
-				case 11:{
-					ret = (void *)&data;
-					break;
-				//	return "unsigned int";
-				}*/
-			}
+			return this->value;
+		}
+		int getValueInt(void){
+			int ret = static_cast<int *>(this->value)[0];
 			return ret;
 		}
-		int dataTypeByName(std::string type){
-			if(type == "float"){return 0;}
-			if(type == "signed float"){return 1;}
-			if(type == "unsigned float"){return 2;}
-			if(type == "double"){return 3;}
-			if(type == "signed double"){return 4;}
-			if(type == "unsigned double"){return 5;}
-			if(type == "int"){return 6;}
-			if(type == "char"){return 7;}
-			if(type == "signed char"){return 8;}
-			if(type == "unsigned char"){return 9;}
-			if(type == "signed int"){return 10;}
-			if(type == "unsigned int"){return 11;}
-			
-			return -1;
+		char getValueChar(void){
+			char ret = static_cast<char *>(this->value)[0];
+			return ret;
 		}
+		float getValueFloat(void){
 
-		std::string dataTypeById(int id){
-			switch(id){
-				case 0:
-					return "float";
-				case 1:
-					return "signed float";
-				case 2:
-					return "unsigned float";
-				case 3:
-					return "double";
-				case 4:
-					return "signed double";
-				case 5:
-					return "unsigned double";
-				case 6:
-					return "int";
-				case 7:
-					return "char";
-				case 8:
-					return "signed char";
-				case 9:
-					return "unsigned char";
-				case 10:
-					return "signed int";
-				case 11:
-					return "unsigned int";
-			}
-			return "";
+			float *ret = static_cast<float*>(this->value);
+			return ret[0];
 		}
+		double getValueDouble(void){
+			double ret = static_cast<double *>(this->value)[0];
+			return ret;
+		}
+		size_t getValueSize_t(void){
+			size_t ret = ((size_t *)this->value)[0];
+			return ret;
+		}
+		long getValueLong(void){
+			long ret = ((long *)this->value)[0];
+			return ret;
+		}
+		
+		
 	
 };
